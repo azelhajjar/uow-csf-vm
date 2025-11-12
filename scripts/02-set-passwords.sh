@@ -1,14 +1,12 @@
 #!/bin/bash
 set -euo pipefail
 
-CSV="/srv/cav-csf/configs/user-passwords.csv"
-
-if [ ! -f "$CSV" ]; then
-  echo "[ERROR] Password file not found: $CSV"
+if [ ! -f /srv/cav-csf/configs/user-passwords.csv ]; then
+  echo "[ERROR] Password file not found: /srv/cav-csf/configs/user-passwords.csv"
   exit 1
 fi
 
-echo "[INFO] Setting user passwords from $CSV"
+echo "[INFO] Setting user passwords from /srv/cav-csf/configs/user-passwords.csv"
 
 while IFS=',' read -r user pass; do
   if [ "$user" = "username" ]; then
@@ -26,6 +24,6 @@ while IFS=',' read -r user pass; do
   else
     echo "[WARN] User $user not found, skipping"
   fi
-done < "$CSV"
+done < /srv/cav-csf/configs/user-passwords.csv
 
 echo "[OK] Passwords applied"
