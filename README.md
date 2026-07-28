@@ -201,6 +201,41 @@ The architecture must preserve both:
 1. realistic host-level network reconnaissance and service enumeration;
 2. reliable deployment and restoration of complex vulnerable applications.
 
+## Reconnaissance and discoverability
+
+The VM must provide enough realistic discoverable information for reconnaissance to be a meaningful activity, not just a short step before exploitation.
+
+Historically, students have had limited information to work with during the early reconnaissance phase. This project should deliberately improve that by creating a believable fictional organisation with public-facing artefacts, naming conventions and service metadata that support passive and active discovery.
+
+Design the environment so that students can practise techniques such as:
+
+- DNS enumeration within the host-only lab network;
+- hostname and virtual-host discovery;
+- web directory and content discovery;
+- robots.txt and sitemap analysis;
+- HTTP header and technology fingerprinting;
+- public document and metadata review;
+- email address, username and department discovery;
+- service banner interpretation;
+- linking information from web content, DNS records and network services.
+
+The VM should include realistic clues such as:
+
+- public web pages for the fictional organisation;
+- departmental or staff references;
+- support or IT contact information;
+- hostnames and subdomains with teaching purpose;
+- selected DNS records;
+- intentionally exposed but non-solution-bearing documents;
+- plausible file and directory names;
+- service banners that support enumeration without giving away answers directly.
+
+The project may also integrate the existing public domain `cwscenario.uk` as a companion reconnaissance asset. This can support realistic public-facing OSINT activities, external web clues, downloadable documents, organisational pages, DNS records or scenario background that the user can update separately. The VM must not depend on the public domain to function during host-only teaching sessions; any critical reconnaissance material needed for classroom activities should also be available inside the lab environment or have a documented offline fallback.
+
+Reconnaissance material must not expose instructor credentials, flags, direct solutions, hidden attack paths or privileged information. It should provide leads that help students decide what to investigate next.
+
+Document the planned reconnaissance surface in the Phase 1 design documents, especially `docs/architecture.md`, `docs/services.md`, `docs/custom-application.md` and `docs/module-mapping.md`.
+
 ## Primary design principles
 1. Build one complete Linux VM containing all intended applications, services and vulnerabilities.
 2. Do not create Level 5, Level 6, Level 7 or CTF VM profiles.
