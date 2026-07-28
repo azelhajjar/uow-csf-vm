@@ -569,7 +569,9 @@ The document should summarise:
 - unresolved questions raised by the previous attempt.
 
 ## Initial delivery phases
+
 ### Phase 1: Design
+
 Produce:
 - architecture document
 - service catalogue
@@ -581,7 +583,9 @@ Produce:
 - AD integration requirements
 - initial CTF flag plan
 Do not implement vulnerabilities during Phase 1.
+
 ### Phase 2: Base VM
+
 Implement:
 - Ubuntu Server base
 - required packages
@@ -590,23 +594,37 @@ Implement:
 - repository scripts
 - landing page
 - service health checks
+
 ### Phase 3: Established web applications
+
 Install and test:
 - Juice Shop
 - WebGoat
 - Security Shepherd
 - optional DVWA if approved
+
 ### Phase 4: Custom application
+
 Implement the agreed custom application and its initial vulnerability set.
+
 ### Phase 5: Network services
+
 Implement the approved service catalogue and deliberate weaknesses.
+
 ### Phase 6: Linux privilege escalation
+
 Implement and verify the approved privilege-escalation routes.
+
 ### Phase 7: Active Directory integration
+
 Join the Linux host to the agreed Windows domain and implement the approved cross-platform activities.
+
 ### Phase 8: CTF support
+
 Add flag generation, placement, manifest generation and verification.
+
 ### Phase 9: Validation and release
+
 Complete:
 - functional testing
 - exploitation testing
@@ -617,7 +635,9 @@ Complete:
 - release archive
 - checksums
 - version notes
+
 ## Immediate task
+
 Start with Phase 1 only.
 Create the following files:
 - `docs/legacy-review.md`
