@@ -36,7 +36,50 @@ All new implementation must remain outside `legacy/`.
 Relevant decisions should be recorded in:
 
 `docs/decisions.md`
+## Public-facing README
 
+The existing `README.md` contains temporary project instructions and development context. It is not the final public-facing README and may be removed or replaced later.
+
+Create:
+
+`README-public-facing.md`
+
+For now, create the file with only:
+
+# CAV-CSF
+
+Public-facing documentation will be added as the environment is developed.
+
+Update `README-public-facing.md` incrementally as implementation progresses.
+
+Only add information that has been implemented and is suitable for public use, including:
+
+- project purpose;
+- supported Ubuntu version;
+- VM resource recommendations;
+- prerequisites;
+- required software;
+- installation and setup instructions;
+- service start, stop and status commands;
+- reset and recovery procedures;
+- verification steps;
+- known limitations;
+- release information.
+
+Do not include:
+
+- instructor credentials;
+- hidden accounts;
+- vulnerability solutions;
+- flag values;
+- exploitation paths;
+- unresolved design discussions;
+- material from the `legacy/` directory;
+- unimplemented or unverified information.
+
+Whenever a task changes a public prerequisite, dependency, command, service name, port, reset process or verification step, update `README-public-facing.md` as part of the same task.
+
+Do not rename `README-public-facing.md` to `README.md` until explicitly instructed.
 ## Base platform
 Use:
 - Ubuntu Server 26.04 LTS
