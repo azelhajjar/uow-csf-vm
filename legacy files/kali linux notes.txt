@@ -1,0 +1,6 @@
+Change default keyboard to UK
+Remove default "Hide Windwos Borders" from terminal (if on)
+Change background colors to BackonLightYellow
+add the Dockers bookmar folder with the following links 
+Put Kali, OWASP on PCs in labs 
+Could we change OWASP to Host-only adapter and to make it 7z file instead of ova
