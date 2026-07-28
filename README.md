@@ -35,7 +35,9 @@ All new implementation must remain outside `legacy/`.
 
 Relevant decisions should be recorded in:
 
-`docs/decisions.md`## Base platform
+`docs/decisions.md`
+
+## Base platform
 Use:
 - Ubuntu Server 26.04 LTS
 - amd64 architecture
@@ -154,7 +156,9 @@ Do not use Docker solely for convenience where it would remove network visibilit
 The architecture must preserve both:
 
 1. realistic host-level network reconnaissance and service enumeration;
-2. reliable deployment and restoration of complex vulnerable applications.## Primary design principles
+2. reliable deployment and restoration of complex vulnerable applications.
+
+## Primary design principles
 1. Build one complete Linux VM containing all intended applications, services and vulnerabilities.
 2. Do not create Level 5, Level 6, Level 7 or CTF VM profiles.
 3. Teaching guides will direct students towards the activities suitable for each module.
@@ -562,7 +566,9 @@ The document should summarise:
 - material worth reusing;
 - material requiring adaptation;
 - material that should be replaced;
-- unresolved questions raised by the previous attempt.## Initial delivery phases
+- unresolved questions raised by the previous attempt.
+
+## Initial delivery phases
 ### Phase 1: Design
 Produce:
 - architecture document
@@ -614,6 +620,7 @@ Complete:
 ## Immediate task
 Start with Phase 1 only.
 Create the following files:
+- `docs/legacy-review.md`
 - `docs/architecture.md`
 - `docs/services.md`
 - `docs/vulnerabilities.md`
