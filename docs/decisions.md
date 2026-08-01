@@ -8,7 +8,7 @@ This file records decisions required before implementation begins. Items marked 
 
 ### Service Catalogue
 
-- DECISION REQUIRED: Port and hostname plan.
+- DECISION REQUIRED: Final port assignments for services other than HTTP and teaching SSH.
 
 ### Web and Custom Application
 
@@ -64,6 +64,8 @@ This file records decisions required before implementation begins. Items marked 
 - APPROVED: Use **Brightleaf Retail Ltd** as the fictional organisation across the public `cwscenario.uk` OSINT site and the internal VM scenario.
 - APPROVED: Keep the public `cwscenario.uk` host safe and OSINT-only; active scanning and exploitation targets must remain inside the isolated lab.
 - APPROVED: Use `cwscenario.uk` only as an optional companion resource; essential classroom material must remain available inside the lab environment.
+- APPROVED: Use the reserved `brightleaf.test` namespace for the offline internal lab.
+- APPROVED: Use `www.brightleaf.test` for the internal landing site. Additional service names will follow the same namespace as services are implemented.
 
 ### First-Build Service Baseline
 

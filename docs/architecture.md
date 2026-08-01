@@ -75,7 +75,7 @@ The VM represents **Brightleaf Retail Ltd**, a fictional UK technology retailer 
 - staff, department and support references;
 - realistic directory and file names.
 
-Critical classroom reconnaissance material must work inside the host-only lab network. The public domain `cwscenario.uk` is a safe, OSINT-only companion asset and must not host deliberately vulnerable components or be presented as an active-testing target. The VM must not depend on it.
+Critical classroom reconnaissance material must work inside the host-only lab network. Internal active-testing targets use the reserved `brightleaf.test` namespace, beginning with `www.brightleaf.test` for the landing site. The public domain `cwscenario.uk` is a safe, OSINT-only companion asset and must not host deliberately vulnerable components or be presented as an active-testing target. The VM must not depend on it.
 
 ## Reset and Recovery Architecture
 
