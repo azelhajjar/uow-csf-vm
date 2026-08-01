@@ -48,13 +48,21 @@ section "Disk usage"
 df -h /
 
 section "Key tools"
-for tool in git curl wget python3 pip3 docker docker-compose systemctl ss ip ifconfig; do
+for tool in git curl wget python3 pip3 docker systemctl ss ip ifconfig; do
   if command -v "$tool" >/dev/null 2>&1; then
     printf '%-15s %s\n' "$tool" "$(command -v "$tool")"
   else
     printf '%-15s missing\n' "$tool"
   fi
 done
+
+if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then
+  printf '%-15s %s\n' "docker compose" "$(docker compose version --short 2>/dev/null || docker compose version)"
+elif command -v docker-compose >/dev/null 2>&1; then
+  printf '%-15s %s\n' "docker-compose" "$(command -v docker-compose)"
+else
+  printf '%-15s missing\n' "docker compose"
+fi
 
 section "Failed systemd units"
 if command -v systemctl >/dev/null 2>&1; then
