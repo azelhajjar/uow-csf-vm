@@ -47,7 +47,9 @@ Host SSH is administrative infrastructure, not a student vulnerability. It remai
 
 ### HTTP and Web Routing
 
-The VM should provide a simple landing site. It should support reconnaissance and navigation without revealing solutions, vulnerabilities, flags, hidden services or instructor notes.
+The VM should provide a Brightleaf Retail Ltd landing site. It should connect naturally with the organisational context on `cwscenario.uk`, support offline reconnaissance and navigation, and avoid revealing solutions, vulnerabilities, flags, hidden services or instructor notes.
+
+The public `cwscenario.uk` host is OSINT-only. All scanning, credential testing and exploitation targets must resolve to the isolated lab environment.
 
 Established web applications can be containerised, but their web interfaces must be reachable from the VM network through documented ports or hostnames.
 

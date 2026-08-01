@@ -6,10 +6,6 @@ This file records decisions required before implementation begins. Items marked 
 
 ## Phase 1 Decisions
 
-### Platform and Naming
-
-- DECISION REQUIRED: Final fictional organisation name and naming scheme.
-
 ### Service Catalogue
 
 - DECISION REQUIRED: Port and hostname plan.
@@ -64,6 +60,9 @@ This file records decisions required before implementation begins. Items marked 
 - APPROVED: Retain `CAV-CSF` as the project and repository name during university development.
 - APPROVED: Do not create a separate public name or edition unless public release becomes a concrete requirement.
 - APPROVED: Avoid unnecessary coupling of service names, hostnames and internal paths to `cav-csf` so a future rename remains manageable.
+- APPROVED: The fictional organisation is a UK technology retailer serving consumers, SMEs, education customers and trade partners.
+- APPROVED: Use **Brightleaf Retail Ltd** as the fictional organisation across the public `cwscenario.uk` OSINT site and the internal VM scenario.
+- APPROVED: Keep the public `cwscenario.uk` host safe and OSINT-only; active scanning and exploitation targets must remain inside the isolated lab.
 - APPROVED: Use `cwscenario.uk` only as an optional companion resource; essential classroom material must remain available inside the lab environment.
 
 ### First-Build Service Baseline

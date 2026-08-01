@@ -65,7 +65,7 @@ Administrative SSH must remain distinct from the vulnerable teaching environment
 
 ## Reconnaissance Surface
 
-The VM should include a believable fictional organisation with:
+The VM represents **Brightleaf Retail Ltd**, a fictional UK technology retailer serving consumers, SMEs, education customers and trade partners. The same organisation appears on the public `cwscenario.uk` OSINT site. The internal lab should include:
 
 - public web pages;
 - hostnames and virtual hosts;
@@ -75,7 +75,7 @@ The VM should include a believable fictional organisation with:
 - staff, department and support references;
 - realistic directory and file names.
 
-Critical classroom reconnaissance material must work inside the host-only lab network. The public domain `cwscenario.uk` may be used as a companion asset, but the VM must not depend on it.
+Critical classroom reconnaissance material must work inside the host-only lab network. The public domain `cwscenario.uk` is a safe, OSINT-only companion asset and must not host deliberately vulnerable components or be presented as an active-testing target. The VM must not depend on it.
 
 ## Reset and Recovery Architecture
 
