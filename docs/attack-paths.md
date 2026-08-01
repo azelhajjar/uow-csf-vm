@@ -173,3 +173,11 @@ The following paths remain proposed and require their own detailed contracts bef
 - writable privileged service or timer privilege escalation;
 - cross-platform Active Directory paths;
 - CTF-only multi-stage paths.
+
+## AP-02: ProFTPD mod_copy to Web-Service Access
+
+Status: INSTALLED AND LIVE-VERIFIED FOR PROVISIONING, CONFIGURATION AND SERVICE COEXISTENCE. EXPLOIT ACCEPTANCE TESTING PENDING.
+
+AP-02 uses a pinned, host-native ProFTPD 1.3.5 build with `mod_copy` on TCP 2121 and a dedicated Apache/PHP boundary on TCP 80. This is a genuine version-bound vulnerability retained for the isolated university lab. See `docs/ap02-design.md` for the architecture, safety boundary, reset contract and verification scope.
+
+Exploit execution is deliberately outside the provisioning verifier and remains a later instructor-controlled acceptance phase.

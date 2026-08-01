@@ -88,3 +88,11 @@ This file records decisions required before implementation begins. Items marked 
 - APPROVED: Use a dedicated sudoers rule allowing `stockroom` to run `/usr/bin/find` as root without a password for the introductory privilege-escalation outcome.
 - APPROVED: Require reset and automated verification for the complete path before adding further deliberate weaknesses.
 - APPROVED: Do not enable teaching SSH on TCP 22 until administrative SSH migration and rollback gates pass.
+
+### Second Attack Path
+
+- APPROVED: Implement AP-02 as a host-native, pinned ProFTPD 1.3.5 service compiled with `mod_copy` for CVE-2015-3306 teaching.
+- APPROVED: Do not use containers for AP-02.
+- APPROVED: Keep AP-01 vsftpd on TCP 21 and expose AP-02 ProFTPD on TCP 2121.
+- APPROVED: Use a dedicated Apache/PHP web boundary on TCP 80 and restrict writable scope to the AP-02 web root.
+- APPROVED: Separate provisioning verification from instructor-controlled exploit acceptance testing.
