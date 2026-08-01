@@ -21,6 +21,11 @@ Design approval does not mean that a path is already installed. The status field
 
 Status: IMPLEMENTED AND LIVE-VERIFIED on the reference Ubuntu 26.04 VM.
 
+Teaching material:
+
+- `docs/ap01-student-lab.md` provides the student-facing exercise without the solution.
+- `docs/ap01-instructor-guide.md` provides delivery, validation, reset and marking guidance.
+
 Difficulty: introductory to intermediate.
 
 Primary learning outcomes:
