@@ -19,7 +19,7 @@ Design approval does not mean that a path is already installed. The status field
 
 ## AP-01: FTP Clue to Teaching SSH to Root
 
-Status: APPROVED FOR FIRST IMPLEMENTATION
+Status: IMPLEMENTED AND LIVE-VERIFIED on the reference Ubuntu 26.04 VM.
 
 Difficulty: introductory to intermediate.
 
@@ -141,6 +141,20 @@ Before AP-01 installation:
 - validate all generated OpenSSH and sudoers configuration before service reload.
 
 If teaching SSH or FTP deployment fails, disable only the new teaching unit and restore the previous administrative SSH configuration. If host access or package state cannot be recovered safely, restore the clean-base VMware snapshot.
+
+## AP-01 Deployment Procedure
+
+The implementation is split at the administrative SSH safety gate:
+
+1. Choose an unused management port from 1024 to 65535, excluding 22.
+2. Run `sudo scripts/configure-admin-ssh.sh prepare PORT`. This retains TCP 22 while adding the management port and enforcing key-only administrative access.
+3. Keep the existing session open and confirm a second administrative session succeeds on the management port.
+4. From the original or tested session, run `sudo scripts/configure-admin-ssh.sh finalize PORT` and type the required confirmation. This releases TCP 22.
+5. Keep the tested management session open and run `sudo scripts/install-ap01.sh`.
+6. Run `sudo scripts/verify-ap01.sh` after installation and `sudo scripts/reset-ap01.sh` between cohorts or exercises.
+
+The AP-01 installer refuses to run before the migration marker exists, before the recorded administrative port is listening, or while TCP 22 remains occupied.
+The migration script disables Ubuntu's default `ssh.socket` activation and enables the standalone `ssh.service`, because socket activation otherwise binds only the first configured administrative port.
 
 ## Deferred Paths
 
