@@ -61,9 +61,9 @@ install_templates() {
   . "$STATE_DIR/credentials.env"
   sed -e "s/@TEACHING_USERNAME@/$TEACHING_USERNAME/g" \
       -e "s/@TEACHING_PASSWORD@/$TEACHING_PASSWORD/g" \
-      "$ROOT_DIR/assets/ap01/ftp/stockroom-handover.txt.in" >"$FTP_ROOT/stockroom-handover.txt"
-  chown root:root "$FTP_ROOT/stockroom-handover.txt"
-  chmod 0644 "$FTP_ROOT/stockroom-handover.txt"
+      "$ROOT_DIR/assets/ap01/ftp/support-ticket-BL-48217.txt.in" >"$FTP_ROOT/support-ticket-BL-48217.txt"
+  chown root:root "$FTP_ROOT/support-ticket-BL-48217.txt"
+  chmod 0644 "$FTP_ROOT/support-ticket-BL-48217.txt"
 
   cp -a "$HOME_TEMPLATE/." "/home/$USERNAME/"
   chown -R "$USERNAME:$USERNAME" "/home/$USERNAME"

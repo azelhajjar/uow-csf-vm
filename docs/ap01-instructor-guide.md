@@ -43,8 +43,8 @@ Do not provide the generated `stockroom` password. Do not identify the handover 
 The exact scanning and FTP client commands may vary. The intended observations are:
 
 1. TCP 21 exposes vsftpd with anonymous read access.
-2. The anonymous FTP root contains `stockroom-handover.txt`.
-3. The document exposes the generated `stockroom` username and password.
+2. The anonymous FTP root contains an accidentally published internal service-desk export, `support-ticket-BL-48217.txt`.
+3. The closed ticket records a temporary local profile and phrase created during a warehouse-terminal incident. These are the generated `stockroom` credentials.
 4. Those credentials authenticate to teaching SSH on TCP 22.
 5. `id` confirms a non-administrative local account.
 6. `sudo -l` exposes the exact `/usr/bin/find` NOPASSWD rule.

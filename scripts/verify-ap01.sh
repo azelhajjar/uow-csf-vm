@@ -37,12 +37,12 @@ ADMIN_PORT="$(cat /etc/cav-csf/admin-ssh-port 2>/dev/null || true)"
 check "FTP listens on TCP 21" "ss -H -ltn 'sport = :21' | grep -q ."
 check "FTP anonymous root is not writable by the ftp account" "[ \"\$(stat -c %U:%G:%a /srv/ftp)\" = 'root:root:755' ]"
 FTP_CHECK="$(mktemp)"
-if curl --silent --show-error --fail ftp://127.0.0.1/stockroom-handover.txt >"$FTP_CHECK"; then
+if curl --silent --show-error --fail ftp://127.0.0.1/support-ticket-BL-48217.txt >"$FTP_CHECK"; then
   pass "anonymous FTP clue is readable"
 else
   fail "anonymous FTP clue is not readable"
 fi
-if grep -Fq "Username: $TEACHING_USERNAME" "$FTP_CHECK"; then
+if grep -Fq "profile: $TEACHING_USERNAME" "$FTP_CHECK"; then
   pass "FTP clue contains the current teaching username"
 else
   fail "FTP clue does not contain the current teaching username"

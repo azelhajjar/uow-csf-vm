@@ -25,9 +25,9 @@ chown root:root /srv/ftp
 chmod 0755 /srv/ftp
 sed -e "s/@TEACHING_USERNAME@/$TEACHING_USERNAME/g" \
     -e "s/@TEACHING_PASSWORD@/$TEACHING_PASSWORD/g" \
-    "$ROOT_DIR/assets/ap01/ftp/stockroom-handover.txt.in" >/srv/ftp/stockroom-handover.txt
-chown root:root /srv/ftp/stockroom-handover.txt
-chmod 0644 /srv/ftp/stockroom-handover.txt
+    "$ROOT_DIR/assets/ap01/ftp/support-ticket-BL-48217.txt.in" >/srv/ftp/support-ticket-BL-48217.txt
+chown root:root /srv/ftp/support-ticket-BL-48217.txt
+chmod 0644 /srv/ftp/support-ticket-BL-48217.txt
 
 SUDOERS_TEMP="$(mktemp)"
 printf '%s ALL=(root) NOPASSWD: /usr/bin/find\n' "$USERNAME" >"$SUDOERS_TEMP"
