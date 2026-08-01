@@ -2,15 +2,15 @@
 
 ## Purpose
 
-This document reviews the previous `legacy/` implementation attempt before new design or implementation work begins.
+This document reviews the abandoned previous `legacy/` implementation attempt before new design or implementation work begins.
 
-The legacy directory is context only. It should not be executed, copied automatically, or treated as complete. Ideas may be reused where they still support the new CAV-CSF teaching VM design.
+The legacy directory is context only. It is not the source of truth for the new project, and much of it may be obsolete, incomplete, experimental or unsuitable. It should not be executed, copied automatically, or treated as a design to preserve. Its purpose is to provide ideas that can be reused only where they still support the new CAV-CSF teaching VM design.
 
 ## Directory Structure
 
 - `legacy/README.md`: short build notes pointing to the early setup scripts.
 - `legacy/environment.md`: previous host, domain and account notes.
-- `legacy/todo.md`: high-level note that the work was based on Metasploitable-style teaching VM ideas.
+- `legacy/todo.md`: high-level note that the abandoned work was based on Metasploitable-style teaching VM ideas.
 - `legacy/docs/`: contains `VM-brief.md` and `solution-checklist.md`, both currently empty.
 - `legacy/scripts/`: previous build and configuration scripts for base VM setup, users, passwords, Samba, NFS, FTP, Apache, flags, Docker and status reporting.
 - `legacy/scripts/vulnerabilities/`: scripts for Apache, PHP, MariaDB/MySQL and older vulnerable-service ideas.
@@ -24,7 +24,7 @@ The legacy directory is context only. It should not be executed, copied automati
 
 ### Base VM Build
 
-The old `00-build-vm.sh` script performs host setup, package installation, service installation and directory creation. It also enables SSH and prepares `/srv/cav-csf` as the working directory on the VM.
+The old `00-build-vm.sh` script shows the previous direction for host setup, package installation, service installation and directory creation. It is useful as evidence of what was attempted, not as a script to preserve.
 
 Useful ideas:
 
@@ -34,7 +34,7 @@ Useful ideas:
 - service directories under `/srv`;
 - checkpoint/status concept.
 
-Issues:
+Design concerns to resolve:
 
 - combines package installation, filesystem layout, service setup and handoff logic in one script;
 - installs a broad package set before Phase 1 service selection is agreed;
@@ -42,11 +42,11 @@ Issues:
 - includes desktop VMware tools even though the target is Ubuntu Server;
 - assumes old service choices before the new service catalogue is approved.
 
-Decision: adapt the build-script idea, but replace the script with new Phase 2 provisioning once the Phase 1 design is approved.
+Decision: keep only the idea of reproducible provisioning. Replace the old build script with new Phase 2 provisioning once the Phase 1 design is approved.
 
 ### Users, Groups, Passwords and Flags
 
-The old user scripts create fictional organisation users, groups, service accounts, shared directories and fixed flags. Password application is separated into a CSV-driven script.
+The old user scripts show possible fictional organisation users, groups, service accounts, shared directories and fixed flags. They are useful for ideas, not as an approved account model.
 
 Useful ideas:
 
@@ -58,16 +58,16 @@ Useful ideas:
 
 Issues:
 
-- users, passwords, flags and filesystem permissions are mixed together;
+- users, passwords, flags and filesystem permissions are mixed together in the old setup flow;
 - flags use more than one format;
-- there is no clear separation between instructor-only material, student-facing clues and provisioning state;
+- there is no clear model for lab credentials, event flags, instructor notes and student-facing clues;
 - the exact user set is not mapped to modules, services, AD integration or CTF use.
 
-Decision: adapt the fictional users/groups concept and password/flag placement ideas. Redesign account and flag definitions as explicit instructor-owned data with reset and verification support.
+Decision: keep the idea of fictional users, groups and flag placement. Design the actual account, password and flag model from scratch for the new VM.
 
 ### Samba
 
-The old Samba setup creates a guest-writable public share with weak permissions and guest access.
+The old Samba setup demonstrates a guest-writable public share with weak permissions and guest access.
 
 Useful ideas:
 
@@ -76,17 +76,17 @@ Useful ideas:
 - writable/readable share activities;
 - file-based clues and possible credential leakage.
 
-Issues:
+Design concerns to resolve:
 
 - share purpose and expected student activity are not documented;
 - permissions are broad and not linked to reset behaviour;
 - no clear separation between introductory SMB enumeration and advanced credential-chain use.
 
-Decision: reuse the SMB service idea. Redesign the share catalogue, intended weaknesses, reset requirements and verification checks.
+Decision: keep SMB as a candidate service idea. Redesign the share catalogue, intended weaknesses, reset requirements and verification checks.
 
 ### NFS
 
-The old NFS setup aims to export a shared directory with weak permissions and `no_root_squash` style behaviour.
+The old NFS setup appears to aim for a shared directory with weak permissions and `no_root_squash` style behaviour.
 
 Useful ideas:
 
@@ -94,17 +94,17 @@ Useful ideas:
 - weak export permissions;
 - Linux privilege or file-access teaching route.
 
-Issues:
+Design concerns to resolve:
 
 - the legacy `configs/exports` file appears to contain FTP provisioning content rather than an NFS exports file;
 - the export network is hardcoded;
 - expected exploitation outcome and reset behaviour are not documented.
 
-Decision: reuse the NFS concept, but replace the implementation and create a proper service design before provisioning.
+Decision: keep NFS as a candidate service idea, but replace the implementation and create a proper service design before provisioning.
 
 ### FTP
 
-The old FTP work includes packaged `vsftpd`, a legacy vulnerable `vsftpd 2.3.4` approach, anonymous upload, local-user access and a possible secondary FTP service.
+The old FTP work includes several attempted directions: packaged `vsftpd`, a legacy vulnerable `vsftpd 2.3.4` approach, anonymous upload, local-user access and a possible secondary FTP service.
 
 Useful ideas:
 
@@ -114,19 +114,19 @@ Useful ideas:
 - local account testing;
 - service banner and version-recognition activity.
 
-Issues:
+Design concerns to resolve:
 
-- relies on obsolete vulnerable binaries and 32-bit compatibility;
+- may rely on obsolete vulnerable binaries and 32-bit compatibility;
 - fetches/builds software during provisioning;
 - includes self-deleting one-shot scripts;
 - mixes classic exploit demonstration with maintainability risk;
 - service choice has not yet been approved in the new catalogue.
 
-Decision: adapt the FTP teaching goals. Decide in Phase 1 whether FTP should use modern misconfiguration, a deliberately old service, or both.
+Decision: keep FTP as a candidate teaching service. Decide in Phase 1 whether the new VM needs modern FTP misconfiguration, a deliberately old service for a specific exploit lesson, or no FTP in the first build.
 
 ### Apache, PHP and Web Misconfiguration
 
-The old Apache/PHP scripts enable directory listing, public server-status, verbose version information, CGI execution, broad overrides, writable web roots, PHP error display, URL include behaviour and weak logging/SSL settings.
+The old Apache/PHP scripts show possible web-server misconfiguration ideas: directory listing, public server-status, verbose version information, CGI execution, broad overrides, writable web roots, PHP error display, URL include behaviour and weak logging/SSL settings.
 
 Useful ideas:
 
@@ -138,18 +138,18 @@ Useful ideas:
 - weak PHP configuration;
 - weak TLS/security-header discussion.
 
-Issues:
+Design concerns to resolve:
 
 - hardcoded PHP version;
 - broad global changes rather than scoped teaching weaknesses;
 - some settings may be obsolete or package-version dependent;
 - no mapping from each misconfiguration to learning outcome and verification test.
 
-Decision: adapt selected Apache/PHP misconfiguration ideas and implement them later as deliberate, documented, testable weaknesses.
+Decision: keep selected Apache/PHP ideas only if they support the new service and vulnerability catalogue. Do not copy the old scripts.
 
 ### Database
 
-The old MariaDB/MySQL work includes remote bind-address changes and weak credentials.
+The old MariaDB/MySQL work shows an attempt at remote database exposure and weak credentials.
 
 Useful ideas:
 
@@ -158,17 +158,17 @@ Useful ideas:
 - weak credential testing;
 - connection between database access and web/application findings.
 
-Issues:
+Design concerns to resolve:
 
-- hardcoded credential assumptions;
+- fixed weak credential assumptions need to be made deliberate and documented;
 - no explicit database schema or teaching purpose;
 - no reset/verification design.
 
-Decision: reuse the exposed-database concept because the README requires at least one network-visible database service. Redesign database role, accounts, schema, reset and verification.
+Decision: keep the exposed-database concept because the README requires at least one network-visible database service. Design the actual database role, accounts, schema, reset and verification for the new VM.
 
 ### Docker and Established Vulnerable Applications
 
-The old Docker script installs `docker.io` and `docker-compose`. Legacy site configs show reverse proxies for Juice Shop, WebGoat and DVWA. The older webapps script also references DVWA, bWAPP and Mutillidae.
+The old Docker script and site configs show attempted container/reverse-proxy ideas for vulnerable web applications. They are not an approved application stack.
 
 Useful ideas:
 
@@ -177,18 +177,18 @@ Useful ideas:
 - reverse-proxy routing;
 - landing-page links to public applications.
 
-Issues:
+Design concerns to resolve:
 
 - old script uses older package names and app choices without Phase 1 approval;
 - no Docker Compose design is present;
 - established application ports/hostnames are not documented as service-catalogue decisions;
 - bWAPP/Mutillidae are not currently named in the new README requirements.
 
-Decision: adapt the reverse-proxy and containerised-app ideas for Juice Shop, WebGoat and Security Shepherd. Treat DVWA as optional and requiring approval.
+Decision: keep the idea of containerised established web apps and clear hostnames. Select the actual application set from the README and Phase 1 decisions.
 
 ### Status and Checkpoint Helpers
 
-The old status script reports active services, listening ports, shares and staged artifacts. The checkpoint helper records text checkpoints.
+The old status script reports active services, listening ports, shares and staged artifacts. The checkpoint helper records text checkpoints. These are useful operational ideas, but they refer to the abandoned build.
 
 Useful ideas:
 
@@ -198,13 +198,13 @@ Useful ideas:
 - checkpoint history;
 - clear operational reporting for instructors.
 
-Issues:
+Design concerns to resolve:
 
 - old service names and paths are hardcoded;
 - output is not connected to formal verification tests;
 - no PASS/FAIL structure matching the new README.
 
-Decision: adapt the status/checkpoint idea into new `scripts/status.sh` and `scripts/verify.sh` during Phase 2.
+Decision: keep the status/checkpoint idea and design new `scripts/status.sh` and `scripts/verify.sh` during Phase 2.
 
 ## Material Worth Reusing
 
@@ -237,7 +237,7 @@ Decision: adapt the status/checkpoint idea into new `scripts/status.sh` and `scr
 - Empty legacy docs.
 - Incorrect or misplaced config content, including the apparent NFS/FTP mismatch in `legacy/configs/exports`.
 - Broad global misconfiguration that is not mapped to learning outcomes.
-- Any direct copy of legacy instructor-only values into public or student-facing documentation.
+- Any direct copy of instructor-only values into public or student-facing documentation where those values would reveal solutions rather than support the intended exercise.
 
 ## Unresolved Questions
 

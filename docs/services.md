@@ -2,61 +2,77 @@
 
 ## Purpose
 
-This document proposes the service set for CAV-CSF. No service should be installed until its teaching purpose, weakness, expected outcome, reset behaviour and verification method are approved.
+This document defines the proposed service catalogue for the first CAV-CSF vulnerable teaching VM design.
 
-## Proposed Services
+The VM should expose enough real host-visible services for network reconnaissance, enumeration, exploitation and reporting. Services should be included because they support teaching, not simply to increase the number of open ports.
 
-| Service | Deployment | Visibility | Teaching Purpose | Proposed Weakness | Status |
+No service is implemented in Phase 1.
+
+## First Build Proposal
+
+The first build should include a small but useful set of services that supports Level 5 and Level 6 teaching immediately, while leaving room for Level 7, AD and CTF extensions.
+
+| Service | Deployment | Visibility | Teaching Purpose | Intended Weakness or Role | Initial Status |
 | --- | --- | --- | --- | --- | --- |
-| HTTP | Host and containers | External | Web discovery, landing page, application access | Directory/content discovery and selected information disclosure | DECISION REQUIRED |
-| HTTPS | Host or reverse proxy | External | TLS inspection and web access | Weak/misconfigured TLS only if pedagogically useful | DECISION REQUIRED |
-| SSH | Host | External | Remote access testing and post-exploitation | Selected weak/reused credentials or AD-authenticated access later | DECISION REQUIRED |
-| FTP | Host or container | External | FTP enumeration, anonymous access, upload testing | Anonymous or weak local-user configuration | DECISION REQUIRED |
-| SMB | Host | External | SMB enumeration and share analysis | Guest/readable/writable shares, information leakage | DECISION REQUIRED |
-| NFS | Host | External | NFS enumeration and Linux file-access weakness | Weak export permissions or `no_root_squash` style route | DECISION REQUIRED |
-| DNS | Host | External on lab network | Hostname, subdomain and virtual-host discovery | Informative records and scenario clues | DECISION REQUIRED |
-| SMTP | Host or container | External or internal | Banner grabbing, email/user discovery | Open information leakage, not necessarily open relay | DECISION REQUIRED |
-| SNMP | Host | External | SNMP enumeration and information disclosure | Weak community string and readable system details | DECISION REQUIRED |
-| Database | Host or published container | External | Version enumeration, credential testing, data extraction | Weak/reused credentials and mapped application data | DECISION REQUIRED |
-| Custom TCP service | Host or container | External | Protocol analysis and custom service exploitation | Simple deliberate protocol flaw | DECISION REQUIRED |
-| Juice Shop | Container | External via port or hostname | Established web exploitation | Application-provided vulnerabilities | Proposed |
-| WebGoat | Container | External via port or hostname | Guided web exploitation | Application-provided vulnerabilities | Proposed |
-| Security Shepherd | Container | External via port or hostname | OWASP-aligned practice | Application-provided vulnerabilities | Proposed |
-| DVWA | Container or host | External if approved | Introductory web exploitation | Application-provided vulnerabilities | DECISION REQUIRED |
+| HTTP landing site | Host or reverse proxy | External | First contact, scenario context, web discovery, links to public apps | Public pages, robots/sitemap/content discovery, non-solution clues | Proposed |
+| SSH | Host | External | Remote access testing, credential testing, post-exploitation | Selected weak or reused credentials once account model is agreed | Proposed |
+| SMB | Host | External | SMB enumeration, share review, file discovery | Readable or writable share, public/internal clue material | Proposed |
+| NFS | Host | External | NFS enumeration, Linux file access, permissions analysis | Weak export or permission model if approved | Proposed |
+| FTP | Host or container | External | FTP enumeration, anonymous/local login testing, file transfer evidence | Modern misconfiguration by default; old vulnerable version only if approved | DECISION REQUIRED |
+| Database | Host or published container | External | Service/version enumeration, database login testing, data extraction | Weak/reused credentials and application-linked data | Proposed |
+| DNS | Host | Lab network | Hostname and virtual-host discovery | Scenario records and subdomain clues | Proposed |
+| Juice Shop | Container | External via documented port or hostname | Established web exploitation | Built-in vulnerable application | Proposed |
+| WebGoat | Container | External via documented port or hostname | Guided web exploitation | Built-in vulnerable application | Proposed |
+| Security Shepherd | Container | External via documented port or hostname | OWASP-aligned web practice | Built-in vulnerable application | Proposed |
+| Custom web application | Container or host | External | Project-owned web, API, CTF and scenario exercises | Agreed custom vulnerability set | Proposed |
 
-## Lessons From Legacy
+## Optional or Deferred Services
 
-Legacy provides candidate service ideas for SSH, Samba, NFS, FTP, Apache, MariaDB/MySQL and Docker-hosted web applications. These ideas should be redesigned rather than copied.
+These services remain useful candidates, but should not be included automatically in the first build unless approved.
 
-Useful legacy service ideas:
+| Service | Reason to Include | Reason to Defer | Status |
+| --- | --- | --- | --- |
+| HTTPS | TLS inspection, certificate review, weak configuration discussion | HTTP already supports early web work; TLS needs a clear teaching reason | DECISION REQUIRED |
+| SMTP | Banner grabbing, user discovery, mail artefacts | Needs careful scope to avoid unnecessary mail-server complexity | DECISION REQUIRED |
+| SNMP | Classic enumeration and information disclosure | Useful, but can be added after core services are stable | DECISION REQUIRED |
+| Custom TCP service | Protocol analysis and custom exploitation | Better designed after custom application and module mapping are clearer | DECISION REQUIRED |
+| DVWA | Introductory web exploitation | May duplicate Juice Shop/WebGoat/custom-app learning outcomes | DECISION REQUIRED |
 
-- guest-writable SMB share;
-- weak NFS export;
-- anonymous/write-enabled FTP;
-- exposed database;
-- web server information disclosure;
-- named virtual hosts for established vulnerable applications;
-- status script reporting running services and listening ports.
+## Service Design Notes
 
-Legacy concerns:
+### HTTP and Web Routing
 
-- broad installation before approval;
-- obsolete vulnerable binaries;
-- hardcoded network ranges;
-- inconsistent configuration files;
-- service names and paths tied to the old attempt;
-- no formal service-to-learning-outcome mapping.
+The VM should provide a simple landing site. It should support reconnaissance and navigation without revealing solutions, vulnerabilities, flags, hidden services or instructor notes.
 
-## Port Exposure Principles
+Established web applications can be containerised, but their web interfaces must be reachable from the VM network through documented ports or hostnames.
 
-- Ports must be exposed because they support teaching, not merely because a container provides them.
-- At least one database service must be reachable from the VM network.
-- Established vulnerable web apps may remain containerised if their intended interfaces are reachable.
-- Internal-only services may exist for advanced discovery or post-exploitation, but they must be documented.
+### Database
+
+At least one database service must be reachable from the VM network. This is a core README requirement because students should be able to discover, enumerate and test a database service directly.
+
+The database should be linked to the custom application or scenario data so that database access has teaching value beyond simply opening another port.
+
+### SMB and NFS
+
+SMB and NFS should support file-share enumeration, permissions analysis and clue discovery. Weak access should be intentional, documented and resettable.
+
+### FTP
+
+FTP is useful for enumeration, anonymous access, weak local-user access and file-transfer evidence. The default proposal is a maintainable modern misconfiguration. A deliberately old vulnerable FTP service should only be used if the exploit lesson is worth the maintenance cost.
+
+### DNS
+
+DNS should support lab-local discovery of hostnames, subdomains and virtual hosts. Any public-domain dependency must have an offline fallback inside the VM.
+
+## Legacy Idea Use
+
+The abandoned legacy attempt suggests possible service ideas: SMB, NFS, FTP, Apache/web, MariaDB/MySQL, Docker-hosted web applications and status reporting.
+
+These are only idea sources. The new service catalogue should not copy the old scripts or assume the old implementation is correct.
 
 ## Verification Requirements
 
-Each approved service needs checks for:
+Each approved service needs a verification check for:
 
 - installed/enabled state;
 - listening address and TCP/UDP port;
@@ -66,12 +82,11 @@ Each approved service needs checks for:
 - reset behaviour;
 - absence of unintended administrative exposure.
 
-## Open Decisions
+## Decisions Required Before Implementation
 
-- DECISION REQUIRED: Final list of enabled services for first implementation.
-- DECISION REQUIRED: Port and hostname plan.
-- DECISION REQUIRED: Which database service is externally visible.
-- DECISION REQUIRED: Whether FTP should include an old vulnerable service or only modern misconfiguration.
-- DECISION REQUIRED: Whether SMTP is included in the first build.
-- DECISION REQUIRED: Whether SNMP is included in the first build.
-- DECISION REQUIRED: Whether DVWA is included.
+- DECISION REQUIRED: Approve the first-build service set.
+- DECISION REQUIRED: Choose the externally visible database technology.
+- DECISION REQUIRED: Decide whether FTP is included in the first build.
+- DECISION REQUIRED: If FTP is included, decide modern misconfiguration versus old vulnerable service.
+- DECISION REQUIRED: Decide whether HTTPS, SMTP, SNMP, custom TCP service or DVWA are included in the first build.
+- DECISION REQUIRED: Approve the first port and hostname plan.
