@@ -80,3 +80,11 @@ This file records decisions required before implementation begins. Items marked 
 - APPROVED: Defer DVWA, SMTP, SNMP and HTTPS from the first build.
 - APPROVED: Do not introduce deliberately obsolete service versions in the first build.
 - APPROVED: Defer Active Directory integration until the core Linux environment is stable.
+
+### First Attack Path
+
+- APPROVED: Implement AP-01 first as an end-to-end path: anonymous FTP clue, reused low-privilege teaching credentials, teaching SSH host access, unsafe sudo rule and root outcome.
+- APPROVED: Use a dedicated `stockroom` teaching account and generate its active credential during provisioning rather than committing it to the repository.
+- APPROVED: Use a dedicated sudoers rule allowing `stockroom` to run `/usr/bin/find` as root without a password for the introductory privilege-escalation outcome.
+- APPROVED: Require reset and automated verification for the complete path before adding further deliberate weaknesses.
+- APPROVED: Do not enable teaching SSH on TCP 22 until administrative SSH migration and rollback gates pass.

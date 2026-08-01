@@ -19,7 +19,7 @@ Possible design:
 
 - a selected low-privilege user can run one carefully chosen command as another user or root.
 
-Status: DECISION REQUIRED.
+Status: APPROVED for AP-01. The dedicated `stockroom` teaching account may run `/usr/bin/find` as root without a password. See `docs/attack-paths.md` for safety, reset and verification requirements.
 
 ### SUID Binary Misuse
 
@@ -79,7 +79,7 @@ Possible design:
 
 - credentials discovered through SMB, FTP, database, web app or documents work for a lower-privilege Linux user.
 
-Status: DECISION REQUIRED.
+Status: APPROVED for AP-01. Anonymous FTP material exposes the generated credentials for the low-privilege `stockroom` teaching account; the value is not committed to the repository.
 
 ### Service Account Misuse
 
