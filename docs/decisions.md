@@ -9,32 +9,21 @@ This file records decisions required before implementation begins. Items marked 
 ### Platform and Naming
 
 - DECISION REQUIRED: Final fictional organisation name and naming scheme.
-- DECISION REQUIRED: Whether VM hostnames, service names and internal paths should avoid the temporary repository name `cav-csf`.
-- DECISION REQUIRED: Level of integration with `cwscenario.uk`.
 
 ### Service Catalogue
 
-- DECISION REQUIRED: Final list of enabled services for the first implementation.
 - DECISION REQUIRED: Port and hostname plan.
-- DECISION REQUIRED: Which services are host-installed, containerised with published ports, or internal-only.
-- DECISION REQUIRED: Which database service is externally visible.
-- DECISION REQUIRED: Whether FTP should use modern misconfiguration, an old vulnerable service, or both.
-- DECISION REQUIRED: Whether SMTP is included in the first build.
-- DECISION REQUIRED: Whether SNMP is included in the first build.
-- DECISION REQUIRED: Whether DVWA is included.
 
 ### Web and Custom Application
 
 - DECISION REQUIRED: Technology stack for the custom application.
 - DECISION REQUIRED: Final custom application vulnerability list.
 - DECISION REQUIRED: Which application findings chain into host, service or AD activities.
-- DECISION REQUIRED: Which established web applications are included in the first build.
 
 ### Vulnerabilities
 
 - DECISION REQUIRED: Which network-service weaknesses are included in the first build.
 - DECISION REQUIRED: Which legacy Apache/PHP misconfigurations are retained.
-- DECISION REQUIRED: Whether any deliberately obsolete service versions are justified.
 - DECISION REQUIRED: Which weaknesses are introductory, intermediate, advanced or CTF-only paths.
 
 ### Module Mapping
@@ -70,4 +59,20 @@ This file records decisions required before implementation begins. Items marked 
 
 ## Approved Decisions
 
-No Phase 1 design decisions have been approved yet.
+### Platform and Naming
+
+- APPROVED: Retain `CAV-CSF` as the project and repository name during university development.
+- APPROVED: Do not create a separate public name or edition unless public release becomes a concrete requirement.
+- APPROVED: Avoid unnecessary coupling of service names, hostnames and internal paths to `cav-csf` so a future rename remains manageable.
+- APPROVED: Use `cwscenario.uk` only as an optional companion resource; essential classroom material must remain available inside the lab environment.
+
+### First-Build Service Baseline
+
+- APPROVED: Include SSH, HTTP, internal lab DNS, SMB, NFS and FTP as host-visible network services.
+- APPROVED: Use a maintained FTP implementation with deliberate modern misconfiguration rather than an obsolete vulnerable version.
+- APPROVED: Run PostgreSQL in a container with its database port deliberately published to the VM network and link it to the custom application.
+- APPROVED: Run OWASP Juice Shop, WebGoat and Security Shepherd as externally reachable containers.
+- APPROVED: Implement the custom application separately in Phase 4 after its technology and vulnerability design is approved.
+- APPROVED: Defer DVWA, SMTP, SNMP and HTTPS from the first build.
+- APPROVED: Do not introduce deliberately obsolete service versions in the first build.
+- APPROVED: Defer Active Directory integration until the core Linux environment is stable.
