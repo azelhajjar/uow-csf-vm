@@ -68,7 +68,10 @@ This file records decisions required before implementation begins. Items marked 
 
 ### First-Build Service Baseline
 
-- APPROVED: Include SSH, HTTP, internal lab DNS, SMB, NFS and FTP as host-visible network services.
+- APPROVED: Host SSH is administrative only and is not an intentionally vulnerable teaching service. It remains on TCP 22 for the clean base snapshot, then moves to a separately secured management port before teaching SSH is deployed.
+- APPROVED: Provide SSH teaching activities through a separate, resettable service on TCP 22 with its own accounts and deliberate weaknesses.
+- APPROVED: Test administrative SSH on its new port in a second session before releasing TCP 22, preventing accidental administrator lockout.
+- APPROVED: Include HTTP, internal lab DNS, SMB, NFS and FTP as host-visible teaching services.
 - APPROVED: Use a maintained FTP implementation with deliberate modern misconfiguration rather than an obsolete vulnerable version.
 - APPROVED: Run PostgreSQL in a container with its database port deliberately published to the VM network and link it to the custom application.
 - APPROVED: Run OWASP Juice Shop, WebGoat and Security Shepherd as externally reachable containers.

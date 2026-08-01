@@ -50,9 +50,13 @@ The VM should expose a meaningful host-visible attack surface. Services will use
 
 Docker must not hide services that students are expected to discover during network reconnaissance.
 
+Administrative SSH must remain distinct from the vulnerable teaching environment. During the base build, host SSH remains on TCP 22 for administration. Before teaching SSH is deployed, administrative SSH will move to a separately secured management port and be tested before TCP 22 is released. The teaching SSH service will then use TCP 22 for realistic discovery. Administrative SSH must use key-only authentication, restrict permitted users and, where practical, restrict source addresses or bind to a management interface.
+
 ## Proposed Service Groups
 
-- Core access and discovery: SSH, HTTP, HTTPS, DNS.
+- Core administration: host SSH on a separately secured management port, migrated safely from the base-build TCP 22 configuration.
+- Core discovery: HTTP, HTTPS and DNS.
+- Teaching access: a separate, resettable SSH service with its own accounts, published on TCP 22.
 - Network services: FTP, SMB, NFS, SNMP, SMTP, database service, custom TCP service.
 - Established web applications: Juice Shop, WebGoat, Security Shepherd, and optional DVWA if approved.
 - Custom vulnerable application: original project-owned web/API/database application.

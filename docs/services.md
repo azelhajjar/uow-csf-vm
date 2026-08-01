@@ -15,7 +15,8 @@ The first build should include a small but useful set of services that supports 
 | Service | Deployment | Visibility | Teaching Purpose | Intended Weakness or Role | Initial Status |
 | --- | --- | --- | --- | --- | --- |
 | HTTP landing site | Host or reverse proxy | External | First contact, scenario context, web discovery, links to public apps | Public pages, robots/sitemap/content discovery, non-solution clues | Proposed |
-| SSH | Host | External | Remote access testing, credential testing, post-exploitation | Selected weak or reused credentials once account model is agreed | Proposed |
+| Administrative SSH | Host; TCP 22 during the base build, then a separately secured management port | Restricted to the management path where practical | VM administration, maintenance and recovery | No deliberate weakness; key-only authentication and restricted administrator access | Base access implemented; port migration planned |
+| Teaching SSH | Separate resettable service, TCP 22 | External | Realistic SSH enumeration, credential testing and controlled low-privilege shell access | Selected weak or reused teaching credentials once the account model is agreed | Proposed |
 | SMB | Host | External | SMB enumeration, share review, file discovery | Readable or writable share, public/internal clue material | Proposed |
 | NFS | Host | External | NFS enumeration, Linux file access, permissions analysis | Weak export or permission model if approved | Proposed |
 | FTP | Host or container | External | FTP enumeration, anonymous/local login testing, file transfer evidence | Modern misconfiguration by default; old vulnerable version only if approved | DECISION REQUIRED |
@@ -39,6 +40,10 @@ These services remain useful candidates, but should not be included automaticall
 | DVWA | Introductory web exploitation | May duplicate Juice Shop/WebGoat/custom-app learning outcomes | DECISION REQUIRED |
 
 ## Service Design Notes
+
+### Administrative and Teaching SSH
+
+Host SSH is administrative infrastructure, not a student vulnerability. It remains on TCP 22 for the clean base snapshot, then moves to a separately secured management port before the separate teaching SSH service claims TCP 22. The administrative service must not use teaching credentials or deliberate weaknesses. Migration must be tested through a second SSH session before the existing connection is closed. Verification must test both that the teaching weakness is present and that unintended administrative SSH access has not been introduced.
 
 ### HTTP and Web Routing
 
