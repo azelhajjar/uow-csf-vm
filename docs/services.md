@@ -20,7 +20,7 @@ The first build should include a small but useful set of services that supports 
 | NFS | Host | External | NFS enumeration, Linux file access, permissions analysis | Weak export or permission model if approved | Proposed |
 | FTP | Host or container | External | FTP enumeration, anonymous/local login testing, file transfer evidence | Modern misconfiguration by default; old vulnerable version only if approved | DECISION REQUIRED |
 | Database | Host or published container | External | Service/version enumeration, database login testing, data extraction | Weak/reused credentials and application-linked data | Proposed |
-| DNS | Host | Lab network | Hostname and virtual-host discovery | Scenario records and subdomain clues | Proposed |
+| Internal lab DNS | Host | Lab network | Hostname and virtual-host discovery | Scenario records, subdomain clues and internal service names | Proposed |
 | Juice Shop | Container | External via documented port or hostname | Established web exploitation | Built-in vulnerable application | Proposed |
 | WebGoat | Container | External via documented port or hostname | Guided web exploitation | Built-in vulnerable application | Proposed |
 | Security Shepherd | Container | External via documented port or hostname | OWASP-aligned web practice | Built-in vulnerable application | Proposed |
@@ -60,9 +60,13 @@ SMB and NFS should support file-share enumeration, permissions analysis and clue
 
 FTP is useful for enumeration, anonymous access, weak local-user access and file-transfer evidence. The default proposal is a maintainable modern misconfiguration. A deliberately old vulnerable FTP service should only be used if the exploit lesson is worth the maintenance cost.
 
-### DNS
+### Internal Lab DNS
 
-DNS should support lab-local discovery of hostnames, subdomains and virtual hosts. Any public-domain dependency must have an offline fallback inside the VM.
+Internal lab DNS should support lab-local discovery of hostnames, subdomains and virtual hosts. It is part of the vulnerable teaching environment and should provide scenario records, internal service names and discovery clues.
+
+This is separate from builder/instructor resolver switching. A helper such as `switch-dns.sh` may be useful for changing the VM resolver between university and home profiles during setup or support work, but that utility is not the vulnerable lab DNS service students enumerate.
+
+Any public-domain clue path must have an internal equivalent or fallback inside the VM so classroom sessions do not depend on external availability.
 
 ## Legacy Idea Use
 
