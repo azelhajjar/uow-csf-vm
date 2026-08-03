@@ -110,6 +110,17 @@ TimeoutStalled                  300
   </Limit>
 </Directory>
 EOF
+  cat >>"$CONFIG_DIR/proftpd.conf" <<EOF
+<Anonymous $WEB_ROOT>
+  User                www-data
+  Group               www-data
+  UserAlias           anonymous www-data
+  RequireValidShell   off
+  <Limit LOGIN>
+    AllowAll
+  </Limit>
+</Anonymous>
+EOF
   "$PREFIX/sbin/proftpd" -t -c "$CONFIG_DIR/proftpd.conf"
   cat >/etc/systemd/system/$UNIT <<EOF
 [Unit]

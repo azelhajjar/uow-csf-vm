@@ -176,8 +176,8 @@ The following paths remain proposed and require their own detailed contracts bef
 
 ## AP-02: ProFTPD mod_copy to Web-Service Access
 
-Status: INSTALLED AND LIVE-VERIFIED FOR PROVISIONING, CONFIGURATION AND SERVICE COEXISTENCE. EXPLOIT ACCEPTANCE TESTING PENDING.
+Status: IMPLEMENTED AND LIVE-VERIFIED, INCLUDING EXPLOIT ACCEPTANCE TESTING (3 August 2026).
 
-AP-02 uses a pinned, host-native ProFTPD 1.3.5 build with `mod_copy` on TCP 2121 and a dedicated Apache/PHP boundary on TCP 80. This is a genuine version-bound vulnerability retained for the isolated university lab. See `docs/ap02-design.md` for the architecture, safety boundary, reset contract and verification scope.
+AP-02 uses a pinned, host-native ProFTPD 1.3.5 build with `mod_copy` on TCP 2121 and a dedicated Apache/PHP boundary on TCP 80. This is a genuine version-bound vulnerability retained for the isolated university lab. See `docs/ap02-design.md` for the architecture, safety boundary, reset contract and verification scope, and `docs/ap02-instructor-guide.md` for delivery, the live exploitation transcript, reset and marking guidance.
 
-Exploit execution is deliberately outside the provisioning verifier and remains a later instructor-controlled acceptance phase.
+Exploit execution is deliberately outside the provisioning verifier and is run as a separate instructor-controlled acceptance phase, which has now been completed once (an `<Anonymous>` ProFTPD context was required and added; see `docs/decisions.md`).

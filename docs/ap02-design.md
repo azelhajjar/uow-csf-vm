@@ -2,7 +2,7 @@
 
 ## Status
 
-Provisioning is complete and the deployment was live-verified on the reference Ubuntu 26.04 VM. Vulnerable-behaviour and command-execution acceptance testing remain deliberately pending.
+Provisioning is complete and the deployment was live-verified on the reference Ubuntu 26.04 VM. Exploit acceptance testing was completed on 3 August 2026: an anonymous FTP session successfully used `SITE CPFR`/`SITE CPTO` to copy a file into the AP-02 web root, confirmed served over HTTP. See `docs/ap02-instructor-guide.md` for the full transcript and `docs/decisions.md` for the `<Anonymous>` configuration change that testing required.
 
 ## Verified Deployment Result
 
@@ -21,6 +21,12 @@ On 1 August 2026, `sudo ./scripts/verify-ap02.sh` passed every non-exploit deplo
 
 No exploit commands, vulnerable copy operations, payloads or command execution were used during verification. No deployment or compatibility fix was required after installation.
 
+## Exploit Acceptance Testing Result
+
+On 3 August 2026, an instructor-controlled exploit acceptance pass (fresh VMware snapshot taken beforehand) was run from a Kali attacker VM against the reference VM. First attempt: authenticating as the AP-01 `stockroom` account and running `SITE CPFR`/`SITE CPTO` against the web root failed with `550 Permission denied`, because a named (non-anonymous) ProFTPD login is set-uid to its own account, not `www-data` — the `<Anonymous>` context described below was missing from the original configuration. After adding it and re-running `install-ap02.sh`, an anonymous session authenticated, `SITE CPFR index.php` / `SITE CPTO proof.php` returned `250 Copy successful`, and `curl` against `http://.../proof.php` with the `warehouse.brightleaf.test` `Host` header returned the copied page. Full transcript in `docs/ap02-instructor-guide.md`. `scripts/reset-ap02.sh` was run afterward and `verify-ap02.sh` still reports `RESULT: PASS`, confirming the vulnerable condition survives reset.
+
+Secondary observation: `stockroom`'s AP-01 credentials also authenticate against AP-02 (ProFTPD falls back to reading `/etc/shadow` directly since the build uses `--disable-auth-pam`). That session runs as `stockroom` and can use `mod_copy` only within paths `stockroom` already owns (e.g. `/tmp`) — it cannot reach the web root. This is a real but secondary finding, not the headline AP-02 path.
+
 ## Authorisation and Isolation
 
 AP-02 is an intentionally vulnerable service for the university-owned CAV-CSF VM. It must run only on the isolated teaching network. The public `cwscenario.uk` host, the Windows host and university infrastructure are outside scope.
@@ -33,9 +39,9 @@ AP-02 introduces a genuine version-bound service vulnerability rather than anoth
 
 | Component | Deployment | Port | Identity | Purpose |
 | --- | --- | ---: | --- | --- |
-| ProFTPD 1.3.5 | Source-built under `/opt/cav-csf/ap02/proftpd` | TCP 2121 | `www-data` worker | Deliberately retained `mod_copy` vulnerability |
+| ProFTPD 1.3.5 | Source-built under `/opt/cav-csf/ap02/proftpd` | TCP 2121 | `www-data` for anonymous sessions (`<Anonymous>` context); named logins run as themselves | Deliberately retained `mod_copy` vulnerability |
 | Apache with PHP | Ubuntu host package | TCP 80 | `www-data` | Brightleaf warehouse document service and AP-02 web boundary |
-| AP-02 web root | `/var/www/brightleaf-ap02` | N/A | writable by `www-data` | Limited destination boundary for the intended path |
+| AP-02 web root | `/var/www/brightleaf-ap02` | N/A | writable by `www-data`; doubles as the anonymous FTP root | Limited destination boundary for the intended path |
 | systemd unit | `cav-csf-ap02-proftpd.service` | N/A | root master, configured worker identity | Lifecycle and reboot persistence |
 
 Existing AP-01 vsftpd remains on TCP 21. Administrative SSH remains key-only on TCP 22222, and teaching SSH remains on TCP 22.
@@ -53,7 +59,9 @@ Provisioning accepts a local archive through `PROFTPD_SOURCE_ARCHIVE`. Otherwise
 
 ## Intended Vulnerable Condition
 
-ProFTPD 1.3.5 is compiled with `mod_copy`, and its worker runs as `www-data`. The AP-02 web root is writable only by that service identity. This intentionally creates the prerequisites for the documented arbitrary file-copy weakness to affect the dedicated AP-02 web boundary.
+ProFTPD 1.3.5 is compiled with `mod_copy`. An `<Anonymous /var/www/brightleaf-ap02>` context chroots anonymous sessions to the AP-02 web root and runs them as `www-data`, the same identity that owns the web root. This intentionally creates the prerequisites for the documented arbitrary file-copy weakness to affect the dedicated AP-02 web boundary, with no credentials required.
+
+Named (non-anonymous) logins are authenticated but run as themselves, not `www-data`, so they cannot reach the web root through `mod_copy` — only the anonymous path can. This was confirmed empirically during exploit acceptance testing; see the result above.
 
 The design does not make `/var/www`, the administrator home, system configuration or unrelated application directories world-writable.
 
@@ -66,7 +74,7 @@ The design does not make `/var/www`, the administrator home, system configuratio
 - install only required build and Apache/PHP packages;
 - verify the pinned source checksum;
 - compile into the dedicated `/opt/cav-csf/ap02` prefix;
-- install a dedicated ProFTPD configuration and systemd unit;
+- install a dedicated ProFTPD configuration (including the `<Anonymous>` context required for the intended exploit condition) and systemd unit;
 - create the dedicated Apache site and web root;
 - preserve AP-01 and administrative SSH;
 - run non-exploit verification after installation.
