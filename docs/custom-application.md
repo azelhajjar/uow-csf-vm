@@ -11,16 +11,24 @@ The application will support:
 3. reconnaissance and organisational scenario material;
 4. links between web findings, database findings and host/service activity.
 
+The canonical runtime and student-delivery rules are defined in `docs/runtime-and-delivery-model.md`.
+
+## One Application, Multiple Uses
+
+Do not create separate Level 5, Level 6, Level 7 or CTF editions of the custom application.
+
+The same deployed application remains available in the same VM. Teaching guides determine which features and vulnerabilities students are asked to investigate and how much guidance they receive.
+
 ## Scenario Role
 
-The custom application should represent a believable fictional organisation. It should provide public pages, user-facing application features, API endpoints and data that help students practise reconnaissance before exploitation.
+The custom application should represent a believable fictional organisation. It should provide public pages, user-facing features, API endpoints and data that support reconnaissance before exploitation.
 
-Possible scenario elements:
+Possible scenario elements include:
 
 - public organisational website;
 - staff and department pages;
 - support or IT contact references;
-- downloadable documents with non-solution-bearing metadata;
+- downloadable documents with realistic metadata;
 - login area;
 - user dashboard;
 - file upload area;
@@ -28,9 +36,11 @@ Possible scenario elements:
 - internal API;
 - database-backed records.
 
+Runtime names must be realistic. Do not expose `cav-csf`, attack-path IDs, challenge numbers or module labels in student-visible URLs, directories, database names, service names or application branding unless deliberately part of the fictional scenario.
+
 ## Vulnerability Scope
 
-The initial application should aim for approximately 10 to 12 well-tested vulnerabilities selected from:
+The initial application should contain a curated set of well-tested vulnerabilities selected from areas such as:
 
 - SQL injection;
 - command injection;
@@ -39,44 +49,48 @@ The initial application should aim for approximately 10 to 12 well-tested vulner
 - broken authentication;
 - insecure session handling;
 - broken access control;
-- File upload vulnreabilities
-- Web sockets
-- Information disclosure 
-- XXE Injectoin
-- DOM BASEd vulnreabilities
 - insecure direct object reference;
 - API broken object-level authorisation;
 - path traversal;
 - insecure file upload;
 - sensitive information disclosure;
 - server-side request forgery;
-- business-logic weakness.
-- Web LLM attacks
-- Web cache poisoning
-- HTTP Host header attacks
-- HTTP request smuggling
-- OAuth authentication
-- JWT attacks
+- XXE;
+- DOM-based vulnerabilities;
+- WebSocket vulnerabilities;
+- business-logic weaknesses;
+- web cache poisoning;
+- HTTP Host header attacks;
+- HTTP request smuggling;
+- OAuth weaknesses;
+- JWT weaknesses;
+- selected Web/LLM interaction weaknesses where they are practical and teachable.
 
+The exact list requires approval before implementation. Do not attempt to reproduce every PortSwigger, Juice Shop or WebGoat topic.
 
-The exact list requires approval before implementation.
+Some vulnerabilities should be independently usable for guided teaching. Others may contribute to advanced chains involving the host, database or AD environment. Do not force every vulnerability into one linear attack path.
 
 ## Database and Service Interaction
 
 The application should have a supporting database or backend service that contributes to both web and network penetration-testing activities.
 
-The README requires at least one network-visible database service. The custom application database is a candidate for this role if the design supports:
+At least one database service in the overall VM must be network-visible. The custom application database is a candidate where this supports:
 
 - database enumeration;
+- service/version identification;
 - weak or reused credentials;
 - direct database access;
 - data extraction;
 - linking database findings to application findings;
-- possible credential reuse for host or AD activity.
+- credential reuse for host or AD activity.
+
+Do not hide the only useful database entirely behind Docker-internal networking.
 
 ## CTF Role
 
-The application may place flags in:
+The same custom application can support University-run CTF events.
+
+Flags may appear in:
 
 - web responses;
 - API output;
@@ -85,20 +99,17 @@ The application may place flags in:
 - application configuration;
 - upload or file-handling paths.
 
-Flags should be generated and verified through the project flag system rather than hardcoded permanently into source code for event use.
+CTF event documentation and flag values must remain separate from normal student-facing teaching material.
 
-## Reset Requirements
+## Student Delivery and Recovery
 
-The application needs reset support for:
+Students receive only the completed VM image. They do not receive this repository or application source as part of the normal VM exercise.
 
-- database state;
-- uploaded files;
-- user accounts;
-- sessions/tokens;
-- flags;
-- intentionally vulnerable configuration.
+Do not create student-facing reset buttons, reset endpoints, activity-reset scripts or per-vulnerability restore controls.
 
-Reset must restore intended vulnerable state, not harden the application.
+Each student starts from a fresh VM. If a student VM becomes unusable, the normal recovery method is to replace it with a fresh copy.
+
+Developer/instructor scripts may rebuild seed data, restore application state or verify the vulnerable condition during development and acceptance testing. Those are maintenance artefacts only and must not be presented as part of the student workflow.
 
 ## Verification Requirements
 
@@ -107,17 +118,17 @@ Application checks should confirm:
 - service is reachable;
 - landing and login pages respond;
 - API responds;
-- seed users exist;
+- seed users/data exist where required;
 - intended vulnerabilities are present;
 - unintended administrative access is absent;
-- flags are present where expected;
-- reset restores expected state.
+- flags are present where expected for CTF builds/events;
+- runtime names do not reveal internal teaching metadata;
+- any network-visible backend service is reachable as designed.
 
 ## Open Decisions
 
-- DECISION REQUIRED: Fictional organisation name and application theme.
-- DECISION REQUIRED: Technology stack for the custom application.
+- DECISION REQUIRED: Final application technology stack.
 - DECISION REQUIRED: Final vulnerability list.
-- DECISION REQUIRED: Database choice and whether it is the externally visible database service.
+- DECISION REQUIRED: Database choice and exposure model.
 - DECISION REQUIRED: Which application findings chain into host, service or AD activities.
-- DECISION REQUIRED: Which flags belong in the application for labs versus CTF events.
+- DECISION REQUIRED: CTF flag locations and event workflow.
