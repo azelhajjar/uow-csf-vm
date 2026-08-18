@@ -2,102 +2,127 @@
 
 ## Purpose
 
-This document defines the proposed service catalogue for the first CAV-CSF vulnerable teaching VM design.
+This document defines the service catalogue for the CAV-CSF vulnerable teaching VM.
 
-The VM should expose enough real host-visible services for network reconnaissance, enumeration, exploitation and reporting. Services should be included because they support teaching, not simply to increase the number of open ports.
+The VM must expose enough real host-visible services for reconnaissance, enumeration, vulnerability identification, exploitation and reporting. Services are included because they support teaching, not simply to increase the number of open ports.
 
-No service is implemented in Phase 1.
+The canonical delivery, vulnerability-selection and runtime-realism rules are defined in `docs/runtime-and-delivery-model.md`.
 
-## First Build Proposal
+## Service Selection Principles
 
-The first build should include a small but useful set of services that supports Level 5 and Level 6 teaching immediately, while leaving room for Level 7, AD and CTF extensions.
+For each exposed service, prefer a genuine CVE-based teaching opportunity where a reliable, reproducible and maintainable option exists. Misconfiguration remains important, but should not automatically replace a suitable real CVE.
 
-| Service | Deployment | Visibility | Teaching Purpose | Intended Weakness or Role | Initial Status |
-| --- | --- | --- | --- | --- | --- |
-| HTTP landing site | Host or reverse proxy | External | First contact, scenario context, web discovery, links to public apps | Public pages, robots/sitemap/content discovery, non-solution clues | Proposed |
-| Administrative SSH | Host; TCP 22 during the base build, then a separately secured management port | Restricted to the management path where practical | VM administration, maintenance and recovery | No deliberate weakness; key-only authentication and restricted administrator access | Base access implemented; port migration planned |
-| Teaching SSH | Separate resettable service, TCP 22 | External | Realistic SSH enumeration, credential testing and controlled low-privilege shell access | Selected weak or reused teaching credentials once the account model is agreed | Proposed |
-| SMB | Host | External | SMB enumeration, share review, file discovery | Readable or writable share, public/internal clue material | Proposed |
-| NFS | Host | External | NFS enumeration, Linux file access, permissions analysis | Weak export or permission model if approved | Proposed |
-| FTP | Host or container | External | FTP enumeration, anonymous/local login testing, file transfer evidence | Modern misconfiguration by default; old vulnerable version only if approved | DECISION REQUIRED |
-| Database | Host or published container | External | Service/version enumeration, database login testing, data extraction | Weak/reused credentials and application-linked data | Proposed |
-| Internal lab DNS | Host | Lab network | Hostname and virtual-host discovery | Scenario records, subdomain clues and internal service names | Proposed |
-| Juice Shop | Container | External via documented port or hostname | Established web exploitation | Built-in vulnerable application | Proposed |
-| WebGoat | Container | External via documented port or hostname | Guided web exploitation | Built-in vulnerable application | Proposed |
-| Security Shepherd | Container | External via documented port or hostname | OWASP-aligned web practice | Built-in vulnerable application | Proposed |
-| Custom web application | Container or host | External | Project-owned web, API, CTF and scenario exercises | Agreed custom vulnerability set | Proposed |
+A service may deliberately combine:
 
-## Optional or Deferred Services
+- a vulnerable software version associated with a genuine CVE;
+- weak credentials or credential reuse;
+- unsafe permissions;
+- excessive service privileges;
+- insecure protocol or share configuration.
 
-These services remain useful candidates, but should not be included automatically in the first build unless approved.
+This combination is desirable where it creates a realistic scenario and multiple teaching opportunities.
 
-| Service | Reason to Include | Reason to Defer | Status |
-| --- | --- | --- | --- |
-| HTTPS | TLS inspection, certificate review, weak configuration discussion | HTTP already supports early web work; TLS needs a clear teaching reason | DECISION REQUIRED |
-| SMTP | Banner grabbing, user discovery, mail artefacts | Needs careful scope to avoid unnecessary mail-server complexity | DECISION REQUIRED |
-| SNMP | Classic enumeration and information disclosure | Useful, but can be added after core services are stable | DECISION REQUIRED |
-| Custom TCP service | Protocol analysis and custom exploitation | Better designed after custom application and module mapping are clearer | DECISION REQUIRED |
-| DVWA | Introductory web exploitation | May duplicate Juice Shop/WebGoat/custom-app learning outcomes | DECISION REQUIRED |
+Where a suitable CVE has a reliable Metasploit module, document that explicitly so the service can support `msfconsole` exploitation activities.
 
-## Service Design Notes
+## Runtime Visibility
 
-### Administrative and Teaching SSH
+The VM must present a meaningful host-visible attack surface. Containerisation must not hide services that students are expected to discover through Nmap or protocol-specific enumeration.
 
-Host SSH is administrative infrastructure, not a student vulnerability. It remains on TCP 22 for the clean base snapshot, then moves to a separately secured management port before the separate teaching SSH service claims TCP 22. The administrative service must not use teaching credentials or deliberate weaknesses. Migration must be tested through a second SSH session before the existing connection is closed. Verification must test both that the teaching weakness is present and that unintended administrative SSH access has not been introduced.
+Use a deliberate mixture of:
 
-### HTTP and Web Routing
+- services installed directly on the Ubuntu host;
+- containerised applications with ports published on the VM network interface;
+- selected supporting services, including at least one database, exposed to the VM network;
+- internal-only services used only where hidden placement has a deliberate advanced-discovery or post-exploitation purpose.
 
-The VM should provide a Brightleaf Retail Ltd landing site at `www.brightleaf.test`. It should connect naturally with the organisational context on `cwscenario.uk`, support offline reconnaissance and navigation, and avoid revealing solutions, vulnerabilities, flags, hidden services or instructor notes.
+Do not expose repository or attack-path naming in runtime service names or locations. Internal labels such as `AP01` and `AP02` are documentation identifiers only.
 
-The public `cwscenario.uk` host is OSINT-only. All scanning, credential testing and exploitation targets must resolve to the isolated lab environment.
+## Service Catalogue
 
-Established web applications can be containerised, but their web interfaces must be reachable from the VM network through documented ports or hostnames.
+| Service | Deployment | Visibility | Teaching Purpose | Intended Weakness or Role |
+| --- | --- | --- | --- | --- |
+| HTTP landing site | Host or reverse proxy | External | First contact, scenario context, content discovery, virtual-host discovery | Public pages, robots/sitemap/content discovery and realistic clues |
+| Administrative SSH | Host, separate management access | Restricted | VM administration and instructor maintenance | No deliberate student weakness |
+| Teaching SSH | Host or isolated instance on TCP 22 | External | SSH enumeration, credential testing and host shell access | Weak/reused teaching credentials or a selected service vulnerability where appropriate |
+| SMB | Host or justified isolated build | External | SMB enumeration, shares, authentication, file discovery, exploitation | Prefer a suitable CVE where practical; may also include guest/weak share configuration |
+| NFS | Host | External | NFS enumeration, file access and permission analysis | Weak export/permission model and, where suitable, a CVE-backed component |
+| FTP | Host or justified isolated build | External | FTP enumeration, authentication testing, file transfer and service exploitation | Prefer a genuine CVE-based service where reliable; misconfiguration may be combined with it |
+| Database | Host or published container | External | Service/version enumeration, authentication, data extraction and application linkage | Weak/reused credentials and/or a suitable vulnerable component |
+| Internal lab DNS | Host | Lab network | Hostname, record and virtual-host discovery | Scenario records and realistic discovery clues |
+| Juice Shop | Container | External | Established modern web exploitation | Built-in vulnerable application |
+| WebGoat | Container | External | Guided web exploitation | Built-in vulnerable application |
+| Security Shepherd | Container | External | OWASP-aligned web practice | Built-in vulnerable application |
+| Custom web application | Container or host | External | Project-owned web, API and CTF exercises | Curated custom vulnerability set |
+| SMTP | Host or container | External if approved | Banner, user and protocol enumeration | Suitable CVE and/or controlled configuration weakness |
+| SNMP | Host | External if approved | Enumeration and information disclosure | Default/weak community or other controlled weakness |
+| Custom TCP service | Host | External if approved | Protocol analysis and custom exploitation | Custom vulnerable protocol behaviour |
 
-### Database
+## Administrative and Teaching SSH
 
-At least one database service must be reachable from the VM network. This is a core README requirement because students should be able to discover, enumerate and test a database service directly.
+Administrative SSH exists only for development/instructor maintenance and must remain distinct from the student-facing teaching surface.
 
-The database should be linked to the custom application or scenario data so that database access has teaching value beyond simply opening another port.
+If TCP 22 is required for the teaching SSH service, administrative SSH should move to a separate management port before teaching deployment. Administrative access should use key-based authentication and must not accept teaching credentials.
 
-### SMB and NFS
+The final student VM is distributed as a complete image. Students do not need an activity-reset interface or resettable teaching SSH service. Build/instructor scripts may restore intended state during development, but that is not part of the student experience.
 
-SMB and NFS should support file-share enumeration, permissions analysis and clue discovery. Weak access should be intentional, documented and resettable.
+## HTTP and Web Routing
 
-### FTP
+The VM should provide a plausible fictional organisational landing site at `www.brightleaf.test` unless the scenario name is changed later. It should support reconnaissance without revealing solutions, flags, CVEs or internal attack-path identifiers.
 
-FTP is useful for enumeration, anonymous access, weak local-user access and file-transfer evidence. The default proposal is a maintainable modern misconfiguration. A deliberately old vulnerable FTP service should only be used if the exploit lesson is worth the maintenance cost.
+Established vulnerable web applications can be containerised, but their intended web interfaces must be reachable from the VM network.
 
-### Internal Lab DNS
+## Database
 
-Internal lab DNS should support lab-local discovery of hostnames, subdomains and virtual hosts. It is part of the vulnerable teaching environment and should provide scenario records, internal service names and discovery clues.
+At least one database service must be reachable from the VM network and visible during scanning. Students should be able to enumerate the database service and connect database findings to a web application or wider compromise scenario.
 
-This is separate from builder/instructor resolver switching. A helper such as `switch-dns.sh` may be useful for changing the VM resolver between university and home profiles during setup or support work, but that utility is not the vulnerable lab DNS service students enumerate.
+Do not hide every database behind Docker-internal networking.
 
-Any public-domain clue path must have an internal equivalent or fallback inside the VM so classroom sessions do not depend on external availability.
+## SMB and NFS
 
-## Legacy Idea Use
+SMB and NFS should support genuine service enumeration and file/permission analysis. Where a reliable CVE-based implementation is available and appropriate, prefer that over a configuration-only exercise. Misconfiguration can still be combined with the vulnerable version where it improves the scenario.
 
-The abandoned legacy attempt suggests possible service ideas: SMB, NFS, FTP, Apache/web, MariaDB/MySQL, Docker-hosted web applications and status reporting.
+Runtime paths and share names must be realistic. Do not use names derived from `cav-csf`, `APxx`, challenge numbers or module names.
 
-These are only idea sources. The new service catalogue should not copy the old scripts or assume the old implementation is correct.
+## FTP
+
+FTP should support more than anonymous access where practical. A genuine vulnerable FTP implementation with a reliable teaching path should be preferred when it can be integrated safely and reproducibly. Misconfiguration such as anonymous access may be retained as a separate or combined learning opportunity.
+
+A suitable Metasploit-exploitable CVE is particularly valuable because it supports the full workflow of service discovery, version identification, vulnerability research and exploitation through `msfconsole`.
+
+## Internal Lab DNS
+
+Internal DNS should support lab-local discovery of hostnames, subdomains and virtual hosts. It should expose plausible organisational names, not teaching identifiers.
+
+The public `cwscenario.uk` host remains contextual/OSINT material and must not be required for the vulnerable VM to function.
+
+## CVE Documentation Requirement
+
+For each service deliberately pinned to a vulnerable version, document:
+
+- exact service/version;
+- port;
+- CVE;
+- discovery method;
+- available Metasploit module where applicable;
+- prerequisites;
+- expected exploitation outcome;
+- intended module/level;
+- installation location;
+- instructor verification procedure.
+
+If a custom installation path is required for an old vulnerable build, use a plausible operational name such as `/opt/samba-legacy/` rather than `/opt/cav-csf/ap03/samba/`.
 
 ## Verification Requirements
 
-Each approved service needs a verification check for:
+Each approved service needs verification for:
 
 - installed/enabled state;
 - listening address and TCP/UDP port;
-- expected banner or response;
+- expected banner/version;
 - intended access controls;
-- intended vulnerability or misconfiguration;
-- reset behaviour;
-- absence of unintended administrative exposure.
+- intended CVE and/or configuration weakness;
+- expected exploitation preconditions;
+- absence of unintended administrative exposure;
+- absence of teaching metadata in student-visible runtime artefacts.
 
-## Decisions Required Before Implementation
-
-- DECISION REQUIRED: Approve the first-build service set.
-- DECISION REQUIRED: Choose the externally visible database technology.
-- DECISION REQUIRED: Decide whether FTP is included in the first build.
-- DECISION REQUIRED: If FTP is included, decide modern misconfiguration versus old vulnerable service.
-- DECISION REQUIRED: Decide whether HTTPS, SMTP, SNMP, custom TCP service or DVWA are included in the first build.
-- DECISION REQUIRED: Approve the first port and hostname plan.
+Verification is an instructor/development concern. It does not require student-facing reset functionality.
