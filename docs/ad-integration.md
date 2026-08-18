@@ -2,87 +2,91 @@
 
 ## Purpose
 
-The Linux VM must be capable of joining a separate Windows Server Active Directory domain as a genuine member server. AD integration is planned, but the final domain join must not be implemented until the Windows environment, domain name, users, groups and service accounts are agreed.
+The Linux VM must be capable of joining a separate Windows Server Active Directory domain as a genuine member server.
 
-The VM must continue to support Linux-only teaching activities when the AD VM is not running.
+The same completed Linux VM is used for Linux-only teaching and for advanced cross-platform activities. There is no separate AD-enabled Linux edition.
+
+The canonical runtime and student-delivery rules are defined in `docs/runtime-and-delivery-model.md`.
 
 ## Planned Capabilities
 
-- DNS integration.
-- Kerberos.
-- `realmd`.
-- SSSD.
-- Samba.
-- AD user and group resolution.
-- Selected AD-authenticated SSH access.
-- Selected AD-authenticated SMB access.
-- AD service account used by a Linux application or service.
-- Cross-platform credential-discovery opportunity.
-- Linux-to-Windows activity.
+- DNS integration;
+- Kerberos;
+- `realmd`;
+- SSSD;
+- Samba;
+- AD user and group resolution;
+- selected AD-authenticated SSH access;
+- selected AD-authenticated SMB access;
+- AD service account used by a Linux application or service;
+- cross-platform credential-discovery opportunity;
+- Linux-to-Windows activity;
 - Windows-to-Linux activity.
 
 ## Design Constraints
 
-- Do not join AD during Phase 1.
-- Do not implement final AD provisioning until Windows domain details are agreed.
+- Linux-only activities must continue to work when the Windows AD VM is not running.
 - AD-dependent services should fail cleanly when the domain is unavailable.
-- Linux-only activities must still work without the Windows AD VM.
-- AD-linked credentials and cross-platform paths must be instructor documented.
+- AD-linked credentials and cross-platform paths are instructor/internal information.
+- Runtime users, groups, shares, services and paths must use plausible organisational names. Do not expose `APxx`, `cav-csf`, challenge numbers or module labels as runtime naming conventions.
+- Cross-platform weaknesses may use misconfiguration, credential exposure or genuine software vulnerabilities as appropriate.
+- Do not add student-facing reset mechanisms. Students begin from a fresh completed VM image.
 
-## Possible Teaching Routes
+## Teaching Uses
 
 ### Linux Member Server Enumeration
 
-Students identify that the Linux VM is domain joined and enumerate relevant configuration.
-
-Status: DECISION REQUIRED.
+Students may identify that the Linux VM is domain joined and enumerate relevant Kerberos, DNS, SSSD, Samba and identity information.
 
 ### AD-Authenticated SSH or SMB
 
-Selected AD users or groups can authenticate to Linux services.
-
-Status: DECISION REQUIRED.
+Selected AD users/groups may authenticate to Linux services where this supports advanced teaching.
 
 ### AD Service Account Exposure
 
-A Linux application or service uses an AD service account. Misplaced configuration or weak file permissions expose useful material.
-
-Status: DECISION REQUIRED.
+A Linux application/service may use an AD service account. A deliberately exposed credential, keytab, configuration file or overbroad permission can create a Linux-to-AD path.
 
 ### Cross-Platform Credential Reuse
 
-Credentials discovered on Linux support Windows or AD activity, or credentials from Windows support Linux access.
+Credentials discovered on Linux may support Windows/AD activity, while credentials recovered from Windows may support Linux access.
 
-Status: DECISION REQUIRED.
+### CVE-Based Cross-Platform Opportunity
 
-## Required Future Inputs
+Where a reliable CVE in a Linux-hosted service or Windows/AD-facing component provides a meaningful cross-platform path, prefer it over constructing an artificial configuration-only weakness.
 
-- Domain name.
-- Domain controller hostname and IP plan.
-- AD users.
-- AD groups.
-- Service accounts.
-- Allowed Linux access policy.
-- DNS design.
-- Kerberos realm.
-- Classroom network assumptions.
+Document exact version, CVE, prerequisites, tool/module availability and expected result.
+
+## Required Inputs
+
+Before final integration, define:
+
+- domain name;
+- domain controller hostname/IP plan;
+- AD users;
+- AD groups;
+- service accounts;
+- Linux access policy;
+- DNS design;
+- Kerberos realm;
+- classroom network assumptions;
+- intended cross-platform attack paths.
 
 ## Verification Requirements
 
-AD verification should check:
+AD verification should confirm:
 
-- VM boots correctly without AD;
-- AD packages and services are installed when approved;
-- domain join works when the AD VM is available;
-- AD users and groups resolve;
+- VM boots and Linux-only labs remain usable without AD;
+- domain join succeeds when the Windows environment is available;
+- AD users/groups resolve correctly;
 - selected SSH/SMB access behaves as intended;
 - AD-dependent services fail cleanly when AD is unavailable;
-- intended cross-platform paths work as designed.
+- intended cross-platform paths work;
+- final runtime names are realistic and do not expose internal teaching identifiers.
 
-## Open Decisions
+## Development Milestone
 
-- DECISION REQUIRED: Domain name and Windows environment details.
-- DECISION REQUIRED: Which AD users and groups should map to Linux access.
-- DECISION REQUIRED: Which Linux service uses an AD service account.
-- DECISION REQUIRED: Which cross-platform attack paths are included.
-- DECISION REQUIRED: Whether AD integration appears before or after CTF support in the first release.
+The accepted AD-integrated state is preserved as the permanent full-clone milestone:
+
+`CAV-CSF-05-AD-Integrated`
+
+Snapshots may be used during the active AD-integration phase for short-term rollback. Student recovery remains replacement with a fresh VM image.
