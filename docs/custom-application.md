@@ -39,6 +39,11 @@ The initial application should aim for approximately 10 to 12 well-tested vulner
 - broken authentication;
 - insecure session handling;
 - broken access control;
+- File upload vulnreabilities
+- Web sockets
+- Information disclosure 
+- XXE Injectoin
+- DOM BASEd vulnreabilities
 - insecure direct object reference;
 - API broken object-level authorisation;
 - path traversal;
@@ -46,6 +51,13 @@ The initial application should aim for approximately 10 to 12 well-tested vulner
 - sensitive information disclosure;
 - server-side request forgery;
 - business-logic weakness.
+- Web LLM attacks
+- Web cache poisoning
+- HTTP Host header attacks
+- HTTP request smuggling
+- OAuth authentication
+- JWT attacks
+
 
 The exact list requires approval before implementation.
 
