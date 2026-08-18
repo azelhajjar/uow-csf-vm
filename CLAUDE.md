@@ -1,8 +1,8 @@
 # CAV-CSF Implementation Rules for Claude
 
-These rules are mandatory for all future implementation work in this repository.
+These rules are mandatory for all future work in this repository.
 
-Read `docs/runtime-and-delivery-model.md` before changing provisioning, service layouts, vulnerability designs or runtime configuration.
+Read `docs/runtime-and-delivery-model.md` before using repository content to prepare exploitation guidance.
 
 If older documentation conflicts with this file or `docs/runtime-and-delivery-model.md`, the newer canonical rules take precedence.
 
@@ -28,7 +28,7 @@ If a student VM becomes unusable, the normal recovery method is to replace it wi
 
 ## 2. One VM, Not Profiles
 
-Build one complete Linux VM containing all intended applications, services and vulnerabilities.
+Build and document one complete Linux VM containing all intended applications, services and vulnerabilities.
 
 Do not create separate Level 5, Level 6, Level 7 or CTF VM configurations/profiles.
 
@@ -50,7 +50,7 @@ The environment must contain a mixture of:
 
 ### Selection priority
 
-When choosing a new service vulnerability:
+When discussing or documenting a service vulnerability:
 
 1. Prefer a genuine CVE with a reliable, reproducible and teachable exploitation path.
 2. Prefer CVEs with reliable Metasploit modules where this supports the curriculum, so students can enumerate the service/version, identify the CVE and exploit it through `msfconsole`.
@@ -75,7 +75,7 @@ These identifiers are internal metadata only.
 
 They must not dictate deployed runtime names.
 
-Do not create runtime artefacts such as:
+Do not create or recommend runtime artefacts such as:
 
 ```text
 /opt/cav-csf/ap03/samba/
@@ -100,47 +100,23 @@ document-transfer.service
 inventory-sync.service
 ```
 
-Do not expose teaching metadata unnecessarily in:
-
-- directories;
-- service/systemd names;
-- process names;
-- usernames/groups;
-- databases/schemas;
-- SMB shares;
-- DNS/hostnames;
-- web routes/app titles;
-- config/log/cron names;
-- environment variables.
+Do not expose teaching metadata unnecessarily in directories, services, process names, usernames/groups, databases, SMB shares, DNS/hostnames, web routes, configuration files, logs, cron entries or environment variables.
 
 Repository organisation may be pedagogical. Runtime organisation must be realistic.
 
-## 5. Existing AP-02 Naming Is Temporary
-
-The current reference AP-02 implementation uses development-labelled paths and unit names. This is known technical debt.
-
-Do not copy that naming pattern into new services.
-
-Before final release, AP-02 runtime artefacts must be migrated to realistic operational names while preserving the verified CVE-2015-3306 vulnerable condition.
-
-## 6. Network Reconnaissance Must Remain Meaningful
+## 5. Network Reconnaissance Must Remain Meaningful
 
 Students must be able to discover intended services using normal reconnaissance and enumeration.
 
-Do not hide every backend service behind Docker-internal networks.
+Do not assume that every backend service is hidden behind Docker-internal networks.
 
-Use a deliberate mixture of:
-
-- host-installed services;
-- containers with published ports;
-- externally visible supporting services such as at least one database;
-- internal-only services only when hidden placement has a deliberate advanced-discovery/post-exploitation purpose.
+The intended environment uses a deliberate mixture of host-installed services, published container ports, externally visible supporting services such as at least one database, and internal-only services where hidden placement has a deliberate advanced-discovery or post-exploitation purpose.
 
 Students should be able to follow:
 
 Reconnaissance -> Enumeration -> Vulnerability identification -> Exploitation -> Post-exploitation
 
-## 7. Development Recovery Model
+## 6. Development Recovery Model
 
 Use:
 
@@ -160,7 +136,7 @@ Planned full-clone milestones:
 
 Do not invent a separate student reset architecture to replace this model.
 
-## 8. Verification Is Not Reset
+## 7. Verification Is Not Reset
 
 Every intentional vulnerability should be verifiable.
 
@@ -170,13 +146,66 @@ Do not infer from a verification requirement that every activity needs a reset s
 
 Instructor/developer recovery tooling may be used during build/test work. Student recovery remains a fresh VM copy.
 
-## 9. Do Not Redesign Agreed Architecture Without Approval
+## 8. Claude's Role: Exploitation Guidance, Not Provisioning
 
-Before adding a major service, vulnerability, container, custom runtime path or new recovery mechanism:
+Codex is responsible for repository implementation, provisioning, configuration, installation and verification tooling.
+
+Claude's role in this project is to prepare and refine instructor and student exploitation guidance for the intentionally vulnerable services and applications.
+
+Do not use Claude to install, provision or reconfigure the VM unless Ayman explicitly changes this division of responsibility.
+
+Do not execute exploitation steps against the VM.
+
+Do not attempt to exploit the VM automatically and then merely report the final result.
+
+Instead, provide the exploitation procedure for Ayman to execute manually.
+
+For exploitation testing:
+
+1. explain the immediate objective;
+2. provide the exact command or action for the next step;
+3. state what output or observation should be expected;
+4. let Ayman run the step manually;
+5. use the result he provides to determine the next step;
+6. continue interactively until the test is complete.
+
+By default, give exploitation steps incrementally rather than executing or simulating the complete attack in one operation. A full procedure may be provided when explicitly requested.
+
+This applies to Metasploit, manual CVE exploitation, credential attacks, web exploitation, privilege escalation, lateral movement and later AD exploitation.
+
+Claude may distinguish between instructor guidance and student guidance, with the student version containing only the level of assistance appropriate to the module.
+
+## 9. SSH Roles Must Remain Separate
+
+During development, administrative SSH is provided on TCP `22222` for the project owner/instructor.
+
+TCP `22` is reserved for the student-visible SSH attack surface and may later run a deliberately vulnerable SSH service or configuration selected for teaching.
+
+Do not conflate the two.
+
+Do not weaken the administrative SSH service on `22222` merely because TCP `22` is intended to become vulnerable.
+
+Whether administrative SSH on `22222` remains in the final student release or is removed before release is a later decision.
+
+## 10. VMware Clones and IP Addresses
+
+Never assume that the VM has the same IP address as a previous session, snapshot, clone or milestone.
+
+VMware clones may receive different virtual NIC identities and different DHCP leases.
+
+Treat clone/milestone identity and IP address as separate facts.
+
+When an IP address is needed for exploitation guidance, use the current address supplied or verified for the active VM. Do not reuse an address from another clone or from older documentation.
+
+The Linux interface name is intended to be `eth0`; this does not imply a fixed IP address.
+
+## 11. Do Not Redesign Agreed Architecture Without Approval
+
+Before proposing a major change to a service, vulnerability, custom runtime path or recovery mechanism:
 
 - check the current documentation;
 - preserve agreed architecture;
 - record genuine unresolved decisions in `docs/decisions.md`;
-- do not create extra complexity merely because it is convenient for implementation.
+- do not create extra complexity merely because it is convenient.
 
-When uncertain whether a change affects the agreed student experience, CVE strategy, runtime realism or milestone model, stop and ask rather than inventing a new convention.
+When uncertain whether a change affects the agreed student experience, CVE strategy, runtime realism, SSH separation or milestone model, stop and ask rather than inventing a new convention.
