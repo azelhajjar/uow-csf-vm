@@ -2,9 +2,18 @@
 
 ## Purpose
 
-CAV-CSF should include several independent Linux privilege-escalation opportunities of different difficulty. They must be intentional, documented, reliable after reset and mapped to learning outcomes.
+CAV-CSF should include several independent Linux privilege-escalation opportunities of different difficulty. They must be intentional, documented and reliably reproducible on the completed VM.
 
-The VM should not rely primarily on kernel exploits.
+The canonical runtime and student-delivery rules are defined in `docs/runtime-and-delivery-model.md`.
+
+## Design Principles
+
+- Do not make every privilege-escalation route part of one mandatory chain.
+- Use several different weakness classes so students learn enumeration and reasoning rather than one repeated pattern.
+- Misconfiguration-based privilege escalation remains valuable, but selected local/service CVEs may also be included where reliable and pedagogically appropriate.
+- Do not rely primarily on kernel exploits.
+- Runtime artefacts must use realistic names and conventional locations. Internal labels such as `AP-01` remain documentation-only.
+- Students receive a fresh VM image and do not require per-route reset scripts.
 
 ## Candidate Routes
 
@@ -15,11 +24,9 @@ Teaching purpose:
 - introduce sudo enumeration;
 - demonstrate command-specific privilege risk.
 
-Possible design:
+Implemented example: the low-privilege `stockroom` teaching account can run `/usr/bin/find` as root without a password in the currently verified AP-01 route.
 
-- a selected low-privilege user can run one carefully chosen command as another user or root.
-
-Status: APPROVED for AP-01. The dedicated `stockroom` teaching account may run `/usr/bin/find` as root without a password. See `docs/attack-paths.md` for safety, reset and verification requirements.
+This is intentionally a configuration weakness and is retained because the weakness itself is pedagogically useful.
 
 ### SUID Binary Misuse
 
@@ -29,9 +36,9 @@ Teaching purpose:
 
 Possible design:
 
-- a small custom or standard binary with an intentionally unsafe execution path.
+- a standard or custom binary with an intentionally unsafe execution path.
 
-Status: DECISION REQUIRED.
+Prefer a plausible operational binary/service name rather than `privesc`, `challenge`, `APxx` or similar teaching metadata.
 
 ### Linux Capabilities Misuse
 
@@ -41,79 +48,84 @@ Teaching purpose:
 
 Possible design:
 
-- a binary with an excessive capability assigned.
+- a plausible operational binary with an excessive capability assigned.
 
-Status: DECISION REQUIRED.
-
-### Writable Privileged Script
+### Writable Privileged Script or Service
 
 Teaching purpose:
 
-- demonstrate unsafe write permissions and scheduled/admin execution.
+- demonstrate unsafe write permissions and privileged execution;
+- teach service/timer/cron enumeration.
 
 Possible design:
 
-- a root-run maintenance script with controlled weak permissions.
+- a root-run maintenance script or systemd service that trusts a writable path or environment value.
 
-Status: DECISION REQUIRED.
-
-### Insecure Cron or Systemd Service
-
-Teaching purpose:
-
-- teach service and timer enumeration.
-
-Possible design:
-
-- a service, timer or cron task that trusts a writable path or environment value.
-
-Status: DECISION REQUIRED.
+Use realistic names such as a backup, reporting, inventory or synchronisation task. Do not call it `ap04-service`, `privesc.service` or similar.
 
 ### Exposed Credentials or Password Reuse
 
 Teaching purpose:
 
-- connect web/service findings to host access.
+- connect web/service findings to host access;
+- demonstrate compound risk.
 
-Possible design:
+Possible sources include:
 
-- credentials discovered through SMB, FTP, database, web app or documents work for a lower-privilege Linux user.
+- FTP/SMB/NFS documents;
+- application configuration;
+- database records;
+- backup files;
+- shell history;
+- AD-linked service credentials.
 
-Status: APPROVED for AP-01. Anonymous FTP material exposes the generated credentials for the low-privilege `stockroom` teaching account; the value is not committed to the repository.
+### Vulnerable Local or Service Software
+
+Where practical, include a genuine CVE-based local/service privilege-escalation route in addition to configuration-based techniques.
+
+For any such CVE document:
+
+- exact product/version;
+- CVE;
+- starting privilege level;
+- prerequisite conditions;
+- exploitation method/tool;
+- expected privilege gain;
+- compatibility with Ubuntu 26.04;
+- instructor verification.
+
+Do not select an obsolete package merely to have a CVE if it is unreliable or adds excessive maintenance burden.
 
 ### Service Account Misuse
 
 Teaching purpose:
 
-- introduce service-account permissions and lateral movement concepts.
+- introduce service-account permissions;
+- connect application compromise, file access and later privilege escalation;
+- support advanced AD/lateral-movement concepts.
 
 Possible design:
 
-- an application or service account has access to a file, group or command that supports escalation.
-
-Status: DECISION REQUIRED.
-
-## Legacy Mapping
-
-Legacy contains useful account, group, service-account, flag and shared-directory ideas. It does not provide a clean privilege-escalation design. Any route should be redesigned and documented before implementation.
+- an application or service account has access to a file, group, credential or delegated command that enables further privilege gain.
 
 ## Requirements
 
-Each route must include:
+Each route should record:
 
-- affected user or service account;
+- affected user/service account;
 - starting access assumption;
-- required student technique;
+- required enumeration technique;
+- weakness type: CVE, configuration, credential or combination;
 - expected outcome;
-- reset behaviour;
-- verification test;
-- instructor notes;
-- difficulty level;
-- module mapping.
+- instructor verification;
+- difficulty level/module mapping;
+- realistic deployed names/locations;
+- developer recovery notes where necessary.
 
-## Open Decisions
+Do not add a student reset requirement to each route. Students normally recover by starting from a fresh VM image.
 
-- DECISION REQUIRED: Number of privilege-escalation routes in the first build.
-- DECISION REQUIRED: Difficulty split across Level 5, Level 6, Level 7 and CTF.
-- DECISION REQUIRED: Whether any route should chain from the custom application.
-- DECISION REQUIRED: Whether any route should depend on AD integration.
+## Development Recovery
+
+During active implementation, use VMware snapshots as temporary rollback points within the current phase. When the privilege-escalation phase is accepted, preserve the milestone using the planned full clone `CAV-CSF-04-PrivilegeEsc`.
+
+Git remains the source/configuration history.
