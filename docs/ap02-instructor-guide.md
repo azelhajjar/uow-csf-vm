@@ -2,151 +2,124 @@
 
 ## Purpose
 
-AP-02 is the second verified CAV-CSF attack path. It provides a genuine, version-bound service vulnerability (CVE-2015-3306, ProFTPD 1.3.5 `mod_copy`) rather than another configuration-only weakness, and links a network file-transfer service directly to web-service compromise.
+AP-02 is an internal identifier for the verified ProFTPD 1.3.5 `mod_copy` exercise using CVE-2015-3306. It provides a genuine version-bound service vulnerability and should serve as a model for future CVE-based network exploitation activities.
 
 This guide contains solution information and must not be issued as the student brief.
 
-## Implemented Path
+The canonical delivery and runtime rules are defined in `docs/runtime-and-delivery-model.md`.
+
+## Runtime-Naming Requirement
+
+`AP-02` is a repository/instructor label only. It must not appear in the final VM as a service name, directory, hostname, web root, process or other student-visible runtime artefact.
+
+The current reference implementation contains development-labelled names such as `/opt/cav-csf/ap02/...`, `/var/www/brightleaf-ap02`, `cav-csf-ap02-proftpd.service` and AP-02-specific configuration paths. These must be migrated to plausible operational names before release while preserving the verified vulnerable condition.
+
+See `docs/ap02-design.md` for the migration requirement.
+
+## Implemented Route
 
 ```text
-Anonymous FTP login on TCP 2121 (ProFTPD 1.3.5, mod_copy)
-  -> SITE CPFR / SITE CPTO abuse the daemon's own www-data identity
-  -> arbitrary file placed inside the AP-02 web root
-  -> file served (and would execute, if PHP) by Apache on TCP 80
+ProFTPD 1.3.5 discovered on TCP 2121
+  -> version/CVE research identifies CVE-2015-3306
+  -> anonymous session satisfies the intended mod_copy condition
+  -> SITE CPFR / SITE CPTO copies a file into a web-served location
+  -> HTTP access demonstrates the impact
 ```
 
-AP-01 vsftpd on TCP 21, teaching SSH on TCP 22 and administrative SSH on TCP 22222 are unaffected and must remain available throughout.
+## Why This Path Matters
 
-## Prerequisites
+This is the type of activity the project should deliberately retain and expand:
 
-- The CAV-CSF VM is attached only to the approved isolated teaching network.
-- A fresh VMware snapshot exists before any instructor-controlled exploit acceptance run.
-- Instructor administration uses TCP 22222 and an SSH key.
-- The student or Kali system can reach the VM on TCP 2121 and TCP 80.
-- `sudo ./scripts/verify-ap02.sh` returns `RESULT: PASS`.
+1. students scan the target;
+2. identify the service and version;
+3. research or recognise a genuine CVE;
+4. identify the exploit prerequisites;
+5. exploit the service manually or through an appropriate framework;
+6. demonstrate a meaningful result;
+7. explain remediation.
+
+Where suitable, future CVEs should also support reliable Metasploit modules so `msfconsole` remains part of the curriculum.
 
 ## Student Starting Information
 
-Provide:
+Provide only what is appropriate for the module:
 
-- the authorised target VM address, or the subnet if host discovery is an assessed objective;
-- assessment evidence and reporting requirements;
-- the lab rules of engagement.
+- target VM address or subnet;
+- assessment/evidence requirements;
+- rules of engagement;
+- the student brief if guided delivery is intended.
 
-Do not provide the vulnerable ProFTPD version in advance; students are expected to fingerprint it themselves. Provide `docs/ap02-student-lab.md` as the student brief — it includes generic tool/command explanations (nmap version scan, FTP raw-command mode via `quote`, curl with a custom `Host` header) but deliberately does not name the specific `SITE CPFR`/`SITE CPTO` commands or confirm that anonymous access is the working vector; identifying both is part of the exercise.
+Do not provide the vulnerable version, CVE or exploit command in advance unless the learning level requires that scaffolding.
 
-## Architecture Note: Anonymous Access Requirement
+## Verified Condition
 
-The original AP-02 design (`docs/ap02-design.md`) intended that the ProFTPD daemon's `User www-data` / `Group www-data` directives would cause file operations to run as `www-data`, allowing `mod_copy` to write into the `www-data`-owned web root. Live exploit acceptance testing on 3 August 2026 showed this is **only true for anonymous sessions** — a named login (e.g. `stockroom`, reused from AP-01) authenticates fine but is set-uid to its own account, and `SITE CPTO` correctly fails with `550 Permission denied` against the `www-data:www-data 0750` web root.
+The validated condition is:
 
-`scripts/install-ap02.sh` was updated to add the missing `<Anonymous>` context so the intended condition actually exists:
+- ProFTPD 1.3.5;
+- `mod_copy` compiled in;
+- anonymous access configured so the vulnerable file operation uses the intended service identity;
+- a bounded web-served destination owned by the service identity;
+- Apache/PHP serving the destination.
 
-```
-<Anonymous /var/www/brightleaf-ap02>
-  User                www-data
-  Group               www-data
-  UserAlias           anonymous www-data
-  RequireValidShell   off
-  <Limit LOGIN>
-    AllowAll
-  </Limit>
-</Anonymous>
-```
+Live acceptance testing confirmed that a named login does not have the same write capability to the web boundary, while the anonymous context does. This implementation detail is part of the instructor solution.
 
-This chroots anonymous sessions to the web root and runs them as `www-data`, matching the classic CVE-2015-3306 demonstration and the impact described in the design doc. See `docs/decisions.md` for the recorded decision.
+## Instructor Verification
 
-Secondary finding: `stockroom`'s AP-01 credentials also authenticate against AP-02 on TCP 2121 (ProFTPD falls back to reading `/etc/shadow` directly, since the build uses `--disable-auth-pam`). That session runs as `stockroom`, so `mod_copy` still works but is confined to paths `stockroom` can already write (e.g. `/tmp`) — it cannot reach the web root. This is a real, teachable credential-reuse observation but is **not** the AP-02 headline path; do not present it as equivalent to the anonymous route.
+Verification should confirm:
 
-## Expected Route
+- exact ProFTPD version;
+- `mod_copy` presence;
+- configuration parse success;
+- intended port listening;
+- web service response;
+- intended ownership/permission boundary;
+- coexistence with approved services;
+- final runtime names do not expose `cav-csf`, `AP-02`, challenge numbers or repository structure.
 
-1. TCP 2121 exposes ProFTPD 1.3.5 (`nmap -sV`).
-2. `mod_copy` is present, so the version is checked against known CVEs, identifying CVE-2015-3306.
-3. Anonymous FTP login succeeds (no credentials required).
-4. `SITE CPFR` / `SITE CPTO` copy an existing file (e.g. `index.php`) to a new name inside the same web-accessible directory.
-5. The copied file is fetched over HTTP, proving arbitrary file placement in a web-servable, potentially PHP-executable location.
+Exploit acceptance testing remains a separate instructor-controlled activity. Health verification does not need to execute the exploit every time.
 
-### Live-Tested Exploitation Transcript
+## Development Recovery
 
-Executed end-to-end from a Kali attacker VM against the reference CAV-CSF VM (`192.168.200.137`) on 3 August 2026, as an approved instructor-controlled validation pass, immediately after the `<Anonymous>` config fix above.
+Any existing `reset-ap02.sh` or similar script is an instructor/development recovery utility only.
 
-**1. Recon** (shared with AP-01 — see that guide's transcript): `nmap` identifies `2121/tcp open ftp ProFTPD 1.3.5` and `80/tcp open http Apache httpd 2.4.66 ((Ubuntu))`.
+It is **not** a student-facing reset process and should not appear in student instructions.
 
-**2. Anonymous login and mod_copy abuse**
+Students receive a fresh completed VM image. If a student VM is damaged, the normal recovery method is to replace it with a fresh copy.
 
-```text
-$ ftp 192.168.200.137 2121
-Connected to 192.168.200.137.
-220 ProFTPD 1.3.5 Server (Brightleaf Document Transfer) [192.168.200.137]
-Name (192.168.200.137:kali): anonymous
-331 Anonymous login ok, send your complete email address as your password
-Password:
-230 Anonymous access granted, restrictions apply
-ftp> quote SITE CPFR index.php
-350 File or directory exists, ready for destination name
-ftp> quote SITE CPTO proof.php
-250 Copy successful
-ftp> quit
-```
+During development:
 
-**3. Confirming impact over HTTP**
+- snapshots are temporary rollback points within the active phase;
+- full clones are permanent milestone backups;
+- Git provides source/configuration history.
 
-```text
-$ curl -s -H "Host: warehouse.brightleaf.test" http://192.168.200.137/proof.php
-<!doctype html>
-...
-  <h1>Brightleaf Warehouse Document Service</h1>
-...
-```
-
-The copied file is served identically to the original `index.php`, confirming an anonymous, unauthenticated FTP session placed an arbitrary file into the live web root. A real attacker would instead copy an already-uploaded file containing a PHP payload to a `.php` destination name to obtain code execution; this guide stops at the non-destructive proof, consistent with the project's controlled-proof approach used in AP-01.
-
-## Instructor Validation
-
-Run from the repository root through administrative SSH on TCP 22222:
-
-```bash
-sudo ./scripts/verify-ap02.sh
-```
-
-This checks deployment/configuration health only (binary version, `mod_copy` presence, config parse, service/port state, coexistence with AP-01/teaching-SSH/admin-SSH). It deliberately does not run the exploit — exploit acceptance testing (as captured above) is a separate, explicit instructor-controlled phase and should not be run against a student-facing instance without a fresh snapshot.
-
-## Reset Between Uses
-
-Run:
-
-```bash
-sudo ./scripts/reset-ap02.sh
-```
-
-Reset wipes everything under the AP-02 web root and reinstalls the source-controlled `index.php`, restores ownership/permissions, restarts AP-02's services, and runs verification. It does not touch AP-01, SSH configuration, administrator data, or the ProFTPD binary/configuration — the vulnerable condition (pinned version, `mod_copy`, anonymous access) persists across resets by design; only session-created files are cleared.
-
-## Troubleshooting
+## Troubleshooting Notes
 
 ### Anonymous login is refused
 
-Confirm the `<Anonymous>` block is present in `/etc/cav-csf/ap02/proftpd.conf` and that `sudo ./scripts/install-ap02.sh` has been run since the block was added. Check `proftpd -t -c /etc/cav-csf/ap02/proftpd.conf` for a syntax error.
+Check that the intended anonymous context exists in the final realistically named ProFTPD configuration and that the service identity and web-served path match the approved design.
 
 ### `SITE CPTO` returns `550 Permission denied`
 
-This means the session did not assume the `www-data` identity — most likely a named (non-anonymous) login was used, or the `<Anonymous>` context path doesn't match `$WEB_ROOT`. Named logins (e.g. `stockroom`) are expected to fail here; this is not a bug.
+Confirm whether the session is anonymous and therefore using the intended service identity. A named login running as its own account is expected to fail against the protected web boundary.
 
 ### Copied file does not appear over HTTP
 
-Confirm the `Host: warehouse.brightleaf.test` header is present in the request — the AP-02 vhost is name-based and will 404 without it. Confirm Apache is active and the web root ownership matches `www-data:www-data:750`.
+Confirm the correct virtual host/Host header, web-service state, final web-root location and ownership.
 
 ### Recovery is uncertain
 
-Keep the TCP 22222 administrative session open. If reset cannot restore the path safely, revert to a known-good VMware snapshot.
+Use the current phase snapshot for short-term rollback. If the phase is no longer trustworthy, return to the previous permanent full-clone milestone.
 
 ## Marking Guidance
 
-Evidence should demonstrate the complete reasoning chain rather than only the final file placement. Suggested areas are:
+Evidence should demonstrate the reasoning chain, not just final file placement. Relevant areas include:
 
 - accurate service fingerprinting and version identification;
-- correct identification of CVE-2015-3306 and its precondition (anonymous access assuming the daemon's own identity);
-- clean, non-destructive demonstration of arbitrary file placement;
-- correct explanation of why the destination directory's ownership matters;
-- discussion of the realistic follow-on impact (webshell upload, RCE) without requiring students to actually deploy one unless explicitly scoped;
-- risk explanation and remediation quality (e.g. disabling anonymous access, upgrading ProFTPD, restricting `mod_copy`, separating FTP and web-server identities).
+- correct CVE identification;
+- understanding of exploitation prerequisites;
+- non-destructive proof of impact;
+- explanation of the permission/identity boundary;
+- realistic follow-on impact;
+- remediation quality.
 
-Stronger submissions should discuss why this is a genuine software vulnerability rather than a configuration mistake, and how it differs in nature from AP-01's sudo misconfiguration.
+Stronger work should distinguish clearly between a genuine software vulnerability and a configuration weakness, and explain how both can interact in a real compromise.
