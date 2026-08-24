@@ -54,7 +54,12 @@ The three files together yield:
 ```
 ssh backupsvc@192.168.144.131
 ```
+The credentials recovered from the exposed backup files are:
 
+```text
+backupsvc / 5W23Z7VsZrQE1CalwmW
+```
+These credentials were then used to obtain an SSH foothold as backupsvc.
 ## Evidence
 
 ```
