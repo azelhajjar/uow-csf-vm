@@ -65,3 +65,7 @@ A list of tools preinstalled on Kali that were **not** used in the documented re
 ## SMTP
 
 - **`swaks`** (Swiss Army Knife for SMTP) — a purpose-built SMTP testing tool, considerably cleaner than raw `nc` for constructing relay tests and enumeration attempts once the underlying protocol is understood manually.
+
+
+
+
