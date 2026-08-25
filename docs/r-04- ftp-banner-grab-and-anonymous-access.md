@@ -242,3 +242,7 @@ run
 **Resulting access:** Anonymous FTP read access to a limited home directory; no shell or credential obtained directly
 **Provides access for:** Intentionally leads toward `e- 02-nfs-anonymous-credential-exposure.md`; the `note` file's "shared backup location" is the NFS export investigated there, where the `backupsvc` credential is recovered
 **Suggested teaching level:** Level 5 (manual protocol interaction, anonymous service access as a distinct finding from CVE-based exploitation, and the value of thorough content enumeration)
+
+## What is FTP?
+
+FTP (File Transfer Protocol) is one of the oldest internet protocols still in common use, designed simply to upload and download files between a client and a server. It predates modern security practices by decades: in its plain/unencrypted form, credentials and file contents are sent in cleartext, and many FTP servers support an "anonymous" login mode intended for public file distribution. Despite its age, FTP servers are still frequently found in real organisations for legacy file-transfer workflows, making misconfigurations like open anonymous access a genuinely common real-world finding.

@@ -315,3 +315,7 @@ The Metasploit cross-check adds a further comparison point: two independent tool
 **Resulting access:** N/A (enumeration only; no authentication attempted or completed on either service)
 **Provides access for:** Precedes and motivates `e-03- erlang-otp-ssh-rce-cve-2025-32433.md`, which exploits the Erlang SSH service identified and distinguished here
 **Suggested teaching level:** Level 5 (banner grabbing, distinguishing services by protocol negotiation detail rather than port-scanner labels alone)
+
+## What is SSH?
+
+SSH (Secure Shell) is the standard protocol for securely logging into and administering remote systems over a network, providing an encrypted replacement for older, insecure protocols like Telnet. Almost every Linux/Unix server exposes SSH for remote administration, making it one of the most consistently present and heavily targeted services on any network. Because SSH is so ubiquitous, any software that also happens to speak the SSH protocol (as seen in this activity) can easily be mistaken for the genuine system service unless properly enumerated and compared.

@@ -202,3 +202,7 @@ Finally, the `mysql_login` false positive is arguably the single most important 
 **Resulting access:** None; the service was found to reject all connections from the current attacker position at the host-access-control level, before authentication
 **Provides access for:** No further activity currently depends on this finding; MariaDB remains an unexploited, access-restricted service on this target as of this activity
 **Suggested teaching level:** Level 5–6 (understanding host-based access control as distinct from authentication, and correctly interpreting consistent negative results across multiple tools as a genuine finding rather than incomplete enumeration)
+
+## What is MySQL/MariaDB?
+
+MySQL and MariaDB (a compatible, community-developed fork of MySQL) are widely used relational database servers that store and manage structured data for applications, from small internal tools to large-scale production systems. Almost any organisation running custom software, web applications, or business systems has a database server like this somewhere on its network, making it a near-universal and high-value target: successful access can expose everything from customer records to internal credentials stored by other applications.

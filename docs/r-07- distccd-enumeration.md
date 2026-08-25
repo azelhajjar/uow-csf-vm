@@ -149,3 +149,7 @@ The nmap crash in Step 3 is equally important as a standalone lesson: broad scri
 **Resulting access:** Command execution as `distccd` (uid 121) demonstrated via the NSE script's self-test in Step 5; no interactive shell obtained in this activity (see `e-06- distcc-cve-2004-2687.md` for the full reverse-shell exploitation)
 **Provides access for:** Precedes and directly motivates the full exploitation documented in `e-06- distcc-cve-2004-2687.md`
 **Suggested teaching level:** Level 6–7 (correct sequencing of general-to-specific enumeration, understanding NSE script categorisation and risk, and a real example of tooling failure from improperly scoped script categories)
+
+## What is distcc?
+
+distcc is a tool that speeds up software compilation by distributing the work of compiling code across multiple machines on a network, rather than relying on a single machine's CPU. A machine running `distccd` (the distcc daemon) accepts compilation jobs from other machines and returns the compiled results. It is mostly used in software development environments (e.g. build farms) rather than typical business infrastructure, but where it does exist, its core design, accepting and executing arbitrary compiler invocations from the network, makes it a historically significant source of remote code execution vulnerabilities when not properly restricted.

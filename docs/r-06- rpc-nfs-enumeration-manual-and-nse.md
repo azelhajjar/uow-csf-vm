@@ -1,4 +1,4 @@
-# Activity: RPC and NFS Enumeration
+# Activity: RPC and NFS Enumeration (Manual Tools vs. NSE)
 
 ## Summary
 
@@ -159,3 +159,7 @@ This is also a good opportunity to reinforce the RPC ephemeral port drift behavi
 **Resulting access:** N/A (enumeration only; file contents observed via `nfs-ls` were not yet acted upon or correlated into credentials in this activity, that step is documented separately in `e- 02-nfs-anonymous-credential-exposure.md`)
 **Provides access for:** Precedes and directly motivates `e- 02-nfs-anonymous-credential-exposure.md`
 **Suggested teaching level:** Level 5 (RPC/NFS enumeration fundamentals, comparing manual and automated tooling, understanding RPC program numbers vs. ephemeral ports)
+
+## What is RPC/NFS?
+
+RPC (Remote Procedure Call) is a general mechanism that lets a program on one computer request a service from a program on another computer as if it were a local function call; `rpcbind` is the service that keeps track of which RPC programs are running on which ports. NFS (Network File System) is one of the most common services built on RPC, and lets a Linux/Unix server export directories that other machines can mount and use as if they were local folders, similar in purpose to Samba/SMB but native to the Unix world rather than Windows. NFS shares are common in real organisations for centralised storage and backups, and misconfigured exports (as investigated here) are a long-standing, still-common source of unauthorised access.

@@ -145,3 +145,7 @@ The inconclusive CVE-2023-25194 check is also valuable specifically because it r
 **Resulting access:** N/A (enumeration only; the CVE-2023-25194 check did not result in any access or confirmed exploitability)
 **Provides access for:** Confirms the process identity of ports 8082/8083/8091 referenced throughout this project; identifies CVE-2023-25194 as an open lead for potential future exploitation activity, not yet pursued further
 **Suggested teaching level:** Level 6 (confirming inferred findings through direct testing, and correctly interpreting inconclusive automated vulnerability checks)
+
+## What is Apache Druid?
+
+Apache Druid is a real-time analytics database designed to ingest, store, and quickly query very large volumes of data, commonly used for dashboards, monitoring systems, and business analytics platforms that need fast answers over huge datasets. It is a distributed system made up of several cooperating processes (coordinator, broker, historical, middleManager, router), each handling a different part of the data pipeline, which is why this VM exposes several distinct Druid-related ports rather than just one. As a relatively complex, less commonly hardened piece of infrastructure software, Druid has a real history of serious vulnerabilities, including the one exploited elsewhere on this VM.

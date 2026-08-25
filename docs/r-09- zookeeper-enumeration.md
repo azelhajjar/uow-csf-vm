@@ -130,3 +130,7 @@ This is also an excellent example of connecting enumeration findings across serv
 **Resulting access:** N/A (enumeration only; no authentication exists to bypass and none was attempted)
 **Provides access for:** Establishes the operational relationship between this service and the Apache Druid installation exploited in `e-05- apache-druid-cve-2021-25646.md`; no further activity currently depends on this finding directly
 **Suggested teaching level:** Level 5–6 (manual protocol interaction where no NSE tooling exists, and connecting enumeration findings across services to establish architectural relationships)
+
+## What is Zookeeper?
+
+Apache Zookeeper is a coordination service used by distributed applications to manage shared configuration, naming, and synchronisation across multiple servers working together. It is rarely deployed as a standalone, general-purpose service; instead, it is almost always a supporting/backend component bundled with a larger distributed system (in this case, Apache Druid), which is exactly what this activity's enumeration confirms. Recognising Zookeeper as a dependency of another service, rather than a target in its own right, is itself a useful reconnaissance skill.

