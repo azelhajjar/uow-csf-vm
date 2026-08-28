@@ -1,6 +1,6 @@
 # Web Apps README — CAV-CSF Linux VM
 
-Overview of the web application security training platforms deployed on this VM. Distinct from `services-README.md`, which covers the deliberately vulnerable/misconfigured infrastructure services (CUPS, Samba, SNMP, etc.). These are self-contained OWASP training curricula with their own built-in lessons/guidance; no bespoke `r-`/`e-` reconnaissance or exploitation write-ups exist for them in this project, separate lab materials are used instead.
+Overview of the web application security training platforms deployed on this VM. Distinct from `services-README.md`, which covers the deliberately vulnerable/misconfigured infrastructure services (CUPS, Samba, SNMP, etc.). These are self-contained training curricula with their own built-in lessons/guidance; no bespoke `r-`/`e-` reconnaissance or exploitation write-ups exist for them in this project, separate lab materials are used instead.
 
 ---
 
@@ -12,6 +12,7 @@ Overview of the web application security training platforms deployed on this VM.
 | WebWolf | 9090/tcp | `webwolf.uow-csf.internal` |
 | DVWA | 8090/tcp | `dvwa.uow-csf.internal` |
 | OWASP Security Shepherd | 8543/tcp (HTTPS) | `shepherd.uow-csf.internal` |
+| OWASP Juice Shop | 3000/tcp | `juiceshop.uow-csf.internal` |
 
 ## Quick Access Links
 
@@ -21,6 +22,7 @@ Overview of the web application security training platforms deployed on this VM.
 | WebWolf | `http://webwolf.uow-csf.internal:9090/login` | `http://192.168.144.100:9090/login` |
 | DVWA | `http://dvwa.uow-csf.internal:8090/` | `http://192.168.144.100:8090/` |
 | Security Shepherd | `https://shepherd.uow-csf.internal:8543/` | `https://192.168.144.100:8543/` |
+| Juice Shop | `http://juiceshop.uow-csf.internal:3000/` | `http://192.168.144.100:3000/` |
 
 ## WebGoat / WebWolf
 
@@ -42,7 +44,13 @@ Admin credentials: `admin` / `password` on first login, requires a password chan
 
 Student account: `student` / `student`, assigned to the "2026 uow-class" class.
 
+## OWASP Juice Shop
+
+Modern, self-contained vulnerable web application (Node.js/Angular) covering the OWASP Top 10 and beyond, with a built-in scoring system that tracks solved challenges in-app rather than via an external scoreboard. No installation prerequisites for students beyond a browser, well suited as either an open-ended, self-paced practice target or a structured challenge sequence, and complements the more guided WebGoat and freeform DVWA formats already on this VM.
+
+No default admin account; students self-register through the app's own registration flow, which is itself part of the intended challenge set (account enumeration, weak validation, etc.). Runs natively via Node.js (not Docker), managed as a systemd service so it survives a host reboot.
+
 ## Notes
 
-- All four platforms sit outside the deliberately-vulnerable infrastructure services documented in `r-`/`e-` activity files; they are training curricula with their own internal guidance, not targets requiring bespoke reconnaissance/exploitation write-ups in this project.
-- DNS records for `webgoat`, `webwolf`, `dvwa`, and `shepherd` are included in `db.uow-csf.internal` alongside the infrastructure service records.
+- All five platforms sit outside the deliberately-vulnerable infrastructure services documented in `r-`/`e-` activity files; they are training curricula with their own internal guidance, not targets requiring bespoke reconnaissance/exploitation write-ups in this project.
+- DNS records for `webgoat`, `webwolf`, `dvwa`, `shepherd`, and `juiceshop` are included in `db.uow-csf.internal` alongside the infrastructure service records.
