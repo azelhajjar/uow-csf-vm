@@ -70,6 +70,8 @@ www.uow-csf.internal.   604800  IN      A       192.168.144.132
 
 Two entries stand out as genuinely valuable leads beyond the already-known services: `dc01.uow-csf.internal` (suggesting a domain controller, presumably part of a Windows AD environment not yet directly reachable or built) and `vpn-internal`/`backup-legacy` (suggesting infrastructure the organisation has, that isn't otherwise announced anywhere else on the network). A zone transfer can reveal the *existence* and *naming conventions* of internal systems even when those specific hosts aren't currently reachable, itself valuable intelligence about the target organisation's infrastructure and internal naming habits.
 
+The `dc01` observation above is recorded as it stood when this activity was run. The Windows domain controller has since been built at that address, under the hostname `uow-csf-dc` rather than `dc01`; see the status note in `e-16- dns-zone-transfer.md` for the resulting record-naming and zone-authority items still to be resolved. `vpn-internal` and `backup-legacy` remain unreachable as described.
+
 ### Step 4: Corroborating via NSE
 
 ```bash
@@ -115,5 +117,5 @@ DNS (Domain Name System) is the internet's naming system, translating human-read
 **Required starting access:** Network access to the target from Kali
 **Starting account:** None
 **Resulting access:** Full disclosure of the internal DNS zone
-**Provides access for:** Precedes `e-16- dns-zone-transfer.md`; the `vpn-internal`/`backup-legacy`/`dc01` records identified here are open leads for future correlation once corresponding services/VMs exist
+**Provides access for:** Precedes `e-16- dns-zone-transfer.md`; the `dc01` record now correlates to the built Windows AD VM at `192.168.144.200` (hostname mismatch noted in `e-16`), while `vpn-internal`/`backup-legacy` remain open leads for future correlation once corresponding services/VMs exist
 **Suggested teaching level:** Level 5

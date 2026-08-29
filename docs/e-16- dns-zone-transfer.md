@@ -29,7 +29,7 @@ Full output already documented in `r-17- dns-enumeration.md`. The exploitation s
 
 **Interpreting and acting on the disclosed records:**
 
-- **`files.uow-csf.internal`, `print.uow-csf.internal`, `mail.uow-csf.internal`, `www.uow-csf.internal`** all resolve to the same host, confirming this single machine runs the Samba share, CUPS print server, and (once built) mail service, corroborating findings already established in `r-14`/`e-13` and `r-12`/`e-12`. A student without prior knowledge of this VM's other services would gain a fast, reliable map of what's running where simply from these names, rather than needing to rediscover each service independently through port scanning alone.
+- **`files.uow-csf.internal`, `print.uow-csf.internal`, `mail.uow-csf.internal`, `www.uow-csf.internal`** all resolve to the same host, confirming this single machine runs the Samba share, CUPS print server, and mail service, corroborating findings already established in `r-14`/`e-13`, `r-12`/`e-12` and `r-18`/`e-17`. A student without prior knowledge of this VM's other services would gain a fast, reliable map of what's running where simply from these names, rather than needing to rediscover each service independently through port scanning alone.
 - **`dc01.uow-csf.internal` → 192.168.144.200`** discloses the presence and expected address of a domain controller, valuable forward-looking intelligence even before that machine exists or is reachable: an attacker (or a student planning further attacks) now knows to watch for and prioritise this address once it becomes active, and knows the organisation is (or will be) running Active Directory.
 - **`vpn-internal.uow-csf.internal` → 192.168.144.150`** and **`backup-legacy.uow-csf.internal` → 192.168.144.151`** point to addresses not currently reachable on this network segment. Confirming this:
 
@@ -38,6 +38,13 @@ nmap -p- -T4 192.168.144.150 192.168.144.151
 ```
 
 Both hosts do not respond (not part of the current lab topology). This is itself a useful, correctly-interpreted negative result: the DNS records reveal the organisation's *intended* or *documented* internal naming scheme, which does not necessarily mean every named host is currently live or reachable from the attacker's position. Real assessments frequently encounter this exact situation, DNS zone data reflecting infrastructure that is planned, decommissioned, or simply on a different network segment, and correctly recording "record exists, host currently unreachable" rather than either ignoring the finding or assuming compromise is a meaningful professional distinction.
+
+### Status note: the `dc01` record since this activity was written
+
+The observations above are recorded exactly as made at the time, when no domain controller existed. That has since changed, and two points now need resolving before this activity is used with students:
+
+- The Windows domain controller is built and live at `192.168.144.200`, so the `dc01` record is no longer a lead pointing at empty space. The address is correct, but the DC's actual hostname is `uow-csf-dc`, not `dc01`. Either the zone record is corrected to match, or `dc01` is deliberately retained as a stale/legacy record, which is realistic but should be an explicit design choice rather than an accident.
+- The DC now serves its own AD-integrated zone for `uow-csf.internal`, so two servers claim authority for this zone. Any fix must preserve the `allow-transfer { any; }` misconfiguration on the Linux BIND9 instance, since this entire activity depends on it. See `ad-integration.md` for the open decision.
 
 ## Outcome
 
@@ -59,5 +66,5 @@ This activity is a strong demonstration of DNS reconnaissance value beyond the t
 **Required starting access:** Network access to the target from Kali
 **Starting account:** None
 **Resulting access:** Complete internal DNS zone disclosure; no shell or further system access directly
-**Provides access for:** Corroborates `r-12`/`e-12` (CUPS) and `r-14`/`e-13` (Samba); the `dc01` record is a forward-looking lead for the future Windows AD VM once built; `vpn-internal` and `backup-legacy` remain open, currently-unreachable leads
+**Provides access for:** Corroborates `r-12`/`e-12` (CUPS) and `r-14`/`e-13` (Samba); the `dc01` record now points at the built Windows AD VM at `192.168.144.200`, subject to the hostname mismatch in the status note above; `vpn-internal` and `backup-legacy` remain open, currently-unreachable leads
 **Suggested teaching level:** Level 5-6

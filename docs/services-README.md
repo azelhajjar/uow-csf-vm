@@ -2,7 +2,7 @@
 
 A consolidated overview of every service running on this VM, its status (vulnerable, misconfigured, or hardened/not exploitable), and links to the relevant reconnaissance/exploitation activity files. Intended as a quick-reference index; see the individual `r-`/`e-` files for full technical detail, evidence, and remediation guidance.
 
-Target addressing note: the disposable VM's IP has changed over the life of this build (originally `.131`, then `.132` after a delete/re-clone); the master VM is currently `.130` and is planned to move to a static `.100` once no further NAT-dependent installs are needed. Individual activity files reflect whatever IP was current at the time they were written; this README does not track IP history, see `r-13- cups-discovery-ip-change.md` for that discussion.
+Target addressing note: the disposable VM's IP has changed over the life of this build (originally `.131`, then `.132` after a delete/re-clone); the master VM is currently `.130` and is planned to move to a static `.100` once no further NAT-dependent installs are needed. Individual activity files reflect whatever IP was current at the time they were written; this README does not track IP history, see `r-13- cups-discovery-ip-change.md` for that discussion. Note that `webapps-README.md` and `ad-integration.md` already document the Linux VM at its intended final `192.168.144.100`, which is the target state rather than the current one. The Windows domain controller is a separate, deliberate static exception at `192.168.144.200`.
 
 ---
 
@@ -81,7 +81,9 @@ Default `public` community string with `view all` (rather than the restrictive d
 `bind 0.0.0.0` and `protected-mode no`, no `requirepass` set. Contains a live-looking session token (session-hijacking primitive) and an application database password (unconfirmed credential-reuse lead against MariaDB, which rejects Kali's connections regardless).
 
 ### DNS (BIND9) — Misconfigured (no CVE)
-Serves `uow-csf.internal` (deliberately `.internal`, not `.local`, to avoid the mDNS reservation conflict) with `allow-transfer { any; }`. A full AXFR discloses every hostname, including `dc01` (foreshadowing the future Windows AD VM at the fixed `192.168.144.200`) and two currently-unreachable breadcrumb hosts (`vpn-internal`, `backup-legacy`).
+Serves `uow-csf.internal` (deliberately `.internal`, not `.local`, to avoid the mDNS reservation conflict) with `allow-transfer { any; }`. A full AXFR discloses every hostname, including `dc01` at `192.168.144.200` and two currently-unreachable breadcrumb hosts (`vpn-internal`, `backup-legacy`).
+
+The `dc01` record was written as a forward-looking breadcrumb while the Windows AD VM was still unbuilt. That VM now exists at `192.168.144.200`, but its actual hostname is `uow-csf-dc`, so the address is correct while the name is not. Two open items follow from this and are tracked below: the `dc01` name itself, and the fact that this BIND9 instance and the DC's AD-integrated zone now both claim authority for `uow-csf.internal`.
 
 ### SMTP (Postfix) — Misconfigured (no CVE)
 `mynetworks` widened to the full lab subnet (open relay, demonstrated by successfully queuing mail to an unrelated external domain) and `mydestination` includes `uow-csf.internal` (enables reliable `RCPT TO`-based user enumeration, though `VRFY` itself is unreliable on this Postfix build, a documented tool-behaviour finding). A legitimate internal email was delivered locally to `analyst`'s mailbox; this is **not** part of the unauthenticated attack surface, it requires a prior shell as `analyst` to read.
@@ -99,8 +101,21 @@ The same underlying lead (the NFS export containing the `backupsvc` credential) 
 
 ## Known Open Items
 
+### Blocking a design decision
+
+- **Split DNS authority for `uow-csf.internal`.** This VM's BIND9 instance is authoritative for the zone (that authority is the entire basis of `e-16`), and the Windows DC now holds an AD-integrated primary zone for the same name. Pointing this VM's resolver at the DC would break the five web-application records in `db.uow-csf.internal`; leaving it self-resolving means AD SRV records (`_ldap._tcp`, `_kerberos._tcp`) do not resolve here. A deliberate resolution is needed — conditional forwarding of `_msdcs`/SRV lookups to the DC, replicating the application records into AD DNS, or an explicit split-horizon design — before the outstanding Linux-to-DC reachability checks in `w-01` can mean anything. Whatever is chosen must preserve the deliberate `allow-transfer { any; }` misconfiguration, since `e-16` depends on it.
+- **`dc01` versus `uow-csf-dc`.** The zone advertises `dc01.uow-csf.internal → 192.168.144.200`; the built DC answers to `uow-csf-dc`. Either the zone record is corrected to match (a `SCENARIO CHANGE` to the master), or `dc01` is deliberately retained as a stale/legacy record with that intent documented. It should not be left as an unacknowledged mismatch.
+
+### Unresolved technical leads
+
 - **CVE-2023-25194** (Druid JNDI injection) — identified, not confirmed exploitable
 - **Port 1716** — service identity unresolved
+- **Redis `app:config:db_password`** — recovered in `e-15`, untested as a credential-reuse lead because MariaDB rejects Kali's source address before authentication (`r-08`)
+
+### Deferred build work
+
 - **`cwscenario.uk` passive reconnaissance** — deferred pending domain/subdomain configuration (`r-01`)
-- **Windows AD VM** — not yet built; `dc01.uow-csf.internal` and the `uow-csf.local` naming convention are already prepared for it
 - **Static IP migration** (master → `192.168.144.100`) — deferred until no further NAT-dependent package installs are anticipated; will require updating the DNS zone file (`db.uow-csf.internal`) self-referencing records on both VMs
+- **Final package/service minimisation** — procedure documented in `final-linux-vm-optimisation.md`, not yet executed
+
+Windows AD status is no longer tracked here; see `w-01-windows-ad-baseline-design.md` for the built Phase 1 baseline and `ad-integration.md` for the cross-VM integration state.

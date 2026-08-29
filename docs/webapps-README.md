@@ -16,6 +16,8 @@ Overview of the web application security training platforms deployed on this VM.
 
 ## Quick Access Links
 
+Two addressing caveats apply to the table below. The `192.168.144.100` address is the Linux VM's intended final static address; the master VM is currently at `192.168.144.130` until the static IP migration tracked in `services-README.md` is done. And the hostname URLs depend on the Linux VM's own BIND9 instance remaining authoritative for `uow-csf.internal`, which is the subject of the open DNS authority decision in `ad-integration.md`. If the resolver is repointed at the Windows DC without first recreating these records in AD DNS, only the IP-based URLs will work.
+
 | Platform | URL (by hostname) | URL (by static IP) |
 |---|---|---|
 | WebGoat | `http://webgoat.uow-csf.internal:8080/WebGoat/` | `http://192.168.144.100:8080/WebGoat/` |
@@ -53,4 +55,4 @@ No default admin account; students self-register through the app's own registrat
 ## Notes
 
 - All five platforms sit outside the deliberately-vulnerable infrastructure services documented in `r-`/`e-` activity files; they are training curricula with their own internal guidance, not targets requiring bespoke reconnaissance/exploitation write-ups in this project.
-- DNS records for `webgoat`, `webwolf`, `dvwa`, `shepherd`, and `juiceshop` are included in `db.uow-csf.internal` alongside the infrastructure service records.
+- DNS records for `webgoat`, `webwolf`, `dvwa`, `shepherd`, and `juiceshop` are included in `db.uow-csf.internal` alongside the infrastructure service records. These five records are the main practical stake in the DNS authority decision recorded in `ad-integration.md`.

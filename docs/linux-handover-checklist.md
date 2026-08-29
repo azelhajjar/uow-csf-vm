@@ -23,7 +23,9 @@ Nothing here should be deleted or edited without confirmation first, per the ori
 
 ## 1. Functional AD Integration
 
-Tracked in `w-01-windows-ad-baseline-design.md`, not duplicated here. Summary: master Linux VM successfully joined `uow-csf.internal` via `realmd`/`sssd` using the dedicated `svc-linux-auth` service account, login confirmed working, home directory auto-creation confirmed.
+Tracked in `w-01-windows-ad-baseline-design.md` and `ad-integration.md`, not duplicated here. Summary: master Linux VM successfully joined `uow-csf.internal` via `realmd`/`sssd` using the dedicated `svc-linux-auth` service account, login confirmed working, home directory auto-creation confirmed.
+
+Not handover-ready despite the working join: the Linux BIND9 instance and the DC both claim authority for `uow-csf.internal`, and the Linux-to-DC DNS/reachability checks are still outstanding pending that decision. See `ad-integration.md`. This should be settled before the VM is packaged, since it determines whether the five web application platforms resolve by hostname on the delivered image.
 
 ## 2. Linux Student-Facing Polish
 
@@ -34,7 +36,7 @@ Not yet reviewed in this session. Items to check before handover:
 - Login banner / MOTD content
 - GitHub issue-reporting link (confirm it points to `https://github.com/azelhajjar/uow-csf-vm.git` as documented, and is reachable/correct)
 - Hostname/IP references throughout any visible documentation or on-VM content
-- References to the Windows DC hostname/domain (should reflect `uow-csf-dc.uow-csf.internal` / `uow-csf.internal` accurately, if referenced at all)
+- References to the Windows DC hostname/domain (should reflect `uow-csf-dc.uow-csf.internal` / `uow-csf.internal` accurately, if referenced at all). One concrete instance already identified: the BIND9 zone `db.uow-csf.internal` advertises `dc01.uow-csf.internal → 192.168.144.200`, which is the right address under the wrong hostname. This is a scenario decision rather than cosmetic polish, tracked in `services-README.md`
 - Any remaining wording that implies the VM is still SecGen-generated (SecGen acknowledgement belongs in GitHub README/docs only, never on the landing page or login banner)
 
 ## 3. Handover Cleanup

@@ -2,7 +2,7 @@
 
 ## Summary
 
-Passive reconnaissance (OSINT) is the first phase of a standard penetration testing methodology, gathering information about a target without directly interacting with it. Earlier in this project, this phase was treated as not applicable, since the target VM was addressed purely by internal IP on an isolated lab segment with no domain or public footprint. This is no longer accurate: a real domain, `cwscenario.uk` ("coursework scenario"), has been registered specifically to support this reconnaissance step and to eventually tie together the Linux VM and the planned Windows/AD VM into a single coherent fictional organisation for teaching purposes.
+Passive reconnaissance (OSINT) is the first phase of a standard penetration testing methodology, gathering information about a target without directly interacting with it. Earlier in this project, this phase was treated as not applicable, since the target VM was addressed purely by internal IP on an isolated lab segment with no domain or public footprint. This is no longer accurate: a real domain, `cwscenario.uk` ("coursework scenario"), has been registered specifically to support this reconnaissance step and to tie together the Linux VM and the Windows/AD VM into a single coherent fictional organisation for teaching purposes.
 
 At the time of writing, `cwscenario.uk` has not yet had its subdomains, DNS records, or other supporting configuration built out, so passive reconnaissance against it is deferred until that setup work is complete. This activity is recorded as a placeholder to keep the reconnaissance phase properly represented in sequence, and will be completed once the domain is ready.
 
@@ -11,20 +11,23 @@ At the time of writing, `cwscenario.uk` has not yet had its subdomains, DNS reco
 | Item | Value |
 |---|---|
 | Domain | cwscenario.uk |
-| Purpose | Dedicated teaching domain, purpose-registered to support passive reconnaissance exercises and to connect the Linux VM (192.168.144.131/.130) and the future Windows/AD VM into a single fictional organisation |
+| Purpose | Dedicated teaching domain, purpose-registered to support passive reconnaissance exercises and to connect the Linux VM (192.168.144.131/.130) and the Windows/AD VM (192.168.144.200) into a single fictional organisation |
 | Status | Registered; subdomains and supporting DNS/service configuration not yet built out |
+| Blocker | None technical. The Windows AD VM this domain was meant to tie in has since been built, so the remaining work is the domain configuration itself |
 
 ## Background
 
 The disposable and master Linux VMs (192.168.144.131 and 192.168.144.130) are addressed purely by internal IP on an isolated lab segment. On their own, they have no domain, no public DNS presence, and nothing for passive OSINT techniques to act on, which is why passive reconnaissance was originally scoped as not applicable.
 
-`cwscenario.uk` changes this. It is a real, currently-registered domain intended specifically to give students a genuine, safe, legally-controlled target for passive reconnaissance techniques (WHOIS lookups, DNS enumeration, certificate transparency log searching, and eventually mail/employee-harvesting style exercises), and to serve as the organisational identity tying the Linux VM and the planned Windows/AD domain controller VM together into one coherent fictional company scenario, rather than two unrelated standalone machines.
+`cwscenario.uk` changes this. It is a real, currently-registered domain intended specifically to give students a genuine, safe, legally-controlled target for passive reconnaissance techniques (WHOIS lookups, DNS enumeration, certificate transparency log searching, and eventually mail/employee-harvesting style exercises), and to serve as the organisational identity tying the Linux VM and the Windows/AD domain controller VM together into one coherent fictional company scenario, rather than two unrelated standalone machines.
+
+Note the intended two-domain split, which should be preserved when this activity is completed: `cwscenario.uk` is the organisation's public-facing identity, the appropriate target for passive OSINT, while `uow-csf.internal` is its internal AD domain, discoverable only through active reconnaissance from inside the lab segment. The SNMP `sysName` disclosure in `r-15` (`PRINT-SRV-01.cwscenario.uk`) is consistent with this split rather than a naming error.
 
 ## Planned Configuration
 
 The following is planned but not yet implemented, and is recorded here so the eventual passive reconnaissance activity has clear scope once revisited:
 
-- Subdomains connecting to both the Linux VM and the future Windows/AD VM, likely following a pattern such as a subdomain per VM or per service
+- Subdomains connecting to both the Linux VM and the Windows/AD VM, likely following a pattern such as a subdomain per VM or per service
 - DNS records appropriate for the scenario (A/AAAA records pointing at the relevant VMs where meaningful, MX records if the planned email service is tied to this domain, TXT records if relevant to the exercise design)
 - Enough structure that genuine passive techniques (WHOIS, `dig` record enumeration, certificate transparency log searching via `crt.sh` or similar) return real, meaningful findings rather than an empty or trivial registration record
 

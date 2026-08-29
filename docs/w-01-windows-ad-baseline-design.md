@@ -1,17 +1,23 @@
-# Windows AD VM, Phase 1: Stable AD DS/DNS Baseline (Design)
+# Windows AD VM, Phase 1: Stable AD DS/DNS Baseline (Design and Build Record)
 
 ## Status
 
-Design and documentation only. Nothing on the Windows VM has been built, configured, tested or verified. No commands have been run by Claude. Everything below is a proposal for you to execute manually; verification claims only become true once you run the steps and confirm the output.
+Phase 1 is built and validated on the working VM. This document began as a design proposal and has since become the build record for that work, so it now mixes both: the design rationale and manual build sequence are retained because the master reproduction still has to follow them, and the validated results are recorded alongside.
+
+Everything in this document was executed manually by the project owner and verified from real command output. Nothing was run by an assistant, and no verification claim here is inferred rather than observed.
+
+Phase 2, the deliberate vulnerability layer, is still design-only. Section 10 in particular describes techniques written against accounts and misconfigurations that do not exist yet, and none of it has been validated.
 
 This revises the earlier `claude_w-01-windows-ad-baseline-design.md`. That document is background only and is not authoritative where it conflicts with the decisions below, in particular its Server Core and WordPress conclusions, which are not current.
 
 ## Current build status
 
 - Clean base installation complete: Windows Server 2019 Standard Evaluation, Desktop Experience, VMware Tools installed, host/guest copy-paste confirmed working. Network discovery not enabled.
-- No static IP, hostname change, AD DS/DNS roles, domain promotion, or vulnerable services/web components yet.
-- Snapshot taken at this point: `cav-csf-windows-01-clean-server2019-vmtools` (Windows Server 2019 + VMware Tools only).
-- Everything from section 7 onward is the next practical sequence from this state.
+- Snapshot at that point: `cav-csf-windows-01-clean-server2019-vmtools` (Windows Server 2019 + VMware Tools only).
+- Static IP, hostname rename, AD DS/DNS roles and domain promotion: all done and validated, see the next section.
+- OU, user and group scaffolding: built, matching section 3 exactly.
+- Deliberate vulnerabilities and the website component: not started, Phase 2 and section 5 respectively.
+- Master reproduction at `192.168.144.200` is in progress and is the reason sections 7 to 9 remain written as an executable sequence.
 
 ## Phase 1 AD DS/DNS baseline: passed
 
@@ -182,7 +188,9 @@ Phase 2 will explicitly revise the account/password model. At that stage, select
 
 - AD-integrated primary forward lookup zone: `uow-csf.internal`, auto-populated with SRV records (`_ldap._tcp`, `_kerberos._tcp`, `_kerberos._udp`, `_gc._tcp`, etc.) by DCPromo
 - Reverse lookup zone: optional but recommended for troubleshooting
-- Linux integration point: the Linux VM does not need to resolve AD names for its own normal operation. For an AD-focused exercise spanning both machines, Kali/Linux should point at `192.168.144.200` for DNS, or use a static hosts entry, rather than making the DC the default resolver for the whole lab network
+- Linux integration point: this assumption has changed. The original design noted that the Linux VM does not need to resolve AD names for its own normal operation, which is no longer true now that it is domain-joined via `realmd`/`sssd`. SSSD requires the AD SRV records to locate the DC
+- Unresolved consequence: the Linux VM's own BIND9 instance is also authoritative for `uow-csf.internal`, so the two zones now overlap. This is the blocking DNS decision recorded in `ad-integration.md`, and it must be settled before the outstanding Linux-to-DC reachability checks above can be completed
+- For Kali, pointing at `192.168.144.200` for DNS or using a static hosts entry remains the intended approach for AD-focused exercises, rather than making the DC the default resolver for the whole lab network
 - Whether the DC forwards external queries anywhere (for Windows Update or feature installation during the build) is an open decision, see section 12
 
 ## 5. Windows-hosted vulnerable website: role agreed, implementation undecided
@@ -212,7 +220,7 @@ Conceptual checklist, exact commands and expected output are in sections 8 and 9
 
 ## 7. Manual build steps
 
-For you to perform manually; nothing here has been executed.
+Executed and validated on the working VM. Retained as the reproduction sequence for the master build at `192.168.144.200`, which is still in progress.
 
 1. Configure static IP `192.168.144.200`, subnet mask, gateway.
 2. Configure preferred DNS as `192.168.144.200` (itself).
@@ -333,6 +341,7 @@ Each of these needs its own numbered write-up, following the existing `.md` docu
 - **Website implementation.** Lightweight IIS/custom intranet versus WordPress versus another option, to be settled once Phase 1 memory headroom is measured and the Phase 2 AD scenario exists to inform what clues the site needs to carry.
 - **Internet access during build.** Needed for Windows Update and feature installation. If enabled temporarily, should it be removed before the VM is treated as lab-ready?
 - **Licensing.** Windows Server 2019 evaluation media carries a 180-day evaluation period. Confirm whether eval-with-rearm is acceptable given the VM is discarded/rebuilt per activity, or whether the university's licensing channel should be used instead.
-- **Snapshot/versioning naming.** Confirm the Windows-side snapshot naming convention against the existing Linux VM style before the first snapshot is taken.
+- **Snapshot/versioning naming.** Still unreconciled, but now retrospectively: the clean-install snapshot was already taken as `cav-csf-windows-01-clean-server2019-vmtools`, which does not match the Linux convention (`CAV-CSF-01-VMware-Clean`). Decide whether to align the two conventions and rename, or accept the divergence and document it, before further Windows snapshots accumulate under the current style.
+- **DNS authority for `uow-csf.internal`.** The Linux VM's BIND9 instance and this DC's AD-integrated zone both claim authority for the same zone. Tracked as the blocking open decision in `ad-integration.md`; recorded here because it affects section 4 and the outstanding Linux-to-DC reachability validation.
 - **Time source.** Should Kali and the Linux VM share an NTP source with the DC? Relevant once cross-machine Kerberos activities (section 10) are added, where clock skew can silently break exploitation attempts.
 - **DnsAdmins scope.** Given the SYSTEM-level blast radius of the DnsAdmins path on a shared lab network, confirm whether it is in scope for Phase 2 at all, or kept as optional advanced material alongside DCSync.

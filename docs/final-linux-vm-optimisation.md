@@ -1,3 +1,15 @@
+## Status
+
+Not yet executed. This is a forward plan, not a completion record, and no step below has been run on either the disposable or the master VM.
+
+Prerequisite state as it currently stands:
+
+- Linux VM configuration: complete.
+- Headless conversion: complete.
+- Windows AD integration: domain join done and working, but the DNS authority question in `ad-integration.md` is unresolved, and Windows AD Phase 2 has not been built.
+
+Because the regression testing below explicitly covers Windows AD integration and cross-VM attack paths, running this procedure before Phase 2 exists would validate against an incomplete target and need repeating. Sequence it after Phase 2, not before.
+
 ## Final Linux cleanup
 
 Once the Linux VM configuration, Windows AD integration and headless conversion have all been completed and validated, perform a final cleanup before preparing the VMware distribution.
