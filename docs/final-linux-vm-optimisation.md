@@ -6,9 +6,12 @@ Prerequisite state as it currently stands:
 
 - Linux VM configuration: complete.
 - Headless conversion: complete.
-- Windows AD integration: domain join done and working, but the DNS authority question in `ad-integration.md` is unresolved, and Windows AD Phase 2 has not been built.
+- Windows AD integration: domain join done and working, DNS arrangement tested and accepted (see `ad-integration.md`), but Windows AD Phase 2 has not been built.
+- Delivery: the Linux VM has already been supplied to the lab technician for the lab repository.
 
-Because the regression testing below explicitly covers Windows AD integration and cross-VM attack paths, running this procedure before Phase 2 exists would validate against an incomplete target and need repeating. Sequence it after Phase 2, not before.
+Two reasons to defer. The regression testing below explicitly covers Windows AD integration and cross-VM attack paths, so running this procedure before Phase 2 exists would validate against an incomplete target and need repeating. And because the image has already been supplied, any minimisation now means re-supplying it, which should be batched with the outstanding student-facing polish in `linux-handover-checklist.md` rather than done on its own.
+
+Sequence this after Phase 2, as part of a single planned re-supply.
 
 ## Final Linux cleanup
 

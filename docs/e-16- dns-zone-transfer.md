@@ -43,8 +43,8 @@ Both hosts do not respond (not part of the current lab topology). This is itself
 
 The observations above are recorded exactly as made at the time, when no domain controller existed. That has since changed, and two points now need resolving before this activity is used with students:
 
-- The Windows domain controller is built and live at `192.168.144.200`, so the `dc01` record is no longer a lead pointing at empty space. The address is correct, but the DC's actual hostname is `uow-csf-dc`, not `dc01`. Either the zone record is corrected to match, or `dc01` is deliberately retained as a stale/legacy record, which is realistic but should be an explicit design choice rather than an accident.
-- The DC now serves its own AD-integrated zone for `uow-csf.internal`, so two servers claim authority for this zone. Any fix must preserve the `allow-transfer { any; }` misconfiguration on the Linux BIND9 instance, since this entire activity depends on it. See `ad-integration.md` for the open decision.
+- The Windows domain controller is built and live at `192.168.144.200`, so the `dc01` record is no longer a lead pointing at empty space. The address is correct, but the DC's actual hostname is `uow-csf-dc`, not `dc01`. Low priority, and correcting it would require re-supplying the Linux VM, so the practical choice is to retain `dc01` as a deliberately stale legacy record (realistic in its own right, and a reasonable teaching point about DNS records outliving the systems they named) or fold a correction into a future re-supply.
+- The DC now serves its own AD-integrated zone for `uow-csf.internal`, so both machines hold the zone. This is an accepted deliberate split rather than a fault, and it does not affect this activity: the `dig @<linux-vm> ... AXFR` query is answered by the Linux VM's own BIND9 instance, so the exercise runs identically whether or not the Windows VM is powered on. Students can complete it on the Linux VM alone. Any future change to the DNS arrangement must preserve the `allow-transfer { any; }` misconfiguration, since this activity depends on it entirely. See `ad-integration.md`.
 
 ## Outcome
 

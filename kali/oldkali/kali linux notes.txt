@@ -1,0 +1,17 @@
+Remove default "Hide Windows Borders" from terminal (if on)
+Change background colors to BackonLightYellow
+add the Dockers bookmar folder with the links to .local 
+
+Extensions:
+- HackBar V2
+- FoxyProxy Standard
+    - start burpsuite
+    - http://burp/
+    - Put Kali, OWASP on PCs in labs
+- Markdown Viewer
+    - To enable local md files using Extensions
+    - chrome://extensions/
+    - Markdown Viewer
+    - Enable: "Allow access to file URLs"
+
+Changed using kali-tweaks from zsh to bash

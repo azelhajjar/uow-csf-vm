@@ -101,10 +101,10 @@ The same underlying lead (the NFS export containing the `backupsvc` credential) 
 
 ## Known Open Items
 
-### Blocking a design decision
+### Accepted design characteristics
 
-- **Split DNS authority for `uow-csf.internal`.** This VM's BIND9 instance is authoritative for the zone (that authority is the entire basis of `e-16`), and the Windows DC now holds an AD-integrated primary zone for the same name. Pointing this VM's resolver at the DC would break the five web-application records in `db.uow-csf.internal`; leaving it self-resolving means AD SRV records (`_ldap._tcp`, `_kerberos._tcp`) do not resolve here. A deliberate resolution is needed — conditional forwarding of `_msdcs`/SRV lookups to the DC, replicating the application records into AD DNS, or an explicit split-horizon design — before the outstanding Linux-to-DC reachability checks in `w-01` can mean anything. Whatever is chosen must preserve the deliberate `allow-transfer { any; }` misconfiguration, since `e-16` depends on it.
-- **`dc01` versus `uow-csf-dc`.** The zone advertises `dc01.uow-csf.internal → 192.168.144.200`; the built DC answers to `uow-csf-dc`. Either the zone record is corrected to match (a `SCENARIO CHANGE` to the master), or `dc01` is deliberately retained as a stale/legacy record with that intent documented. It should not be left as an unacknowledged mismatch.
+- **Split DNS authority for `uow-csf.internal`.** This VM's BIND9 instance is authoritative for the zone (that authority is the entire basis of `e-16`), and the Windows DC also holds an AD-integrated primary zone for the same name. **Tested and accepted, not a defect.** All five web application platforms were confirmed working with the Windows VM powered off, which is the normal state for the great majority of teaching use: students work on the Linux VM alone except in one Level 6 and one Level 7 module. The Linux VM keeps serving its own zone and does not depend on the DC being reachable. No change is planned, and none should be made without a specific reason, since the Linux VM has already been supplied to the lab technician for the lab repository.
+- **`dc01` versus `uow-csf-dc`.** The zone advertises `dc01.uow-csf.internal → 192.168.144.200`; the built DC answers to `uow-csf-dc`. The address is correct, the name is not. Low priority and cosmetic in effect, but it should be an explicit choice rather than unnoticed drift: either correct the record, or retain `dc01` deliberately as a stale/legacy entry, which is realistic in its own right. Note that changing it now means re-supplying the Linux VM, so the realistic options are "retain and document" or "fold into the next scheduled re-supply."
 
 ### Unresolved technical leads
 

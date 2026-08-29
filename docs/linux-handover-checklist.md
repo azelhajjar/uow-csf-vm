@@ -4,6 +4,10 @@
 
 Tracking document for `cav-csf-linux` master VM handover to the lab technician. Separate from the Windows AD design document (`w-01-windows-ad-baseline-design.md`), since this covers Linux-side student-facing polish and build-artefact cleanup rather than AD design.
 
+**Handover has taken place.** The Linux VM has been supplied to the lab technician for the lab repository. This changes the status of everything below: remaining items are no longer pre-handover tasks but changes that would require re-supplying the image. They should be batched into a scheduled re-supply rather than actioned individually, and each should be weighed against the disruption of replacing an image already in the lab repository.
+
+Functionally the delivered image is sound. The five web application platforms have been tested and confirmed working with the Windows VM powered off, which is the normal operating state for all but two modules. What remains outstanding is student-facing polish, not capability.
+
 Nothing here should be deleted or edited without confirmation first, per the original scope instruction: produce a checklist/report, then wait for approval before acting on each item.
 
 ## Completed
@@ -25,11 +29,11 @@ Nothing here should be deleted or edited without confirmation first, per the ori
 
 Tracked in `w-01-windows-ad-baseline-design.md` and `ad-integration.md`, not duplicated here. Summary: master Linux VM successfully joined `uow-csf.internal` via `realmd`/`sssd` using the dedicated `svc-linux-auth` service account, login confirmed working, home directory auto-creation confirmed.
 
-Not handover-ready despite the working join: the Linux BIND9 instance and the DC both claim authority for `uow-csf.internal`, and the Linux-to-DC DNS/reachability checks are still outstanding pending that decision. See `ad-integration.md`. This should be settled before the VM is packaged, since it determines whether the five web application platforms resolve by hostname on the delivered image.
+DNS note, resolved: the Linux BIND9 instance and the DC both hold a zone for `uow-csf.internal`. This is an accepted deliberate split, not a defect. The Linux VM resolves independently and the web application platforms were confirmed working with the Windows VM powered off. The outstanding Linux-to-DC reachability checks in `w-01-windows-ad-baseline-design.md` apply only to the two modules that use both machines and should be validated with both running. See `ad-integration.md`.
 
 ## 2. Linux Student-Facing Polish
 
-Not yet reviewed in this session. Items to check before handover:
+Never reviewed, and the image has since been supplied. These items therefore shipped as-is. None affects whether the VM works, but they are the parts students see first, so they are the natural content of a future re-supply. Batch them together rather than replacing the image for any one of them:
 
 - Landing page wording
 - Landing page colours
@@ -41,7 +45,7 @@ Not yet reviewed in this session. Items to check before handover:
 
 ## 3. Handover Cleanup
 
-Status: substantially complete. Journal history, shell history, mailname/Postfix hostname, and SecGen filesystem/package residuals all reviewed and addressed above. Remaining from the original list:
+Status: substantially complete, and complete enough that the image was supplied on this basis. Journal history, shell history, mailname/Postfix hostname, and SecGen filesystem/package residuals all reviewed and addressed above. Remaining from the original list, now verification rather than pre-handover work:
 
 - Temporary files / scratch files: appears already handled during the build itself (`~/kde-plasma-packages.txt`, `~/error.log`, `~/installnotes` were removed during the KDE purge/cleanup steps visible in shell history before it was cleared). Not independently re-verified in this session, worth a final `ls -la ~` sanity check across accounts if a fully certain state is wanted.
 - Browser/download artefacts: not yet checked.

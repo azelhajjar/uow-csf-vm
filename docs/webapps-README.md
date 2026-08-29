@@ -16,7 +16,9 @@ Overview of the web application security training platforms deployed on this VM.
 
 ## Quick Access Links
 
-Two addressing caveats apply to the table below. The `192.168.144.100` address is the Linux VM's intended final static address; the master VM is currently at `192.168.144.130` until the static IP migration tracked in `services-README.md` is done. And the hostname URLs depend on the Linux VM's own BIND9 instance remaining authoritative for `uow-csf.internal`, which is the subject of the open DNS authority decision in `ad-integration.md`. If the resolver is repointed at the Windows DC without first recreating these records in AD DNS, only the IP-based URLs will work.
+All five platforms have been tested and confirmed working with the Windows VM powered off, which is the normal state for all but two modules. Hostname access is served by the Linux VM's own BIND9 instance and does not depend on the domain controller being reachable; IP access performs no name lookup at all and is therefore unaffected by any DNS or domain-join consideration.
+
+One addressing caveat: `192.168.144.100` is the Linux VM's intended final static address, while the master VM has been tracked at `192.168.144.130` pending the static IP migration noted in `services-README.md`. Confirm which address the image supplied to the lab technician actually uses before circulating these URLs to students.
 
 | Platform | URL (by hostname) | URL (by static IP) |
 |---|---|---|
@@ -55,4 +57,4 @@ No default admin account; students self-register through the app's own registrat
 ## Notes
 
 - All five platforms sit outside the deliberately-vulnerable infrastructure services documented in `r-`/`e-` activity files; they are training curricula with their own internal guidance, not targets requiring bespoke reconnaissance/exploitation write-ups in this project.
-- DNS records for `webgoat`, `webwolf`, `dvwa`, `shepherd`, and `juiceshop` are included in `db.uow-csf.internal` alongside the infrastructure service records. These five records are the main practical stake in the DNS authority decision recorded in `ad-integration.md`.
+- DNS records for `webgoat`, `webwolf`, `dvwa`, `shepherd`, and `juiceshop` are included in `db.uow-csf.internal` alongside the infrastructure service records. They are served by the Linux VM itself, which is why they continue to resolve when the Windows VM is offline. See `ad-integration.md` for why the zone is deliberately split between the two machines.

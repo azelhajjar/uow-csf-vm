@@ -40,24 +40,24 @@ Superseded framing: this document was originally written before either the Windo
 
 - **Should the Linux VM fully join `uow-csf.internal`, or only resolve and reference it?** Resolved: full join, completed via `realmd`/`sssd`. This supersedes the earlier constraint in this document that a full join should be deferred until a specific teaching purpose justified it.
 
-## Blocking Open Decision: DNS Authority
+## DNS Authority: Split, Tested, Accepted
 
-Both machines now claim authority for `uow-csf.internal`. The Linux VM runs BIND9 authoritative for the zone, serving the infrastructure and web application records in `db.uow-csf.internal`, and the DC holds an AD-integrated primary zone for the same name, auto-populated with the SRV records AD requires.
+Both machines hold a zone for `uow-csf.internal`. The Linux VM runs BIND9 authoritative for it, serving the infrastructure and web application records in `db.uow-csf.internal`, and the DC holds an AD-integrated primary zone for the same name, auto-populated with the SRV records AD requires.
 
-This is not currently reconciled, and it constrains the remaining DNS questions below rather than being independent of them:
+This is a deliberate split rather than a fault, and it has been validated in the configuration that matters most: **all five web application platforms were tested with the Windows VM powered off and confirmed working.** The Linux VM continues to serve its own zone independently and does not depend on the DC being reachable.
 
-- Pointing the Linux resolver at the DC breaks the five web application records (`webgoat`, `webwolf`, `dvwa`, `shepherd`, `juiceshop`) unless they are recreated in AD DNS.
-- Leaving the Linux VM self-resolving means AD SRV lookups do not resolve from it, which limits any Kerberos-dependent exercise run from the Linux side.
+The teaching pattern is what makes this the right trade-off. Students work on the Linux VM alone for the great majority of the curriculum; the Windows VM is used in one Level 6 module and one Level 7 module. Optimising the Linux VM for standalone operation therefore matches how the lab is actually used, and the Linux VM has already been supplied to the lab technician for the lab repository, so it is effectively frozen unless there is a strong reason to re-supply it.
 
-Candidate approaches, none yet chosen: conditional forwarding of `_msdcs` and SRV lookups to the DC while BIND9 keeps the application records; replicating the application records into the AD-integrated zone and retiring the BIND9 authority; or an explicit split-horizon design documented as intentional.
+Two consequences to keep in mind rather than fix:
 
-Constraint on any solution: the deliberate `allow-transfer { any; }` misconfiguration on the Linux BIND9 instance is the basis of `e-16` and must survive whatever is decided.
+- AD SRV lookups (`_ldap._tcp`, `_kerberos._tcp`) are served by the DC, so any Kerberos-dependent exercise driven from the Linux side needs the Windows VM running. That is expected for the two modules that use it.
+- The deliberate `allow-transfer { any; }` misconfiguration on the Linux BIND9 instance is the basis of `e-16` and must survive any future change here.
 
-Related record mismatch: the Linux zone advertises `dc01.uow-csf.internal → 192.168.144.200`, but the DC's hostname is `uow-csf-dc`. The address is right, the name is not. Either correct the record or document `dc01` as a deliberately retained stale entry.
+Related record mismatch, low priority: the Linux zone advertises `dc01.uow-csf.internal → 192.168.144.200`, but the DC's hostname is `uow-csf-dc`. The address is right, the name is not. Either retain `dc01` as a deliberately stale legacy entry, which is realistic, or correct it during the next scheduled re-supply of the Linux VM.
 
 ## DNS Expectations
 
-Once the authority question above is resolved, the Linux VM should be able to resolve:
+For the two modules that use both VMs, the Linux VM should be able to resolve:
 
 ```text
 uow-csf-dc.uow-csf.internal
@@ -72,12 +72,15 @@ Expected DC IP:
 192.168.144.200
 ```
 
-Linux-to-DC DNS and reachability checks are recorded as still outstanding in `w-01-windows-ad-baseline-design.md`. They cannot be meaningfully completed before the authority decision is made.
+Linux-to-DC DNS and reachability checks are recorded as still outstanding in `w-01-windows-ad-baseline-design.md`. They are relevant only to the two modules that use both VMs, and should be validated with both machines running rather than treated as a general handover blocker.
+
+## Resolved by Testing
+
+- **Should Linux use the Windows DC as its primary DNS server?** No. The Linux VM keeps its own resolution, which is what allows it to work standalone.
+- **Should DNS fallback remain available when the Windows VM is offline?** Effectively yes, and confirmed by test: all five web application platforms work with the Windows VM powered off.
 
 ## Remaining Open Decisions
 
-- Should Linux use the Windows DC as its primary DNS server? Dependent on the authority decision above.
-- Should DNS fallback remain available when the Windows VM is offline? Relevant because the five web application platforms are reachable by hostname only while the Linux zone resolves.
 - Which Linux services should contain breadcrumbs pointing to AD?
 - Should Kerberos/LDAP/SSSD exercises be part of the core lab or an advanced extension? The join itself is done, so this is now a question about exercise design rather than capability.
 - Should SMB integration be Linux-to-Windows, Windows-to-Linux, or both?
