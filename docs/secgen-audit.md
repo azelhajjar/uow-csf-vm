@@ -4,10 +4,11 @@
 
 The audit defined by this plan has been carried out, and the resulting remediation is recorded in `linux-handover-checklist.md`, which is the authoritative record of findings and outcomes. This document is retained as the methodology, not as an outstanding task.
 
-Summary of where it landed: hostname, journal history, shell history, `/etc/mailname` and Postfix `mydestination` all cleaned and confirmed; no SecGen-named paths anywhere on the filesystem; the `erlang-otp-prebuilt` package deliberately kept, since it is load-bearing for the `e-03` scenario and its only SecGen trace is a `dpkg` description string. Still open and low priority: git reflogs under `/var/www/dvwa` and `/opt/SecurityShepherd` referencing the old hostname.
+Summary of where it landed: hostname, journal history, shell history, `/etc/mailname`, Postfix `mydestination`, the landing page, the issue-reporting link, login banner / MOTD content, visible on-VM notes, hostname/domain references, and visible SecGen-generated wording have all been reviewed and addressed; no SecGen-named paths remain anywhere on the filesystem; the `erlang-otp-prebuilt` package is deliberately kept, since it is load-bearing for the `e-03` scenario and its only SecGen trace is a `dpkg` description string. Still open and low priority: git reflogs under `/var/www/dvwa` and `/opt/SecurityShepherd` referencing the old hostname.
 
-The student-facing polish items in the "Repository Areas To Check" list below (landing page, login banner, MOTD, issue-reporting link) have **not** been reviewed. Those remain outstanding and are tracked in `linux-handover-checklist.md` section 2.
+The landing page, student-facing issue-reporting link, login banner / MOTD content, visible on-VM notes, hostname/domain references, and visible SecGen-generated wording have all been reviewed and addressed as part of the Linux handover pass. The landing page is live at `http://192.168.144.100/` and is served by Apache from `/var/www/html/index.html`.
 
+No outstanding student-facing polish item remains. The only recorded low-priority SecGen residual is the internal git reflog history under `/var/www/dvwa` and `/opt/SecurityShepherd`, which is not student-facing normal-use content.
 ## Purpose
 
 Audit the CAV-CSF Linux VM and repository for leftover SecGen references or artefacts.

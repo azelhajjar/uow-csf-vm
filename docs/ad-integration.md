@@ -8,14 +8,14 @@ The Linux VM remains the main general-purpose vulnerable services target. The Wi
 
 ## Status
 
-Superseded framing: this document was originally written before either the Windows DC or the domain join existed, and described the whole integration as planned. Both have since been built. The sections below now separate what is confirmed working from what is still an open decision.
+Superseded framing: this document was originally written before either the Windows DC or the Linux domain join existed, and described the integration as planned. That is now stale. Windows Phase 1 is complete, the DC is live at `192.168.144.200`, and the Linux master is static at `192.168.144.100` and joined to `uow-csf.internal`. The sections below separate confirmed working state from remaining design decisions.
 
 ## Current VM Roles
 
 ### Linux VM
 
 - Hostname: `cav-csf-linux`
-- IP address: `192.168.144.100` (intended final address; the master VM is currently at `192.168.144.130` pending the static IP migration tracked in `services-README.md`)
+- IP address: `192.168.144.100` (final static master address)
 - Role: general vulnerable Linux/service target
 
 ### Windows AD VM
@@ -27,7 +27,7 @@ Superseded framing: this document was originally written before either the Windo
 - FQDN: `uow-csf-dc.uow-csf.internal`
 - NetBIOS name: `UOWCSF`
 - Roles: AD DS and DNS
-- Build state: Phase 1 baseline built and validated, see `w-01-windows-ad-baseline-design.md`. No deliberate vulnerabilities applied yet.
+- Build state: Phase 1 baseline complete and validated, see `w-01-windows-ad-baseline-design.md`. No deliberate Phase 2 vulnerabilities applied yet.
 
 ## Confirmed Working
 
@@ -72,7 +72,7 @@ Expected DC IP:
 192.168.144.200
 ```
 
-Linux-to-DC DNS and reachability checks are recorded as still outstanding in `w-01-windows-ad-baseline-design.md`. They are relevant only to the two modules that use both VMs, and should be validated with both machines running rather than treated as a general handover blocker.
+Linux-to-DC DNS and reachability checks were previously recorded as outstanding in `w-01-windows-ad-baseline-design.md`, but the successful Linux domain join confirms the required integration path works. They remain relevant only to the two modules that use both VMs, and any Kerberos-dependent exercise should still be validated with both machines running.
 
 ## Resolved by Testing
 

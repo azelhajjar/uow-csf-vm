@@ -33,15 +33,14 @@ DNS note, resolved: the Linux BIND9 instance and the DC both hold a zone for `uo
 
 ## 2. Linux Student-Facing Polish
 
-Never reviewed, and the image has since been supplied. These items therefore shipped as-is. None affects whether the VM works, but they are the parts students see first, so they are the natural content of a future re-supply. Batch them together rather than replacing the image for any one of them:
+The landing page has now been updated and verified at `http://192.168.144.100/`. It is served by Apache from `/var/www/html/index.html`, owned by `www-data:www-data`, mode `0644`, with browser title `CAV-CSF Linux Lab Environment`, visible host/IP context for `cav-csf-linux`, service links for the five web applications, appropriate fixed credentials where the application genuinely uses them, no fixed Juice Shop credential hint, and the GitHub issue-reporting link present.
 
-- Landing page wording
-- Landing page colours
+The image has already been supplied to the lab technician, so the remaining items below are future re-supply candidates rather than pre-handover blockers. None affects whether the VM works, but they are student-visible polish items and should be batched together rather than replacing the image for any one of them:
+
 - Login banner / MOTD content
-- GitHub issue-reporting link (confirm it points to `https://github.com/azelhajjar/uow-csf-vm.git` as documented, and is reachable/correct)
 - Hostname/IP references throughout any visible documentation or on-VM content
-- References to the Windows DC hostname/domain (should reflect `uow-csf-dc.uow-csf.internal` / `uow-csf.internal` accurately, if referenced at all). One concrete instance already identified: the BIND9 zone `db.uow-csf.internal` advertises `dc01.uow-csf.internal → 192.168.144.200`, which is the right address under the wrong hostname. This is a scenario decision rather than cosmetic polish, tracked in `services-README.md`
-- Any remaining wording that implies the VM is still SecGen-generated (SecGen acknowledgement belongs in GitHub README/docs only, never on the landing page or login banner)
+- References to the Windows DC hostname/domain, which should reflect `uow-csf-dc.uow-csf.internal` / `uow-csf.internal` accurately if referenced at all
+- Any remaining visible wording that implies the VM is still SecGen-generated; SecGen acknowledgement belongs in GitHub README/docs, not on the landing page or login banner
 
 ## 3. Handover Cleanup
 

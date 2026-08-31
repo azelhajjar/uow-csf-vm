@@ -16,9 +16,9 @@ Overview of the web application security training platforms deployed on this VM.
 
 ## Quick Access Links
 
-All five platforms have been tested and confirmed working with the Windows VM powered off, which is the normal state for all but two modules. Hostname access is served by the Linux VM's own BIND9 instance and does not depend on the domain controller being reachable; IP access performs no name lookup at all and is therefore unaffected by any DNS or domain-join consideration.
+All five platforms are deployed on the final Linux master VM at `192.168.144.100` and have been tested and confirmed working with the Windows VM powered off, which is the normal state for all but two modules. Hostname access is served by the Linux VM's own BIND9 instance and does not depend on the domain controller being reachable; IP access performs no name lookup at all and is therefore unaffected by any DNS or domain-join consideration.
 
-One addressing caveat: `192.168.144.100` is the Linux VM's intended final static address, while the master VM has been tracked at `192.168.144.130` pending the static IP migration noted in `services-README.md`. Confirm which address the image supplied to the lab technician actually uses before circulating these URLs to students.
+Current addressing: the Linux master VM is now on its final static address, `192.168.144.100`. The five web application platforms are deployed on that master image and have been tested using both their `uow-csf.internal` hostnames and direct IP-based URLs.
 
 | Platform | URL (by hostname) | URL (by static IP) |
 |---|---|---|

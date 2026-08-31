@@ -2,8 +2,7 @@
 
 A consolidated overview of every service running on this VM, its status (vulnerable, misconfigured, or hardened/not exploitable), and links to the relevant reconnaissance/exploitation activity files. Intended as a quick-reference index; see the individual `r-`/`e-` files for full technical detail, evidence, and remediation guidance.
 
-Target addressing note: the disposable VM's IP has changed over the life of this build (originally `.131`, then `.132` after a delete/re-clone); the master VM is currently `.130` and is planned to move to a static `.100` once no further NAT-dependent installs are needed. Individual activity files reflect whatever IP was current at the time they were written; this README does not track IP history, see `r-13- cups-discovery-ip-change.md` for that discussion. Note that `webapps-README.md` and `ad-integration.md` already document the Linux VM at its intended final `192.168.144.100`, which is the target state rather than the current one. The Windows domain controller is a separate, deliberate static exception at `192.168.144.200`.
-
+Target addressing note: this README describes the master CAV-CSF Linux VM. The master VM is currently on its final static address, `192.168.144.100`. The Windows domain controller is a separate static host at `192.168.144.200`.
 ---
 
 ## Summary Table
@@ -115,7 +114,6 @@ The same underlying lead (the NFS export containing the `backupsvc` credential) 
 ### Deferred build work
 
 - **`cwscenario.uk` passive reconnaissance** — deferred pending domain/subdomain configuration (`r-01`)
-- **Static IP migration** (master → `192.168.144.100`) — deferred until no further NAT-dependent package installs are anticipated; will require updating the DNS zone file (`db.uow-csf.internal`) self-referencing records on both VMs
 - **Final package/service minimisation** — procedure documented in `final-linux-vm-optimisation.md`, not yet executed
 
 Windows AD status is no longer tracked here; see `w-01-windows-ad-baseline-design.md` for the built Phase 1 baseline and `ad-integration.md` for the cross-VM integration state.
