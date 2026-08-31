@@ -2,7 +2,7 @@
 
 ## Status
 
-Phase 1 is built and validated on the working VM. This document began as a design proposal and has since become the build record for that work, so it now mixes both: the design rationale and manual build sequence are retained because the master reproduction still has to follow them, and the validated results are recorded alongside.
+Phase 1 is complete on the Windows Server 2019 domain controller `uow-csf-dc` at `192.168.144.200`, for the domain `uow-csf.internal`. This document began as a design proposal and has since become the build record for that completed Phase 1 baseline. The design rationale and manual build sequence are retained as historical build documentation, while the validated results record the completed master state.
 
 Everything in this document was executed manually by the project owner and verified from real command output. Nothing was run by an assistant, and no verification claim here is inferred rather than observed.
 
@@ -17,7 +17,7 @@ This revises the earlier `claude_w-01-windows-ad-baseline-design.md`. That docum
 - Static IP, hostname rename, AD DS/DNS roles and domain promotion: all done and validated, see the next section.
 - OU, user and group scaffolding: built, matching section 3 exactly.
 - Deliberate vulnerabilities and the website component: not started, Phase 2 and section 5 respectively.
-- Master reproduction at `192.168.144.200` is in progress and is the reason sections 7 to 9 remain written as an executable sequence.
+- Master reproduction at `192.168.144.200` is complete; sections 7 to 9 are retained as the completed build sequence and validation record.
 
 ## Phase 1 AD DS/DNS baseline: passed
 
@@ -45,7 +45,7 @@ Known notes:
 - `repadmin /replsummary` returns no rows, there are no replication partners to report on a single-DC forest, this is expected rather than a failure.
 - One transient Spooler OOM event was logged during the pre-AD-role boot window, worth watching if it recurs, not treated as a Phase 1 blocker.
 
-Master reproduction (`192.168.144.200`) is in progress.
+Master reproduction (`192.168.144.200`) is complete.
 
 ### Confirmed carry-over items for eventual master reproduction
 
@@ -63,8 +63,8 @@ Not to be actioned yet, recorded here so they aren't lost between now and the ma
 - Power/lock-timeout settings: applied
 - Windows 7 and Windows 10 client domain join: confirmed working
 - Normal domain user login, tested end to end from a client: confirmed. Windows 10 client (`Win10`) joined to `uow-csf.internal`, logged in as `uowcsf\analyst` (Phase 1 baseline account), DNS correctly resolved to `192.168.144.200` via domain join, no manual DNS override needed
-- Decision on DHCP (whether the lab segment should offer it, and if so from where, given the DC is currently the only static-IP host): still outstanding. Data point: the Windows 10 client also required static IP configuration (`192.168.144.237`, `DHCP Enabled: No`), no DHCP currently available on the segment
-- Linux-to-DC DNS/reachability checks (`cav-csf-linux` resolving/reaching `uow-csf-dc.uow-csf.internal`): still outstanding
+- DHCP is not part of the completed Phase 1 baseline. The lab segment is currently static-addressed; the Windows 10 client was configured manually at `192.168.144.237` (`DHCP Enabled: No`). Any future DHCP service would be a separate post-Phase-1 design decision, not a Phase 1 blocker.
+- Linux-to-DC integration is now confirmed: `cav-csf-linux` has joined `uow-csf.internal` successfully via `realmd`/`sssd`, using the dedicated `svc-linux-auth` service account. Domain login and home-directory auto-creation have been confirmed.
 
 ### Power/lock-timeout settings: decided, keep
 
@@ -125,7 +125,7 @@ Disk: Microsoft's stated minimum for Server 2019 install media is around 32 GB. 
 `cav-csf-windows` is a Windows Server 2019 domain controller, deployed in VMware Workstation alongside `cav-csf-linux` and the university Kali attacker VM.
 
 - **Network segment.** Same `192.168.144.0/24` lab subnet as the Linux VM, not a separate isolated AD segment.
-- **Static IP.** `192.168.144.200`. Unlike the Linux VM, which deliberately uses DHCP, the DC needs a stable address for DNS, SRV records and Kerberos, so a static IP is a documented, deliberate exception.
+- **Static IP.** `192.168.144.200`. The Linux master is also now static at `192.168.144.100`; the DC's stable address is required for DNS, SRV records and Kerberos.
 - **VM sizing.** 2 GB RAM, 1 to 2 vCPU, 40 GB thin-provisioned disk, Desktop Experience install.
 
 ## 2. Domain and hostname configuration
@@ -197,13 +197,13 @@ Phase 2 will explicitly revise the account/password model. At that stage, select
 
 Agreed: the site's job is a reconnaissance and initial-access bridge into the AD environment (staff names/usernames matching the naming convention above, department names matching AD groups, internal hostnames, service account references, breadcrumbs toward `uow-csf-dc.uow-csf.internal`), not a general OWASP-style playground duplicating the Linux VM's WebGoat/Juice Shop/Security Shepherd coverage.
 
-Not yet decided: the implementation. Candidates, to be weighed once Phase 1 memory headroom is actually measured:
+Not yet decided: the implementation. Phase 1 memory headroom has now been measured and passed, so the website decision should be driven by the Phase 2 AD scenario design:
 
 - **Lightweight IIS/custom intranet or staff/service-desk portal.** Static or minimal server-side content, IIS role only (Static Content, CGI/URL Rewrite as needed), no database engine required. Lowest resource cost of the candidates, and easiest to control precisely for planted clues, at the cost of more manual build effort than an off-the-shelf CMS.
 - **WordPress (IIS + PHP via FastCGI + MariaDB, tuned down).** Familiar CMS with a large deliberately-vulnerable-plugin ecosystem if a specific CVE-based exercise is wanted later, at the cost of a heavier resource footprint (PHP-FPM/FastCGI plus a database engine) that competes directly with the already-tight 2 GB budget in section above. Only worth the cost if a specific teaching objective needs an actual CMS rather than a static/scripted site.
 - **Other lightweight Windows-compatible option**, if one emerges with a clearer resource/teaching trade-off than the two above.
 
-Given the current 2 GB target and the Desktop Experience overhead already discussed, the lightweight IIS/custom intranet is the more resource-conservative default, but this is not a decision yet, only a lean. WordPress remains on the table if there is a specific teaching reason (e.g. a plugin-based CVE the design wants to include) that justifies the extra memory cost. This should be revisited once section 6/9's memory headroom check has real numbers, and once the Phase 2 AD objects the site needs to reference (users, groups, hostnames) actually exist, so the clues are accurate rather than placeholder text.
+Given the 2 GB target and Desktop Experience overhead, the lightweight IIS/custom intranet remains the more resource-conservative default, but this is not a final decision. WordPress remains on the table only if a specific teaching reason, such as a plugin-based CVE, justifies the extra memory cost. Since Phase 1 memory headroom has passed, the remaining decision now depends on the Phase 2 AD objects the site needs to reference (users, groups, hostnames), so the clues are accurate rather than placeholder text.
 
 Build timing: not part of the Phase 1 baseline build. Sequenced after the DC baseline is stable, and ideally after the Phase 2 AD misconfiguration design exists.
 
@@ -220,7 +220,7 @@ Conceptual checklist, exact commands and expected output are in sections 8 and 9
 
 ## 7. Manual build steps
 
-Executed and validated on the working VM. Retained as the reproduction sequence for the master build at `192.168.144.200`, which is still in progress.
+Executed and validated on the master Windows VM at `192.168.144.200`. Retained as the completed build sequence for the Phase 1 baseline.
 
 1. Configure static IP `192.168.144.200`, subnet mask, gateway.
 2. Configure preferred DNS as `192.168.144.200` (itself).
@@ -338,7 +338,7 @@ Each of these needs its own numbered write-up, following the existing `.md` docu
   - If Windows Server 2019 Desktop Experience with no AD roles installed idles consistently above roughly 1.7 GB RAM used, or becomes visibly unstable/unusable at the 2 GB allocation, rebuild using Server Core before proceeding (Checkpoint A).
   - If it remains usable after clean install, continue to the AD DS/DNS baseline and check again after promotion (Checkpoint B).
   - This is a quick practical observation at each checkpoint, not a separate benchmarking exercise.
-- **Website implementation.** Lightweight IIS/custom intranet versus WordPress versus another option, to be settled once Phase 1 memory headroom is measured and the Phase 2 AD scenario exists to inform what clues the site needs to carry.
+- **Website implementation.** Lightweight IIS/custom intranet versus WordPress versus another option. Phase 1 memory headroom has passed, so this is now a Phase 2 design decision based on what AD accounts, groups, hostnames, and breadcrumbs the site needs to carry.
 - **Internet access during build.** Needed for Windows Update and feature installation. If enabled temporarily, should it be removed before the VM is treated as lab-ready?
 - **Licensing.** Windows Server 2019 evaluation media carries a 180-day evaluation period. Confirm whether eval-with-rearm is acceptable given the VM is discarded/rebuilt per activity, or whether the university's licensing channel should be used instead.
 - **Snapshot/versioning naming.** Still unreconciled, but now retrospectively: the clean-install snapshot was already taken as `cav-csf-windows-01-clean-server2019-vmtools`, which does not match the Linux convention (`CAV-CSF-01-VMware-Clean`). Decide whether to align the two conventions and rename, or accept the divergence and document it, before further Windows snapshots accumulate under the current style.

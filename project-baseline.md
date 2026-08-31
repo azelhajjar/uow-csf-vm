@@ -1,6 +1,6 @@
 # CAV-CSF Master Project Blueprint
 
-**Consolidated project context for local IDE migration**
+**Private maintainer record for the CAV-CSF VM build, validation, integration, and handover state**
 **Generated:** 29 August 2026 · **Revised:** 31 August 2026 (project-state reconciliation pass: the Linux master is now recorded consistently as static `192.168.144.100` and already joined to the Windows AD domain; Windows Phase 1 is recorded as complete, with the Windows Server 2019 DC `uow-csf-dc` at `192.168.144.200` for `uow-csf.internal`; stale archive wording that still described `.130`, deferred static migration, incomplete landing-page review, or Phase 1 reproduction in progress has been superseded by the current verified state; split DNS is retained as a deliberate, tested, accepted design; all five web-application platforms are recorded as deployed; delivery of the Linux VM to the lab technician is treated as complete; historical disposable-VM `.13x` testing addresses are preserved only where they document the exploitation evidence trail)
 
 **Source:** This private maintainer repository is the authoritative working record for the CAV-CSF VM build, validation, integration, and handover state. It is not student-facing material. Student-facing content lives inside the supplied VM images and any separate lab materials distributed to students.
