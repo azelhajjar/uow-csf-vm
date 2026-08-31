@@ -184,6 +184,7 @@ This is a deliberate Phase 1 build/testing convention, not the final vulnerabili
 
 Phase 2 will explicitly revise the account/password model. At that stage, selected accounts may receive different passwords, weak passwords, reused passwords, password-policy behaviour, or other credential conditions, depending on the intended attack paths, and recorded/included in the dictionary/wordlist used at that point.
 
+Phase 2 credential rule: the Phase 1 shared password convention may remain only where an account is being used as a low-privilege bootstrap or validation account. Any account that is itself the target of a Phase 2 attack path must receive a deliberately designed credential condition for that activity, such as a crackable service-account password, disabled pre-authentication, controlled password reuse, or scoped delegated rights.
 ## 4. DNS records and Linux integration points
 
 - AD-integrated primary forward lookup zone: `uow-csf.internal`, auto-populated with SRV records (`_ldap._tcp`, `_kerberos._tcp`, `_kerberos._udp`, `_gc._tcp`, etc.) by DCPromo
