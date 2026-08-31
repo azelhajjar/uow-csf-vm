@@ -7,10 +7,9 @@
 
 **Audience note:** These documents are maintainer-facing. They may include build history, discarded approaches, SecGen provenance, troubleshooting notes, implementation detail, and unresolved technical leads that students are not expected to see. References to the repository, Git, or project documents should be understood as private maintainer workflow unless explicitly described as student-facing output.
 
-**Note on earlier references:** prior revisions of this blueprint cited some material using older external/project-store path wording. Those path references are historical only. The current maintainer documentation uses the repository's `docs/` layout.
+**Note on superseded context:** Only this private maintainer repository and its current `docs/` directory describe the current CAV-CSF project state. Older assistant conversations, previous project-store wording, deleted files, and discarded build notes must not be used to infer current architecture, pending work, or file layout.
 
-**Lineage correction:** earlier CAV-CSF conversations also contained a discarded Ubuntu/from-scratch build thread, with ideas such as a separate administrative SSH service, Docker-hosted vulnerable applications on a build VM, milestone reset thinking, and locally hosted web apps on Kali. That thread is historical only. The current baseline in this document is the SecGen-derived Debian 12 VMware Linux VM plus the separate Windows Server 2019 AD DC, with Kali acting as the attacker/workstation VM.
-
+**Lineage correction:** Earlier CAV-CSF conversations contained a discarded Ubuntu/from-scratch build thread, including ideas such as a separate administrative SSH service, Docker-hosted vulnerable applications on a build VM, milestone reset thinking, and locally hosted web apps on Kali. That thread is not part of the current project state and should not be used as evidence for current architecture or outstanding work. The current baseline is the SecGen-derived Debian 12 VMware Linux VM plus the separate Windows Server 2019 AD DC, with Kali acting only as the attacker/workstation VM.
 ---
 
 ## 1. Project Overview
