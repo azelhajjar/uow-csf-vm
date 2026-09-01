@@ -8,7 +8,7 @@ Exploitation of the default `public` SNMP community string confirmed in `r-15- s
 
 | Item | Value |
 |---|---|
-| Target | 192.168.144.200 |
+| Target | 192.168.144.100 |
 | Service | Net-SNMP (snmpd) 5.9.3, port 161/udp |
 | Attacker | Kali VM on the same host-only lab network |
 | Tooling | snmpwalk, Metasploit (`auxiliary/scanner/snmp/snmp_enum`) |

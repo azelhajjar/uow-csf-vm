@@ -8,7 +8,7 @@ Enumeration of the MariaDB service on port 3306, previously identified only by v
 
 | Item | Value |
 |---|---|
-| Target | 192.168.144.200 |
+| Target | 192.168.144.100 |
 | Service | MariaDB, port 3306/tcp |
 | Attacker | Kali VM on the same host-only lab network |
 | Tooling | nc, mysql client, nmap NSE (`mysql-info`, `mysql-empty-password`, `mysql-vuln-cve2012-2122`), Metasploit (`auxiliary/scanner/mysql/mysql_version`, `auxiliary/scanner/mysql/mysql_login`, `auxiliary/scanner/mysql/mysql_authbypass_hashdump`) |

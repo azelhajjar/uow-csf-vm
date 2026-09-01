@@ -8,7 +8,7 @@ Following deletion of the original disposable VM and re-cloning from the master 
 
 | Item | Value |
 |---|---|
-| Target | 192.168.144.200 |
+| Target | 192.168.144.100 |
 | Attacker | Kali VM on the same host-only lab network |
 | Tooling | nmap, nc, journalctl (target-side debug log) |
 

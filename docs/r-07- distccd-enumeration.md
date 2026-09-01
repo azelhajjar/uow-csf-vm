@@ -8,7 +8,7 @@ Reconnaissance and enumeration of the distcc distributed compiler daemon on port
 
 | Item | Value |
 |---|---|
-| Target | 192.168.144.200 |
+| Target | 192.168.144.100 |
 | Service | distccd, port 3632/tcp |
 | Attacker | Kali VM on the same host-only lab network |
 | Tooling | nc, nmap NSE (`default` category, `distcc-cve2004-2687`) |

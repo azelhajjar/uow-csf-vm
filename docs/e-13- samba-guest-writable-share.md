@@ -8,7 +8,7 @@ Exploitation of the guest-writable `HR-Shared` Samba share confirmed in `r-14- s
 
 | Item | Value |
 |---|---|
-| Target | 192.168.144.200 |
+| Target | 192.168.144.100 |
 | Service | Samba 4.17.12-Debian, share `HR-Shared` |
 | Attacker | Kali VM on the same host-only lab network |
 | Tooling | smbclient |

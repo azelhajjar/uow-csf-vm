@@ -8,7 +8,7 @@ An NFS share exported without host or authentication restrictions discloses back
 
 | Item | Value |
 |---|---|
-| Target | 192.168.144.200 |
+| Target | 192.168.144.100 |
 | Service | NFSv3/v4, rpcbind, port 111/2049/tcp |
 | Attacker | Kali VM on the same host-only lab network |
 | Tooling | nmap, rpcinfo, showmount, mount.nfs, ssh |

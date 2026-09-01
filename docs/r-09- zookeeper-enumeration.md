@@ -8,7 +8,7 @@ Enumeration of the Apache Zookeeper service on port 2181, previously identified 
 
 | Item | Value |
 |---|---|
-| Target | 192.168.144.200 |
+| Target | 192.168.144.100 |
 | Service | Apache Zookeeper 3.4.14, port 2181/tcp |
 | Attacker | Kali VM on the same host-only lab network |
 | Tooling | nc, nmap |

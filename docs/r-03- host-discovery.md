@@ -8,7 +8,7 @@ Basic host discovery against the target segment, confirming the target is live a
 
 | Item | Value |
 |---|---|
-| Target | 192.168.144.200 |
+| Target | 192.168.144.100 |
 | Attacker | Kali VM on the same host-only lab network |
 | Segment | 192.168.144.0/24 |
 | Tooling | ping, arp-scan |

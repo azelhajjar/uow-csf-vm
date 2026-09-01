@@ -8,7 +8,7 @@ Reconnaissance of the newly added Postfix mail service, using nmap NSE scripts a
 
 | Item | Value |
 |---|---|
-| Target | 192.168.144.200 |
+| Target | 192.168.144.100 |
 | Service | Postfix (Debian/GNU), port 25/tcp |
 | Attacker | Kali VM on the same host-only lab network |
 | Tooling | nmap NSE (`smtp-commands`, `smtp-open-relay`, `smtp-enum-users`, `smtp-vuln-cve2010-4344`, `smtp-vuln-cve2011-1720`, `smtp-vuln-cve2011-1764`), nc (manual confirmation) |

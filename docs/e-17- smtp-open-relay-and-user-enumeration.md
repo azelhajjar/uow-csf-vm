@@ -8,7 +8,7 @@ Exploitation of the two SMTP misconfigurations confirmed in `r-18- smtp-enumerat
 
 | Item | Value |
 |---|---|
-| Target | 192.168.144.200 |
+| Target | 192.168.144.100 |
 | Service | Postfix (Debian/GNU), port 25/tcp |
 | Attacker | Kali VM on the same host-only lab network |
 | Tooling | nc (manual SMTP interaction) |

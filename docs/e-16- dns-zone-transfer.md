@@ -8,7 +8,7 @@ Exploitation of the unauthenticated AXFR zone transfer confirmed in `r-17- dns-e
 
 | Item | Value |
 |---|---|
-| Target | 192.168.144.200 |
+| Target | 192.168.144.100 |
 | Service | BIND9 9.18.49, `uow-csf.internal` zone |
 | Attacker | Kali VM on the same host-only lab network |
 | Tooling | dig |

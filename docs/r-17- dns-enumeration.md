@@ -8,7 +8,7 @@ Reconnaissance of the newly added internal DNS service, confirming it serves an 
 
 | Item | Value |
 |---|---|
-| Target | 192.168.144.200 |
+| Target | 192.168.144.100 |
 | Service | BIND9 9.18.49, port 53/tcp+udp |
 | Attacker | Kali VM on the same host-only lab network |
 | Tooling | dig |

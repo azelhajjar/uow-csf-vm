@@ -8,7 +8,7 @@ Enumeration of the RPC portmapper service (port 111) and the NFS export it adver
 
 | Item | Value |
 |---|---|
-| Target | 192.168.144.200 |
+| Target | 192.168.144.100 |
 | Service | rpcbind (111/tcp, 111/udp), NFS export (2049/tcp) |
 | Attacker | Kali VM on the same host-only lab network |
 | Tooling | rpcinfo, showmount, nmap NSE (`rpcinfo`, `nfs-showmount`, `nfs-ls`, `nfs-statfs`) |

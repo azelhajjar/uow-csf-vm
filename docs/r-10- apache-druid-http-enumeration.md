@@ -8,7 +8,7 @@ Enumeration of all five HTTP ports associated with the Apache Druid installation
 
 | Item | Value |
 |---|---|
-| Target | 192.168.144.200 |
+| Target | 192.168.144.100 |
 | Service | Apache Druid 0.20.0, ports 8081, 8082, 8083, 8091, 8888 (all tcp) |
 | Attacker | Kali VM on the same host-only lab network |
 | Tooling | curl, nmap NSE (`http-title`, `http-headers`, `http-methods`), Metasploit (`auxiliary/scanner/http/http_version`, `exploit/multi/http/apache_druid_cve_2023_25194`) |

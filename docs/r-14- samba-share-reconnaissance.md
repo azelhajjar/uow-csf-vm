@@ -8,7 +8,7 @@ Reconnaissance of the Samba/SMB service, newly added to this VM, port scanning, 
 
 | Item | Value |
 |---|---|
-| Target | 192.168.144.200 |
+| Target | 192.168.144.100 |
 | Service | Samba 4.17.12-Debian (smbd/nmbd), ports 139/tcp, 445/tcp |
 | Attacker | Kali VM on the same host-only lab network |
 | Tooling | nmap, smbclient |

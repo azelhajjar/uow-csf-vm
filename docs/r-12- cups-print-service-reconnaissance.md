@@ -8,7 +8,7 @@ Enumeration of the CUPS/cups-browsed print service on port 631, newly added to t
 
 | Item | Value |
 |---|---|
-| Target | 192.168.144.200 |
+| Target | 192.168.144.100 |
 | Service | cupsd 2.4.2 / cups-browsed 1.28.17-3 (deliberately downgraded, pre-CVE-2024-47176 fix), port 631 (tcp + udp) |
 | Attacker | Kali VM on the same host-only lab network |
 | Tooling | nmap, nc |

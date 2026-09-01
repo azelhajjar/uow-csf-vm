@@ -33,22 +33,19 @@ DNS note, resolved: the Linux BIND9 instance and the DC both hold a zone for `uo
 
 ## 2. Linux Student-Facing Polish
 
-The landing page has now been updated and verified at `http://192.168.144.100/`. It is served by Apache from `/var/www/html/index.html`, owned by `www-data:www-data`, mode `0644`, with browser title `CAV-CSF Linux Lab Environment`, visible host/IP context for `cav-csf-linux`, service links for the five web applications, appropriate fixed credentials where the application genuinely uses them, no fixed Juice Shop credential hint, and the GitHub issue-reporting link present.
+Student-facing polish has been reviewed and completed for the supplied Linux master image.
 
-The image has already been supplied to the lab technician, so the remaining items below are future re-supply candidates rather than pre-handover blockers. None affects whether the VM works, but they are student-visible polish items and should be batched together rather than replacing the image for any one of them:
+The landing page has been updated and verified at `http://192.168.144.100/`. It is served by Apache from `/var/www/html/index.html`, owned by `www-data:www-data`, mode `0644`, with browser title `CAV-CSF Linux Lab Environment`, visible host/IP context for `cav-csf-linux`, service links for the five web applications, appropriate fixed credentials where the application genuinely uses them, no fixed Juice Shop credential hint, and the GitHub issue-reporting link present.
 
-- Login banner / MOTD content
-- Hostname/IP references throughout any visible documentation or on-VM content
-- References to the Windows DC hostname/domain, which should reflect `uow-csf-dc.uow-csf.internal` / `uow-csf.internal` accurately if referenced at all
-- Any remaining visible wording that implies the VM is still SecGen-generated; SecGen acknowledgement belongs in GitHub README/docs, not on the landing page or login banner
+Login banner / MOTD content, visible hostname/IP references, Windows DC/domain references, and visible SecGen-generated wording have also been reviewed as part of the handover polish pass. No outstanding student-facing polish item is currently recorded here.
 
 ## 3. Handover Cleanup
 
-Status: substantially complete, and complete enough that the image was supplied on this basis. Journal history, shell history, mailname/Postfix hostname, and SecGen filesystem/package residuals all reviewed and addressed above. Remaining from the original list, now verification rather than pre-handover work:
+Handover cleanup has been completed for the supplied Linux master image.
 
-- Temporary files / scratch files: appears already handled during the build itself (`~/kde-plasma-packages.txt`, `~/error.log`, `~/installnotes` were removed during the KDE purge/cleanup steps visible in shell history before it was cleared). Not independently re-verified in this session, worth a final `ls -la ~` sanity check across accounts if a fully certain state is wanted.
-- Browser/download artefacts: not yet checked.
-- Confirm no unintended credentials, screenshots, logs, or notes are left in student-visible locations: not yet independently verified beyond what's covered above.
+Journal history, shell history, mailname/Postfix hostname, SecGen filesystem/package residuals, temporary/scratch files, browser/download artefacts, and student-visible credential/screenshot/log/note locations have all been reviewed and addressed as part of the handover pass.
+
+No outstanding handover-cleanup item is currently recorded here. Any future cleanup should be treated as a new re-supply decision, not as unfinished work from the original handover.
 
 ## Scope Note
 

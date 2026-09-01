@@ -8,7 +8,7 @@ Port 1716/tcp was identified as open during the initial full-range scan (`r-02- 
 
 | Item | Value |
 |---|---|
-| Target | 192.168.144.200 |
+| Target | 192.168.144.100 |
 | Service | Unidentified, port 1716/tcp (and 1716/udp) |
 | Attacker | Kali VM on the same host-only lab network |
 | Tooling | nc, nmap (version detection at maximum intensity, UDP scan), openssl s_client |

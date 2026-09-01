@@ -8,7 +8,7 @@ Reconnaissance of the SNMP service, newly added to this VM, confirming the defau
 
 | Item | Value |
 |---|---|
-| Target | 192.168.144.200 |
+| Target | 192.168.144.100 |
 | Service | Net-SNMP (snmpd) 5.9.3, port 161/udp |
 | Attacker | Kali VM on the same host-only lab network |
 | Tooling | snmpwalk, Metasploit (`auxiliary/scanner/snmp/snmp_login`, `auxiliary/scanner/snmp/snmp_enum`) |

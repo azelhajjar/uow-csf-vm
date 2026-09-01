@@ -8,7 +8,7 @@ Manual and automated protocol interaction against the FTP service on port 21, di
 
 | Item | Value |
 |---|---|
-| Target | 192.168.144.200 |
+| Target | 192.168.144.100 |
 | Service | ProFTPD 1.3.3c, port 21/tcp |
 | Attacker | Kali VM on the same host-only lab network |
 | Tooling | nc, ftp, curl, nmap NSE (`ftp-anon`, `ftp-syst`, `ftp-bounce`, `ftp-proftpd-backdoor`), Metasploit (`auxiliary/scanner/ftp/ftp_version`, `auxiliary/scanner/ftp/ftp_anonymous`) |

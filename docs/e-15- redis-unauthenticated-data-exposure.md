@@ -8,7 +8,7 @@ Exploitation of the unauthenticated Redis instance confirmed in `r-16- redis-enu
 
 | Item | Value |
 |---|---|
-| Target | 192.168.144.200 |
+| Target | 192.168.144.100 |
 | Service | Redis 7.0.15, port 6379/tcp |
 | Attacker | Kali VM on the same host-only lab network |
 | Tooling | redis-cli |

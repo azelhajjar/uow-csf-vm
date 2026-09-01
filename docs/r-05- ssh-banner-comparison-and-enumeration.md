@@ -8,7 +8,7 @@ The target exposes two distinct services that speak the SSH protocol, on port 22
 
 | Item | Value |
 |---|---|
-| Target | 192.168.144.200 |
+| Target | 192.168.144.100 |
 | Services | OpenSSH 9.2p1 (port 22/tcp), Erlang/OTP SSH daemon (port 2222/tcp) |
 | Attacker | Kali VM on the same host-only lab network |
 | Tooling | nc, ssh (verbose mode), nmap NSE (`ssh2-enum-algos`, `ssh-hostkey`, `ssh-auth-methods`), Metasploit (`auxiliary/scanner/ssh/ssh_version`) |

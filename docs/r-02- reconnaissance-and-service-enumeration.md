@@ -8,7 +8,7 @@ Full-range TCP port discovery against the target, followed by targeted service/v
 
 | Item | Value |
 |---|---|
-| Target | 192.168.144.200 |
+| Target | 192.168.144.100 |
 | Attacker | Kali VM on the same host-only lab network |
 | Tooling | nmap |
 
