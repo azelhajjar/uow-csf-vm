@@ -8,9 +8,9 @@ Manual and automated protocol interaction against the FTP service on port 21, di
 
 | Item | Value |
 |---|---|
-| Target | 192.168.144.131 |
+| Target | 192.168.144.200 |
 | Service | ProFTPD 1.3.3c, port 21/tcp |
-| Attacker | Kali, 192.168.144.129 |
+| Attacker | Kali VM on the same host-only lab network |
 | Tooling | nc, ftp, curl, nmap NSE (`ftp-anon`, `ftp-syst`, `ftp-bounce`, `ftp-proftpd-backdoor`), Metasploit (`auxiliary/scanner/ftp/ftp_version`, `auxiliary/scanner/ftp/ftp_anonymous`) |
 
 ## Reconnaissance
@@ -18,12 +18,12 @@ Manual and automated protocol interaction against the FTP service on port 21, di
 ### Step 1: Manual banner grab
 
 ```bash
-nc -nv 192.168.144.131 21
+nc -nv 192.168.144.200 21
 ```
 
 ```
-Connection to 192.168.144.131 21 port [tcp/*] succeeded!
-220 ProFTPD 1.3.3c Server (outstandingmailbox) [192.168.144.131]
+Connection to 192.168.144.200 21 port [tcp/*] succeeded!
+220 ProFTPD 1.3.3c Server (outstandingmailbox) [192.168.144.200]
 ```
 
 Connecting directly with `nc` (netcat) rather than an FTP client or nmap's version-detection script demonstrates that a service's identifying banner is often available simply by opening a raw TCP connection and reading what the server sends unprompted, no authentication or protocol-specific tooling required. This confirms the ProFTPD 1.3.3c version already identified by nmap in `r- 02-reconnaissance-and-service-enumeration.md`, directly from the service itself rather than via a scanner's inference.
@@ -33,13 +33,13 @@ Connecting directly with `nc` (netcat) rather than an FTP client or nmap's versi
 ### Step 2: Anonymous login check
 
 ```bash
-ftp 192.168.144.131
+ftp 192.168.144.200
 ```
 
 ```
-Connected to 192.168.144.131.
-220 ProFTPD 1.3.3c Server (outstandingmailbox) [192.168.144.131]
-Name (192.168.144.131:kali): anonymous
+Connected to 192.168.144.200.
+220 ProFTPD 1.3.3c Server (outstandingmailbox) [192.168.144.200]
+Name (192.168.144.200:kali): anonymous
 331 Anonymous login ok, send your complete email address as your password
 Password:
 230 Greetings! Welcome to the server.
@@ -94,7 +94,7 @@ The manual `nc`/`ftp` approach above is one valid method of FTP enumeration; the
 ### NSE: `ftp-anon`
 
 ```bash
-nmap -p 21 --script ftp-anon 192.168.144.131
+nmap -p 21 --script ftp-anon 192.168.144.200
 ```
 
 ```
@@ -107,7 +107,7 @@ PORT   STATE SERVICE
 ### NSE: `ftp-bounce`
 
 ```bash
-nmap -p 21 --script ftp-bounce 192.168.144.131
+nmap -p 21 --script ftp-bounce 192.168.144.200
 ```
 
 ```
@@ -124,7 +124,7 @@ This script tests for the classic FTP bounce vulnerability, where an FTP server'
 ### NSE: `ftp-proftpd-backdoor`
 
 ```bash
-nmap -p 21 --script ftp-proftpd-backdoor 192.168.144.131
+nmap -p 21 --script ftp-proftpd-backdoor 192.168.144.200
 ```
 
 ```
@@ -137,7 +137,7 @@ PORT   STATE SERVICE
 ### NSE: `ftp-syst`
 
 ```bash
-nmap -p 21 --script ftp-syst 192.168.144.131
+nmap -p 21 --script ftp-syst 192.168.144.200
 ```
 
 ```
@@ -150,13 +150,13 @@ PORT   STATE SERVICE
 ### Alternate manual tool: `curl`
 
 ```bash
-curl -v ftp://192.168.144.131/ --user anonymous:
+curl -v ftp://192.168.144.200/ --user anonymous:
 ```
 
 ```
-*   Trying 192.168.144.131:21...
-* Established connection to 192.168.144.131 (192.168.144.131 port 21) from 192.168.144.129 port 55678
-< 220 ProFTPD 1.3.3c Server (outstandingmailbox) [192.168.144.131]
+*   Trying 192.168.144.200:21...
+* Established connection to 192.168.144.200 (192.168.144.200 port 21) from 192.168.144.129 port 55678
+< 220 ProFTPD 1.3.3c Server (outstandingmailbox) [192.168.144.200]
 > USER anonymous
 < 331 Anonymous login ok, send your complete email address as your password
 > PASS
@@ -172,7 +172,7 @@ curl -v ftp://192.168.144.131/ --user anonymous:
 < 150 Opening ASCII mode data connection for file list
 -rw-r--r--   1 anon     anon          179 Aug 23 04:19 note
 < 226 Transfer complete
-* Connection #0 to host 192.168.144.131:21 left intact
+* Connection #0 to host 192.168.144.200:21 left intact
 ```
 
 `curl` with `--user anonymous:` (empty password after the colon) achieves the identical result to the interactive `ftp` client used earlier, confirmed anonymous login, directory listing showing the `note` file, in a single non-interactive command suitable for scripting or automation, rather than requiring a live interactive session. The `-v` (verbose) flag is what exposes the underlying FTP protocol exchange (`>` lines are commands curl sent, `<` lines are the server's responses), which is otherwise hidden by curl's default quiet output. This is a good demonstration that `curl` is not just an HTTP tool, it supports the FTP protocol natively, and can be a faster, more scriptable alternative to an interactive FTP client for straightforward tasks such as confirming anonymous access or retrieving a specific known file, though the interactive `ftp` client remains more convenient for open-ended exploration of an unfamiliar directory structure.
@@ -209,27 +209,27 @@ To further test whether the NSE detection gap was specific to nmap's script impl
 
 ```
 use auxiliary/scanner/ftp/ftp_version
-set RHOSTS 192.168.144.131
+set RHOSTS 192.168.144.200
 run
 ```
 
 ```
-[+] 192.168.144.131:21    - FTP Banner: '220 ProFTPD 1.3.3c Server (outstandingmailbox) [192.168.144.131]\x0d\x0a'
-[*] 192.168.144.131:21    - Scanned 1 of 1 hosts (100% complete)
+[+] 192.168.144.200:21    - FTP Banner: '220 ProFTPD 1.3.3c Server (outstandingmailbox) [192.168.144.200]\x0d\x0a'
+[*] 192.168.144.200:21    - Scanned 1 of 1 hosts (100% complete)
 ```
 
 This simply confirms the same banner already captured manually in Step 1, with no discrepancy.
 
 ```
 use auxiliary/scanner/ftp/ftp_anonymous
-set RHOSTS 192.168.144.131
+set RHOSTS 192.168.144.200
 run
 ```
 
 ```
-[+] 192.168.144.131:21    - Anonymous Read-only access ()
-[+] 192.168.144.131:21    - Directory listing stored to: /home/kali/.msf4/loot/20260824043223_default_192.168.144.131_ftp.anonymous_862038.txt
-[*] 192.168.144.131:21    - Scanned 1 of 1 hosts (100% complete)
+[+] 192.168.144.200:21    - Anonymous Read-only access ()
+[+] 192.168.144.200:21    - Directory listing stored to: /home/kali/.msf4/loot/20260824043223_default_192.168.144.200_ftp.anonymous_862038.txt
+[*] 192.168.144.200:21    - Scanned 1 of 1 hosts (100% complete)
 ```
 
 **This resolves the detection gap identified earlier with nmap's `ftp-anon` script.** Metasploit's `ftp_anonymous` module correctly and immediately detected anonymous access, explicitly reporting `Anonymous Read-only access`, and additionally saved the resulting directory listing to a local loot file for later reference, a convenience the manual `ftp`/`curl` approaches did not provide automatically. This confirms the anonymous-access finding is genuine and reliably detectable by automated tooling in general; the earlier `ftp-anon` NSE script's silent failure was therefore specific to that particular script or nmap version/implementation, not evidence of some broader oddity in how this ProFTPD build responds to automated anonymous-login probing. This is an important refinement of the earlier finding: rather than concluding "automated FTP anonymous-detection is unreliable against this target" in general, the more precise and now better-supported conclusion is "this specific nmap NSE script failed on this target, but an equivalent, independently-implemented Metasploit module succeeded without issue." This distinction matters for how confidently either tool's results should be trusted in future engagements against similar targets.

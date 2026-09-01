@@ -8,9 +8,9 @@ Enumeration of the RPC portmapper service (port 111) and the NFS export it adver
 
 | Item | Value |
 |---|---|
-| Target | 192.168.144.131 |
+| Target | 192.168.144.200 |
 | Service | rpcbind (111/tcp, 111/udp), NFS export (2049/tcp) |
-| Attacker | Kali, 192.168.144.129 |
+| Attacker | Kali VM on the same host-only lab network |
 | Tooling | rpcinfo, showmount, nmap NSE (`rpcinfo`, `nfs-showmount`, `nfs-ls`, `nfs-statfs`) |
 
 ## Reconnaissance
@@ -18,7 +18,7 @@ Enumeration of the RPC portmapper service (port 111) and the NFS export it adver
 ### Step 1: Manual RPC service enumeration with `rpcinfo`
 
 ```bash
-rpcinfo -p 192.168.144.131
+rpcinfo -p 192.168.144.200
 ```
 
 ```
@@ -53,11 +53,11 @@ rpcinfo -p 192.168.144.131
 ### Step 2: Manual export enumeration with `showmount`
 
 ```bash
-showmount -e 192.168.144.131
+showmount -e 192.168.144.200
 ```
 
 ```
-Export list for 192.168.144.131:
+Export list for 192.168.144.200:
 /srv/backups *
 ```
 
@@ -66,7 +66,7 @@ Export list for 192.168.144.131:
 ### Step 3: NSE equivalent of `rpcinfo`
 
 ```bash
-nmap -p 111 --script rpcinfo 192.168.144.131
+nmap -p 111 --script rpcinfo 192.168.144.200
 ```
 
 ```
@@ -106,7 +106,7 @@ The practical takeaway: the NSE script and the CLI tool return equivalent core i
 ### Step 4: NSE export enumeration, directory listing, and filesystem statistics
 
 ```bash
-nmap -p 111,2049 --script nfs-showmount,nfs-ls,nfs-statfs 192.168.144.131
+nmap -p 111,2049 --script nfs-showmount,nfs-ls,nfs-statfs 192.168.144.200
 ```
 
 ```

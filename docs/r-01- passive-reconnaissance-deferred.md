@@ -11,13 +11,13 @@ At the time of writing, `cwscenario.uk` has not yet had its subdomains, DNS reco
 | Item | Value |
 |---|---|
 | Domain | cwscenario.uk |
-| Purpose | Dedicated teaching domain, purpose-registered to support passive reconnaissance exercises and to connect the Linux VM (192.168.144.131/.130) and the Windows/AD VM (192.168.144.200) into a single fictional organisation |
+| Purpose | Dedicated teaching domain, purpose-registered to support passive reconnaissance exercises and to connect the Linux VM (192.168.144.200/.130) and the Windows/AD VM (192.168.144.200) into a single fictional organisation |
 | Status | Registered; subdomains and supporting DNS/service configuration not yet built out |
 | Blocker | None technical. The Windows AD VM this domain was meant to tie in has since been built, so the remaining work is the domain configuration itself |
 
 ## Background
 
-The disposable and master Linux VMs (192.168.144.131 and 192.168.144.130) are addressed purely by internal IP on an isolated lab segment. On their own, they have no domain, no public DNS presence, and nothing for passive OSINT techniques to act on, which is why passive reconnaissance was originally scoped as not applicable.
+The disposable and master Linux VMs (192.168.144.200 and 192.168.144.200) are addressed purely by internal IP on an isolated lab segment. On their own, they have no domain, no public DNS presence, and nothing for passive OSINT techniques to act on, which is why passive reconnaissance was originally scoped as not applicable.
 
 `cwscenario.uk` changes this. It is a real, currently-registered domain intended specifically to give students a genuine, safe, legally-controlled target for passive reconnaissance techniques (WHOIS lookups, DNS enumeration, certificate transparency log searching, and eventually mail/employee-harvesting style exercises), and to serve as the organisational identity tying the Linux VM and the Windows/AD domain controller VM together into one coherent fictional company scenario, rather than two unrelated standalone machines.
 

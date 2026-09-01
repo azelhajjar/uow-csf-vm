@@ -8,9 +8,9 @@ Reconnaissance of the newly added internal DNS service, confirming it serves an 
 
 | Item | Value |
 |---|---|
-| Target | 192.168.144.132 |
+| Target | 192.168.144.200 |
 | Service | BIND9 9.18.49, port 53/tcp+udp |
-| Attacker | Kali, 192.168.144.129 |
+| Attacker | Kali VM on the same host-only lab network |
 | Tooling | dig |
 
 ## Reconnaissance
@@ -18,7 +18,7 @@ Reconnaissance of the newly added internal DNS service, confirming it serves an 
 ### Step 1: Port confirmation
 
 ```bash
-nmap -sV -p 53 192.168.144.132
+nmap -sV -p 53 192.168.144.200
 ```
 
 Confirms `53/tcp` and `53/udp` open, new ports not present in the original `r-02` baseline, running BIND 9.18.49.
@@ -26,7 +26,7 @@ Confirms `53/tcp` and `53/udp` open, new ports not present in the original `r-02
 ### Step 2: Basic name resolution
 
 ```bash
-dig @192.168.144.132 uow-csf.internal NS
+dig @192.168.144.200 uow-csf.internal NS
 ```
 
 ```
@@ -37,12 +37,12 @@ uow-csf.internal.       604800  IN      NS      ns1.uow-csf.internal.
 Confirms the server is authoritative for a zone named `uow-csf.internal`, discoverable simply by querying it directly once the domain name is known or guessed (e.g. from other reconnaissance, such as hostnames referenced elsewhere on the network).
 
 ```bash
-dig @192.168.144.132 print.uow-csf.internal A
+dig @192.168.144.200 print.uow-csf.internal A
 ```
 
 ```
 ;; ANSWER SECTION:
-print.uow-csf.internal. 604800  IN      A       192.168.144.132
+print.uow-csf.internal. 604800  IN      A       192.168.144.200
 ```
 
 Confirms individual record lookups work normally; `print.uow-csf.internal` correctly resolves to the target, consistent with the CUPS print server already identified on this host.
@@ -50,7 +50,7 @@ Confirms individual record lookups work normally; `print.uow-csf.internal` corre
 ### Step 3: Zone transfer (AXFR)
 
 ```bash
-dig @192.168.144.132 uow-csf.internal AXFR
+dig @192.168.144.200 uow-csf.internal AXFR
 ```
 
 ```
@@ -58,12 +58,12 @@ uow-csf.internal.       604800  IN      SOA     ns1.uow-csf.internal. admin.uow-
 uow-csf.internal.       604800  IN      NS      ns1.uow-csf.internal.
 backup-legacy.uow-csf.internal. 604800 IN A     192.168.144.151
 dc01.uow-csf.internal.  604800  IN      A       192.168.144.200
-files.uow-csf.internal. 604800  IN      A       192.168.144.132
-mail.uow-csf.internal.  604800  IN      A       192.168.144.132
-ns1.uow-csf.internal.   604800  IN      A       192.168.144.132
-print.uow-csf.internal. 604800  IN      A       192.168.144.132
+files.uow-csf.internal. 604800  IN      A       192.168.144.200
+mail.uow-csf.internal.  604800  IN      A       192.168.144.200
+ns1.uow-csf.internal.   604800  IN      A       192.168.144.200
+print.uow-csf.internal. 604800  IN      A       192.168.144.200
 vpn-internal.uow-csf.internal. 604800 IN A      192.168.144.150
-www.uow-csf.internal.   604800  IN      A       192.168.144.132
+www.uow-csf.internal.   604800  IN      A       192.168.144.200
 ```
 
 **This is the core finding.** A single, entirely unauthenticated `AXFR` query returns the complete zone, every hostname the organisation has defined, in one response. This is a fundamentally different, and far more efficient, reconnaissance technique than guessing or brute-forcing individual subdomain names one at a time: instead of trying `www`, `mail`, `vpn`, `backup`, etc. and hoping for a hit, the entire naming scheme is handed over in a single query.
@@ -81,7 +81,7 @@ ls -l /usr/share/nmap/scripts/ | grep -i dns
 A large DNS script family exists; `dns-zone-transfer` is the direct NSE equivalent of the manual `dig AXFR` technique already used in Step 3.
 
 ```bash
-nmap -p 53 --script dns-zone-transfer --script-args dns-zone-transfer.domain=uow-csf.internal 192.168.144.132
+nmap -p 53 --script dns-zone-transfer --script-args dns-zone-transfer.domain=uow-csf.internal 192.168.144.200
 ```
 
 ```

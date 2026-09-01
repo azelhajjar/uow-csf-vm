@@ -2,14 +2,14 @@
 
 ## Summary
 
-Following deletion of the original disposable VM and re-cloning from the master VM's post-CUPS-installation snapshot, the disposable VM's address changed from 192.168.144.131 to **192.168.144.132**. This activity re-establishes the CUPS/cups-browsed attack surface against the new address: confirming the rest of the previously-known service baseline is unchanged, confirming CUPS itself is invisible to a full TCP port sweep (since `cupsd`'s TCP interface is loopback-only), confirming it is visible via UDP scanning, and confirming, via `cups-browsed`'s own debug log, that the CVE-2024-47176 unauthenticated callback and local-queue-creation behaviour fires exactly as expected.
+Following deletion of the original disposable VM and re-cloning from the master VM's post-CUPS-installation snapshot, the disposable VM's address changed from 192.168.144.200 to **192.168.144.200**. This activity re-establishes the CUPS/cups-browsed attack surface against the new address: confirming the rest of the previously-known service baseline is unchanged, confirming CUPS itself is invisible to a full TCP port sweep (since `cupsd`'s TCP interface is loopback-only), confirming it is visible via UDP scanning, and confirming, via `cups-browsed`'s own debug log, that the CVE-2024-47176 unauthenticated callback and local-queue-creation behaviour fires exactly as expected.
 
 ## Environment
 
 | Item | Value |
 |---|---|
-| Target | 192.168.144.132 |
-| Attacker | Kali, 192.168.144.129 |
+| Target | 192.168.144.200 |
+| Attacker | Kali VM on the same host-only lab network |
 | Tooling | nmap, nc, journalctl (target-side debug log) |
 
 ## Reconnaissance
@@ -17,7 +17,7 @@ Following deletion of the original disposable VM and re-cloning from the master 
 ### Step 1: Full TCP re-scan against the new address
 
 ```bash
-nmap -p- -T4 192.168.144.132
+nmap -p- -T4 192.168.144.200
 ```
 
 Result: identical set of 15 well-known ports and 6 high/ephemeral RPC ports as the original `r-02- reconnaissance-and-service-enumeration.md` baseline. **Port 631 does not appear.** This is expected and correct: `cupsd`'s TCP listener is bound to `127.0.0.1`/`::1` only (confirmed during CUPS installation validation), so it is invisible to any external TCP scan regardless of the service being genuinely present and running.
@@ -25,7 +25,7 @@ Result: identical set of 15 well-known ports and 6 high/ephemeral RPC ports as t
 ### Step 2: UDP scan
 
 ```bash
-nmap -sU --top-ports 20 192.168.144.132
+nmap -sU --top-ports 20 192.168.144.200
 ```
 
 ```
@@ -49,7 +49,7 @@ sudo journalctl -u cups-browsed -f
 A `tcpdump` capture on the target confirmed the crafted UDP packet was arriving correctly at the network level regardless:
 
 ```
-00:48:32 eth0 In IP 192.168.144.129.34673 > 192.168.144.132.631: UDP, length 72
+00:48:32 eth0 In IP 192.168.144.129.34673 > 192.168.144.200.631: UDP, length 72
   0 3 http://192.168.144.129:8000/printers/test "Office HQ" "Test Printer"
 ```
 
@@ -94,7 +94,7 @@ The queue name (`HR-LaserJet-2F`, suggesting HR department, 2nd floor) and the c
 
 ## Outcome
 
-Confirmed the CVE-2024-47176 vulnerability is present and fully functional on the re-cloned disposable VM (192.168.144.132), with debug-log evidence showing the complete unauthenticated queue-creation and callback sequence, not merely the HTTP request alone. Confirmed CUPS is undetectable via TCP scanning but detectable via UDP scanning, a valuable methodological point. All other previously-known services remain consistent with the `r-02` baseline. All future activity files referencing this target should use `192.168.144.132`, not `.131`.
+Confirmed the CVE-2024-47176 vulnerability is present and fully functional on the re-cloned disposable VM (192.168.144.200), with debug-log evidence showing the complete unauthenticated queue-creation and callback sequence, not merely the HTTP request alone. Confirmed CUPS is undetectable via TCP scanning but detectable via UDP scanning, a valuable methodological point. All other previously-known services remain consistent with the `r-02` baseline. All future activity files referencing this target should use `192.168.144.200`, not `.131`.
 
 ## Teaching Notes
 
@@ -102,7 +102,7 @@ Two lessons stand out from this troubleshooting process itself, worth preserving
 
 ## Lab Dependencies
 
-**Prerequisite exploit(s):** None; supersedes the target address used in `r-12- cups-print-service-reconnaissance.md` and `e-12- cups-full-rce-chain.md`, which were validated against the now-deleted 192.168.144.131 instance
+**Prerequisite exploit(s):** None; supersedes the target address used in `r-12- cups-print-service-reconnaissance.md` and `e-12- cups-full-rce-chain.md`, which were validated against the now-deleted 192.168.144.200 instance
 **Required starting access:** Network access to the target from Kali
 **Starting account:** None
 **Resulting access:** N/A (reconnaissance/confirmation only)

@@ -8,9 +8,9 @@ A root-owned cron job periodically archives the contents of `/usr/lib/backup` us
 
 | Item | Value |
 |---|---|
-| Target | 192.168.144.131 |
+| Target | 192.168.144.200 |
 | Misconfiguration | World-writable `/usr/lib/backup` combined with a root cron job that archives its contents using an unquoted shell wildcard |
-| Attacker | Kali, 192.168.144.129 |
+| Attacker | Kali VM on the same host-only lab network |
 | Starting account | `backupsvc` (uid 1001), reached via SSH using credentials recovered in `02-nfs-anonymous-credential-exposure.md` |
 | Resulting account | `root` (uid 0) |
 

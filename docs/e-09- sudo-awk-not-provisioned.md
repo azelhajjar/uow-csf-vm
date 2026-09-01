@@ -8,7 +8,8 @@ The SecGen build was expected to include a sudo rule permitting privilege escala
 
 | Item | Value |
 |---|---|
-| Target | 192.168.144.131 |
+| Target | 192.168.144.200 |
+| Attacker | Kali VM on the same host-only lab network |
 | Access used | root, via `analyst` → `sudo su` (exploit 08 artefact) |
 | Attacker | Kali, 192.168.144.129 |
 

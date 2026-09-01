@@ -8,9 +8,9 @@ Reconnaissance of the newly added Postfix mail service, using nmap NSE scripts a
 
 | Item | Value |
 |---|---|
-| Target | 192.168.144.132 |
+| Target | 192.168.144.200 |
 | Service | Postfix (Debian/GNU), port 25/tcp |
-| Attacker | Kali, 192.168.144.129 |
+| Attacker | Kali VM on the same host-only lab network |
 | Tooling | nmap NSE (`smtp-commands`, `smtp-open-relay`, `smtp-enum-users`, `smtp-vuln-cve2010-4344`, `smtp-vuln-cve2011-1720`, `smtp-vuln-cve2011-1764`), nc (manual confirmation) |
 
 ## Reconnaissance
@@ -38,7 +38,7 @@ A substantial SMTP script set exists, three scripts were selected as directly re
 ### Step 2: Banner and capability enumeration
 
 ```bash
-nmap -p 25 --script smtp-commands 192.168.144.132
+nmap -p 25 --script smtp-commands 192.168.144.200
 ```
 
 ```
@@ -50,7 +50,7 @@ Confirms the server's identity and advertised capabilities in a single query, in
 ### Step 3: Open relay detection
 
 ```bash
-nmap -p 25 --script smtp-open-relay 192.168.144.132
+nmap -p 25 --script smtp-open-relay 192.168.144.200
 ```
 
 ```
@@ -62,7 +62,7 @@ A clean, unambiguous positive result: 16 out of 16 relay tests succeeded. Unlike
 ### Step 4: User enumeration, first attempt (misleading default result)
 
 ```bash
-nmap -p 25 --script smtp-enum-users 192.168.144.132
+nmap -p 25 --script smtp-enum-users 192.168.144.200
 ```
 
 ```
@@ -90,7 +90,7 @@ printf "analyst\nwebops\nbackupsvc\nnonexistentuser123\n" > /tmp/real_users.txt
 
 An initial attempt to point the script at this file failed silently (still returning the default wordlist) using an incorrectly guessed argument name:
 ```bash
-nmap -p 25 --script smtp-enum-users --script-args smtp-enum-users.methods=RCPT,smtp-enum-users.userdb=/tmp/real_users.txt 192.168.144.132
+nmap -p 25 --script smtp-enum-users --script-args smtp-enum-users.methods=RCPT,smtp-enum-users.userdb=/tmp/real_users.txt 192.168.144.200
 ```
 
 Checking the script's actual source confirmed the correct argument:
@@ -104,7 +104,7 @@ local status, nextuser = unpwdb.usernames()
 
 The script uses nmap's shared `unpwdb` library, whose standard argument is the unprefixed `userdb`, not a script-specific `smtp-enum-users.userdb`. Correcting this:
 ```bash
-nmap -p 25 --script smtp-enum-users --script-args userdb=/tmp/real_users.txt 192.168.144.132
+nmap -p 25 --script smtp-enum-users --script-args userdb=/tmp/real_users.txt 192.168.144.200
 ```
 ```
 | smtp-enum-users:
@@ -118,7 +118,7 @@ nmap -p 25 --script smtp-enum-users --script-args userdb=/tmp/real_users.txt 192
 
 **This result also requires scrutiny rather than being accepted directly.** `nonexistentuser123` is deliberately fake, included specifically as a negative control, yet it appears in the script's output identically to the three genuinely real accounts. Manual testing (see Step 7, and `e-17`) already independently confirmed the real server response to `RCPT TO: nonexistentuser123@uow-csf.internal` is `550 5.1.1 ... User unknown in local recipient table`, an explicit rejection. Debug output confirms the script itself labels this as a `RCPT`-method success regardless:
 ```bash
-nmap -p 25 --script smtp-enum-users --script-args userdb=/tmp/real_users.txt -d 192.168.144.132 2>&1 | grep -i "RCPT"
+nmap -p 25 --script smtp-enum-users --script-args userdb=/tmp/real_users.txt -d 192.168.144.200 2>&1 | grep -i "RCPT"
 ```
 ```
 |   RCPT, analyst
@@ -134,7 +134,7 @@ nmap -p 25 --script smtp-enum-users --script-args userdb=/tmp/real_users.txt -d 
 To resolve the discrepancy definitively, manual protocol interaction was used, the same reliable technique already established:
 
 ```bash
-nc -nv 192.168.144.132 25
+nc -nv 192.168.144.200 25
 ```
 ```
 HELO test.local
@@ -152,7 +152,7 @@ This confirms manual interaction gives the correct, trustworthy result (`analyst
 ### Step 8: CVE-specific checks
 
 ```bash
-nmap -p 25 --script smtp-vuln-cve2010-4344,smtp-vuln-cve2011-1720,smtp-vuln-cve2011-1764 192.168.144.132
+nmap -p 25 --script smtp-vuln-cve2010-4344,smtp-vuln-cve2011-1720,smtp-vuln-cve2011-1764 192.168.144.200
 ```
 
 ```

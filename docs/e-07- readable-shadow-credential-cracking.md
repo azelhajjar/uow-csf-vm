@@ -8,9 +8,9 @@
 
 | Item | Value |
 |---|---|
-| Target | 192.168.144.131 |
+| Target | 192.168.144.100 |
 | Misconfiguration | `/etc/shadow` mode `0644` instead of the standard `0640 root:shadow` |
-| Attacker | Kali, 192.168.144.129 |
+| Attacker | Kali VM on the same host-only lab network |
 | Tooling | john the ripper, rockyou.txt |
 | Starting account | any local low-privilege account (demonstrated from `distccd`) |
 

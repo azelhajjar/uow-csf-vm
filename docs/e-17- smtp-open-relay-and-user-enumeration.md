@@ -8,9 +8,9 @@ Exploitation of the two SMTP misconfigurations confirmed in `r-18- smtp-enumerat
 
 | Item | Value |
 |---|---|
-| Target | 192.168.144.132 |
+| Target | 192.168.144.200 |
 | Service | Postfix (Debian/GNU), port 25/tcp |
-| Attacker | Kali, 192.168.144.129 |
+| Attacker | Kali VM on the same host-only lab network |
 | Tooling | nc (manual SMTP interaction) |
 
 ## Vulnerability
@@ -25,7 +25,7 @@ Two independent misconfigurations:
 **Open relay demonstration, on Kali:**
 
 ```bash
-nc -nv 192.168.144.132 25
+nc -nv 192.168.144.200 25
 ```
 ```
 HELO test.local
@@ -85,7 +85,7 @@ In the meantime, the current backup share remains at its usual location.
 Retrieval genuinely requires a shell as `analyst`, obtained via the separate credential-exposure chain already documented elsewhere on this VM (recover the `backupsvc` credential from the NFS export in `e-02`, use it for an SSH foothold, then escalate or pivot to `analyst` via the shadow-cracking chain in `e-07`). Once that shell exists:
 
 ```bash
-ssh analyst@192.168.144.132
+ssh analyst@192.168.144.200
 ```
 ```
 You have mail.

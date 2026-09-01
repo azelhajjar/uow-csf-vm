@@ -8,9 +8,9 @@ Reconnaissance of the Samba/SMB service, newly added to this VM, port scanning, 
 
 | Item | Value |
 |---|---|
-| Target | 192.168.144.132 |
+| Target | 192.168.144.200 |
 | Service | Samba 4.17.12-Debian (smbd/nmbd), ports 139/tcp, 445/tcp |
-| Attacker | Kali, 192.168.144.129 |
+| Attacker | Kali VM on the same host-only lab network |
 | Tooling | nmap, smbclient |
 
 ## Reconnaissance
@@ -18,7 +18,7 @@ Reconnaissance of the Samba/SMB service, newly added to this VM, port scanning, 
 ### Step 1: Full port re-scan confirming new ports
 
 ```bash
-nmap -p- -T4 192.168.144.132
+nmap -p- -T4 192.168.144.200
 ```
 
 ```
@@ -47,7 +47,7 @@ Confirms `139/tcp` (netbios-ssn) and `445/tcp` (microsoft-ds) as new additions r
 ### Step 2: Port/service confirmation
 
 ```bash
-nmap -sV -p 139,445 --script default 192.168.144.132
+nmap -sV -p 139,445 --script default 192.168.144.200
 ```
 
 Confirms `smbd`/`nmbd` listening on the standard SMB ports, with the server banner identifying `Samba 4.17.12-Debian` (matching the version confirmed during installation validation).
@@ -63,7 +63,7 @@ ls -l /usr/share/nmap/scripts/ | grep -i smb
 A large set of scripts is available (share/user/group enumeration, OS discovery, protocol dialects, several historical vulnerability checks). Four were selected as directly relevant: `smb-enum-shares` (the NSE equivalent of the manual `smbclient -L` listing already performed), `smb-os-discovery`, `smb-protocols`, and `smb-vuln-cve-2017-7494` (checked for completeness, since a real assessment would want to rule out SambaCry even though this VM's current Samba version, 4.17.12, is confirmed well beyond the 2017 vulnerable range).
 
 ```bash
-nmap -p 139,445 --script smb-enum-shares,smb-os-discovery,smb-protocols,smb-vuln-cve-2017-7494 192.168.144.132
+nmap -p 139,445 --script smb-enum-shares,smb-os-discovery,smb-protocols,smb-vuln-cve-2017-7494 192.168.144.200
 ```
 
 ```
@@ -81,7 +81,7 @@ nmap -p 139,445 --script smb-enum-shares,smb-os-discovery,smb-protocols,smb-vuln
 ### Step 4: Unauthenticated share listing
 
 ```bash
-smbclient -L //192.168.144.132/ -N
+smbclient -L //192.168.144.200/ -N
 ```
 
 ```
@@ -100,7 +100,7 @@ The trailing SMB1 protocol negotiation error is expected and unrelated to the sh
 ### Step 5: Testing guest access to HR-Shared
 
 ```bash
-smbclient //192.168.144.132/HR-Shared -N
+smbclient //192.168.144.200/HR-Shared -N
 ```
 
 ```

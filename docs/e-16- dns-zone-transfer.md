@@ -8,9 +8,9 @@ Exploitation of the unauthenticated AXFR zone transfer confirmed in `r-17- dns-e
 
 | Item | Value |
 |---|---|
-| Target | 192.168.144.132 |
+| Target | 192.168.144.200 |
 | Service | BIND9 9.18.49, `uow-csf.internal` zone |
-| Attacker | Kali, 192.168.144.129 |
+| Attacker | Kali VM on the same host-only lab network |
 | Tooling | dig |
 
 ## Vulnerability
@@ -22,7 +22,7 @@ Exploitation of the unauthenticated AXFR zone transfer confirmed in `r-17- dns-e
 **On Kali**, the transfer itself:
 
 ```bash
-dig @192.168.144.132 uow-csf.internal AXFR
+dig @192.168.144.200 uow-csf.internal AXFR
 ```
 
 Full output already documented in `r-17- dns-enumeration.md`. The exploitation step here is using this disclosed information effectively, rather than the query itself, which is trivial.

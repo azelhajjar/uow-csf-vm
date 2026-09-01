@@ -8,9 +8,9 @@ Exploitation of the guest-writable `HR-Shared` Samba share confirmed in `r-14- s
 
 | Item | Value |
 |---|---|
-| Target | 192.168.144.132 |
+| Target | 192.168.144.200 |
 | Service | Samba 4.17.12-Debian, share `HR-Shared` |
-| Attacker | Kali, 192.168.144.129 |
+| Attacker | Kali VM on the same host-only lab network |
 | Tooling | smbclient |
 
 ## Vulnerability
@@ -22,7 +22,7 @@ The share is configured with `guest ok = yes`, `guest only = yes`, and `writable
 **Retrieving the exposed content:**
 
 ```bash
-smbclient //192.168.144.132/HR-Shared -N
+smbclient //192.168.144.200/HR-Shared -N
 ```
 ```
 smb: \> get Staff_Directory.csv

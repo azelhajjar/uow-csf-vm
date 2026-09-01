@@ -10,7 +10,7 @@ Unauthenticated and low-cost reconnaissance against the Windows Server 2019 doma
 |---|---|
 | Target | `uow-csf-dc.uow-csf.internal`, `192.168.144.200` |
 | Domain | `uow-csf.internal` (NetBIOS `UOWCSF`) |
-| Attacker | Kali, `192.168.144.129` |
+| Attacker | Kali VM on the same host-only lab network |
 | Tools | `nmap` (incl. `krb5-enum-users` NSE), `dig`, `ldapsearch`, `nmblookup`, `smbclient`, `rpcclient`, `impacket-getTGT` |
 | Wordlists | `/usr/share/wordlists/cav-csf-users.txt` (24 entries), `/usr/share/wordlists/cav-csf-wordlist.txt` (153 entries), see `wordlists-README.md` |
 

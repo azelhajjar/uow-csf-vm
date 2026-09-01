@@ -8,9 +8,9 @@ Enumeration of all five HTTP ports associated with the Apache Druid installation
 
 | Item | Value |
 |---|---|
-| Target | 192.168.144.131 |
+| Target | 192.168.144.200 |
 | Service | Apache Druid 0.20.0, ports 8081, 8082, 8083, 8091, 8888 (all tcp) |
-| Attacker | Kali, 192.168.144.129 |
+| Attacker | Kali VM on the same host-only lab network |
 | Tooling | curl, nmap NSE (`http-title`, `http-headers`, `http-methods`), Metasploit (`auxiliary/scanner/http/http_version`, `exploit/multi/http/apache_druid_cve_2023_25194`) |
 
 ## Reconnaissance
@@ -18,29 +18,29 @@ Enumeration of all five HTTP ports associated with the Apache Druid installation
 ### Step 1: Manual HTTP request comparison across all five ports
 
 ```bash
-curl -v http://192.168.144.131:8081/ 2>&1 | head -30
-curl -v http://192.168.144.131:8082/ 2>&1 | head -30
-curl -v http://192.168.144.131:8083/ 2>&1 | head -30
-curl -v http://192.168.144.131:8091/ 2>&1 | head -30
-curl -v http://192.168.144.131:8888/ 2>&1 | head -30
+curl -v http://192.168.144.200:8081/ 2>&1 | head -30
+curl -v http://192.168.144.200:8082/ 2>&1 | head -30
+curl -v http://192.168.144.200:8083/ 2>&1 | head -30
+curl -v http://192.168.144.200:8091/ 2>&1 | head -30
+curl -v http://192.168.144.200:8888/ 2>&1 | head -30
 ```
 
 Results summarised:
 
 | Port | Response | Location header |
 |---|---|---|
-| 8081 | `302 Found` | `http://192.168.144.131:8081/unified-console.html` |
+| 8081 | `302 Found` | `http://192.168.144.200:8081/unified-console.html` |
 | 8082 | `404 Not Found` | none |
 | 8083 | `404 Not Found` | none |
 | 8091 | `404 Not Found` | none |
-| 8888 | `302 Found` | `http://192.168.144.131:8888/unified-console.html` |
+| 8888 | `302 Found` | `http://192.168.144.200:8888/unified-console.html` |
 
 **This is the key finding of this activity, and it directly confirms what had previously only been assumed in `r-02- reconnaissance-and-service-enumeration.md`.** Ports 8081 and 8888 both redirect an unauthenticated root-path request to `unified-console.html`, Druid's web-based management UI, confirming these two are the coordinator/overlord (8081) and router (8888) processes, both of which host the web console (the router simply proxies the coordinator's console, as already noted in `e-05- apache-druid-cve-2021-25646.md`). Ports 8082, 8083, and 8091 all return a plain `404 Not Found` with no redirect and no console, but they **do respond as functioning HTTP servers** rather than refusing the connection or timing out. This is consistent with these three being Druid's broker, historical, and middleManager processes respectively, which expose internal/inter-node HTTP APIs for Druid's own distributed operation but do not serve a web console at the root path, exactly the behaviour a non-console Druid process would be expected to exhibit. This confirms the process identification that had only been inferred by port-number convention in `r-02`, now backed by actual observed HTTP behaviour rather than assumption alone.
 
 ### Step 2: NSE HTTP enumeration scripts
 
 ```bash
-nmap -p 8081,8082,8083,8091,8888 --script http-title,http-headers,http-methods 192.168.144.131
+nmap -p 8081,8082,8083,8091,8888 --script http-title,http-headers,http-methods 192.168.144.200
 ```
 
 ```
@@ -58,12 +58,12 @@ PORT     STATE SERVICE
 
 ```
 use auxiliary/scanner/http/http_version
-set RHOSTS 192.168.144.131
+set RHOSTS 192.168.144.200
 set RPORT 8082
 run
 ```
 ```
-[+] 192.168.144.131:8082
+[+] 192.168.144.200:8082
 ```
 
 ```
@@ -71,7 +71,7 @@ set RPORT 8083
 run
 ```
 ```
-[+] 192.168.144.131:8083
+[+] 192.168.144.200:8083
 ```
 
 ```
@@ -79,7 +79,7 @@ set RPORT 8091
 run
 ```
 ```
-[+] 192.168.144.131:8091
+[+] 192.168.144.200:8091
 ```
 
 ```
@@ -87,7 +87,7 @@ set RPORT 8888
 run
 ```
 ```
-[+] 192.168.144.131:8888  ( 302-http://192.168.144.131:8888/unified-console.html )
+[+] 192.168.144.200:8888  ( 302-http://192.168.144.200:8888/unified-console.html )
 ```
 
 Metasploit's `http_version` module confirms the same result pattern as the manual `curl` requests: 8888 reports the same `302` redirect to the unified console already seen manually, while 8082, 8083, and 8091 report bare confirmation of an HTTP service present with no further detail (consistent with the `404`, no-title, no-redirect responses observed manually). This module did not produce the internally contradictory or false-positive behaviour seen with `mysql_login` in `r-08- mysql-mariadb-enumeration.md`, its results here are consistent with, and corroborated by, the manual `curl` findings from Step 1.
@@ -98,14 +98,14 @@ During the Metasploit module discovery search already documented in earlier acti
 
 ```
 use exploit/multi/http/apache_druid_cve_2023_25194
-set RHOSTS 192.168.144.131
+set RHOSTS 192.168.144.200
 set RPORT 8081
 check
 ```
 
 ```
-[-] Exploit failed [unreachable]: OpenSSL::SSL::SSLError SSL_connect returned=1 errno=0 peeraddr=192.168.144.131:8081 state=SSLv3/TLS write client hello: wrong version number
-[-] 192.168.144.131:8081 - Check failed: The state could not be determined.
+[-] Exploit failed [unreachable]: OpenSSL::SSL::SSLError SSL_connect returned=1 errno=0 peeraddr=192.168.144.200:8081 state=SSLv3/TLS write client hello: wrong version number
+[-] 192.168.144.200:8081 - Check failed: The state could not be determined.
 ```
 
 The initial check attempt failed due to a module configuration mismatch rather than any target-side condition: the module defaulted to attempting an HTTPS/TLS connection, while Druid's console on this target is served over plain HTTP, confirmed throughout every other activity in this project. This was corrected:
@@ -116,7 +116,7 @@ check
 ```
 
 ```
-[*] 192.168.144.131:8081 - Cannot reliably check exploitability. No LDAP search query was received.
+[*] 192.168.144.200:8081 - Cannot reliably check exploitability. No LDAP search query was received.
 ```
 
 **This result is inconclusive, not a confirmed negative.** CVE-2023-25194 is a JNDI (Java Naming and Directory Interface) injection vulnerability, and Metasploit's check mechanism for this class of vulnerability typically works by attempting to trigger the vulnerable target into making an outbound LDAP callback to a listener the module sets up, then checking whether that callback is actually received. The message `No LDAP search query was received` indicates the module did not observe this callback, which could mean the target is genuinely not vulnerable to this specific CVE, or it could mean the callback mechanism itself did not function correctly in this network environment for reasons unrelated to the target's actual vulnerability status (for example, if outbound connectivity, DNS resolution, or listener configuration between the target and the check mechanism did not behave as the module expects). No further investigation of this specific vulnerability was undertaken in this activity; it is recorded here as an identified, plausible, but not yet confirmed or ruled out candidate for future testing, consistent with the project's broader practice of recording unresolved leads rather than asserting a conclusion the available evidence does not support.

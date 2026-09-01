@@ -8,9 +8,9 @@ Reconnaissance of the SNMP service, newly added to this VM, confirming the defau
 
 | Item | Value |
 |---|---|
-| Target | 192.168.144.132 |
+| Target | 192.168.144.200 |
 | Service | Net-SNMP (snmpd) 5.9.3, port 161/udp |
-| Attacker | Kali, 192.168.144.129 |
+| Attacker | Kali VM on the same host-only lab network |
 | Tooling | snmpwalk, Metasploit (`auxiliary/scanner/snmp/snmp_login`, `auxiliary/scanner/snmp/snmp_enum`) |
 
 ## Reconnaissance
@@ -18,7 +18,7 @@ Reconnaissance of the SNMP service, newly added to this VM, confirming the defau
 ### Step 1: Port confirmation
 
 ```bash
-nmap -sU -p 161 192.168.144.132
+nmap -sU -p 161 192.168.144.200
 ```
 
 Confirms `161/udp` open, consistent with a newly added SNMP service not present in the original `r-02` baseline.
@@ -32,7 +32,7 @@ ls -l /usr/share/nmap/scripts/ | grep -i snmp
 A substantial SNMP script set exists, including several Windows-oriented scripts (`snmp-win32-*`) not relevant to this Linux target. Four were selected: `snmp-sysdescr` (basic system identification), `snmp-processes` (running process enumeration, the NSE equivalent of Metasploit's `snmp_enum` used later in this activity), `snmp-netstat`, and `snmp-interfaces`.
 
 ```bash
-nmap -sU -p 161 --script snmp-sysdescr,snmp-processes,snmp-netstat,snmp-interfaces --script-args snmpcommunity=public 192.168.144.132
+nmap -sU -p 161 --script snmp-sysdescr,snmp-processes,snmp-netstat,snmp-interfaces --script-args snmpcommunity=public 192.168.144.200
 ```
 
 Unlike several other services enumerated in this project, these scripts worked correctly and reliably. `snmp-processes` in particular returned a complete process listing (PID, name, path, and launch parameters), including confirmation of the Postfix mail subsystem (`master`, `pickup`, `qmgr`, `tlsmgr`, `cleanup`, `local`) and standard system processes:
@@ -50,12 +50,12 @@ This independently corroborates the process-level visibility already demonstrate
 
 ```
 use auxiliary/scanner/snmp/snmp_login
-set RHOSTS 192.168.144.132
+set RHOSTS 192.168.144.200
 run
 ```
 
 ```
-[+] 192.168.144.132:161 - Login Successful: public (Access level: read-only); Proof (sysDescr.0): Linux cav-csf-linux 6.1.0-27-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.1.115-1 (2024-11-01) x86_64
+[+] 192.168.144.200:161 - Login Successful: public (Access level: read-only); Proof (sysDescr.0): Linux cav-csf-linux 6.1.0-27-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.1.115-1 (2024-11-01) x86_64
 ```
 
 The module's built-in wordlist correctly guessed the default community string `public` on the first attempt, confirming both that a weak/default string is in use and that it grants at least read access. `sysDescr.0` is also disclosed as proof, itself a meaningful information leak: exact kernel version and build date, without any authentication.
@@ -63,20 +63,20 @@ The module's built-in wordlist correctly guessed the default community string `p
 ### Step 4: Full walk via snmpwalk
 
 ```bash
-snmpwalk -v2c -c public 192.168.144.132 1.3.6.1.2.1.25.1.6.0
+snmpwalk -v2c -c public 192.168.144.200 1.3.6.1.2.1.25.1.6.0
 ```
 
 ```
 iso.3.6.1.2.1.25.1.6.0 = Gauge32: 275
 ```
 
-Confirms live system data (running process count) is retrievable, not just static configuration strings. A full unrestricted walk (`snmpwalk -v2c -c public 192.168.144.132`) returns extensive MIB data spanning multiple standard MIB modules (system, host resources, IP, DISMAN event MIB), consistent with the deliberately configured `view all` scope rather than the restrictive `systemonly` default view Debian ships.
+Confirms live system data (running process count) is retrievable, not just static configuration strings. A full unrestricted walk (`snmpwalk -v2c -c public 192.168.144.200`) returns extensive MIB data spanning multiple standard MIB modules (system, host resources, IP, DISMAN event MIB), consistent with the deliberately configured `view all` scope rather than the restrictive `systemonly` default view Debian ships.
 
 ### Step 5: Full system enumeration via Metasploit
 
 ```
 use auxiliary/scanner/snmp/snmp_enum
-set RHOSTS 192.168.144.132
+set RHOSTS 192.168.144.200
 run
 ```
 
@@ -97,7 +97,7 @@ This module retrieves a structured summary far more readable than a raw walk, in
 Beyond the standard MIB fields, the target's `snmpd.conf` includes a custom `extend` directive exposing the contents of a small note file via SNMP itself, discoverable only by walking the `NET-SNMP-EXTEND-MIB` subtree.
 
 ```bash
-snmpwalk -v2c -c public 192.168.144.132 1.3.6.1.4.1.8072.1.3.2
+snmpwalk -v2c -c public 192.168.144.200 1.3.6.1.4.1.8072.1.3.2
 ```
 
 ```

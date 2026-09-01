@@ -8,8 +8,8 @@ Basic host discovery against the target segment, confirming the target is live a
 
 | Item | Value |
 |---|---|
-| Target | 192.168.144.131 |
-| Attacker | Kali, 192.168.144.129 |
+| Target | 192.168.144.200 |
+| Attacker | Kali VM on the same host-only lab network |
 | Segment | 192.168.144.0/24 |
 | Tooling | ping, arp-scan |
 
@@ -18,16 +18,16 @@ Basic host discovery against the target segment, confirming the target is live a
 ### Step 1: ICMP reachability check
 
 ```bash
-ping -c 4 192.168.144.131
+ping -c 4 192.168.144.200
 ```
 
 ```
-PING 192.168.144.131 (192.168.144.131) 56(84) bytes of data.
-64 bytes from 192.168.144.131: icmp_seq=1 ttl=64 time=0.405 ms
-64 bytes from 192.168.144.131: icmp_seq=2 ttl=64 time=0.953 ms
-64 bytes from 192.168.144.131: icmp_seq=3 ttl=64 time=1.07 ms
-64 bytes from 192.168.144.131: icmp_seq=4 ttl=64 time=1.65 ms
---- 192.168.144.131 ping statistics ---
+PING 192.168.144.200 (192.168.144.200) 56(84) bytes of data.
+64 bytes from 192.168.144.200: icmp_seq=1 ttl=64 time=0.405 ms
+64 bytes from 192.168.144.200: icmp_seq=2 ttl=64 time=0.953 ms
+64 bytes from 192.168.144.200: icmp_seq=3 ttl=64 time=1.07 ms
+64 bytes from 192.168.144.200: icmp_seq=4 ttl=64 time=1.65 ms
+--- 192.168.144.200 ping statistics ---
 4 packets transmitted, 4 received, 0% packet loss, time 3031ms
 rtt min/avg/max/mdev = 0.405/1.020/1.651/0.442 ms
 ```
@@ -47,10 +47,10 @@ Interface: eth0, type: EN10MB, MAC: 00:0c:29:1d:5a:65, IPv4: 192.168.144.129
 WARNING: Cannot open MAC/Vendor file ieee-oui.txt: Permission denied
 WARNING: Cannot open MAC/Vendor file mac-vendor.txt: Permission denied
 Starting arp-scan 1.10.0 with 256 hosts (https://github.com/royhills/arp-scan)
-192.168.144.131 00:0c:29:94:44:82       (Unknown)
+192.168.144.200 00:0c:29:94:44:82       (Unknown)
 192.168.144.1   00:50:56:c0:00:01       (Unknown)
-192.168.144.131 00:0c:29:94:44:82       (Unknown) (DUP: 2)
-192.168.144.130 00:0c:29:e5:ff:81       (Unknown)
+192.168.144.200 00:0c:29:94:44:82       (Unknown) (DUP: 2)
+192.168.144.200 00:0c:29:e5:ff:81       (Unknown)
 192.168.144.254 00:50:56:fd:7d:c1       (Unknown)
 23 packets received by filter, 0 packets dropped by kernel
 Ending arp-scan 1.10.0: 256 hosts scanned in 2.035 seconds (125.80 hosts/sec). 4 responded
@@ -65,17 +65,17 @@ Four distinct hosts responded on the segment:
 | IP | MAC Address | Identity (from other project context) |
 |---|---|---|
 | 192.168.144.1 | 00:50:56:c0:00:01 | VMware virtual network gateway/host-only adapter (typical VMware `.1` gateway MAC prefix `00:50:56`) |
-| 192.168.144.130 | 00:0c:29:e5:ff:81 | Master CAV-CSF VM (reference only; never exploited) |
-| 192.168.144.131 | 00:0c:29:94:44:82 | Target: disposable exploitation VM |
+| 192.168.144.200 | 00:0c:29:e5:ff:81 | Master CAV-CSF VM (reference only; never exploited) |
+| 192.168.144.200 | 00:0c:29:94:44:82 | Target: disposable exploitation VM |
 | 192.168.144.254 | 00:50:56:fd:7d:c1 | Likely a VMware NAT/DHCP service address (typical VMware `.254` reserved address, MAC prefix `00:50:56` again indicating a VMware-generated virtual interface rather than a physical host) |
 
-The target (`192.168.144.131`) appearing twice with a `(DUP: 2)` annotation is expected `arp-scan` behaviour when a host replies more than once within the scan window (commonly caused by switch/network timing rather than indicating two separate physical hosts); it is the same single host both times, confirmed by the identical MAC address `00:0c:29:94:44:82`.
+The target (`192.168.144.200`) appearing twice with a `(DUP: 2)` annotation is expected `arp-scan` behaviour when a host replies more than once within the scan window (commonly caused by switch/network timing rather than indicating two separate physical hosts); it is the same single host both times, confirmed by the identical MAC address `00:0c:29:94:44:82`.
 
 Both `00:0c:29:...` MAC prefixes (on `.130` and `.131`) are VMware's standard OUI for VM network adapters, consistent with both being VMware Workstation guest VMs as expected from the project's environment (`session-continuation-prompt-23-08.md`), while the `00:50:56:...` prefixes on `.1` and `.254` are VMware's separately allocated OUI range used for virtual network infrastructure (host-only gateway and NAT services) rather than guest VMs themselves.
 
 ## Outcome
 
-Confirmed the target (192.168.144.131) is live and reachable via both ICMP and ARP. Identified the full set of hosts present on the local lab segment: the Kali attacker itself, the target disposable VM, the master reference VM (192.168.144.130, out of scope for exploitation per project rules), and two VMware-generated virtual network infrastructure addresses (gateway and NAT/DHCP service). No hosts outside the expected lab topology were discovered.
+Confirmed the target (192.168.144.200) is live and reachable via both ICMP and ARP. Identified the full set of hosts present on the local lab segment: the Kali attacker itself, the target disposable VM, the master reference VM (192.168.144.200, out of scope for exploitation per project rules), and two VMware-generated virtual network infrastructure addresses (gateway and NAT/DHCP service). No hosts outside the expected lab topology were discovered.
 
 ## Remediation
 

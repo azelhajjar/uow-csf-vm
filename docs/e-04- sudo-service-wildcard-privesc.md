@@ -8,7 +8,8 @@ Root privilege escalation from the `aberrant_distance` foothold (see `03-erlang-
 
 | Item | Value |
 |---|---|
-| Target | 192.168.144.131, hostname `cav-csf-linux` |
+| Target | 192.168.144.200, hostname `cav-csf-linux` |
+| Attacker | Kali VM on the same host-only lab network |
 | Starting account | `aberrant_distance` (uid 1006) |
 | Resulting account | `root` (uid 0) |
 

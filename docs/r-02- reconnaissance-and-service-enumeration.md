@@ -8,8 +8,8 @@ Full-range TCP port discovery against the target, followed by targeted service/v
 
 | Item | Value |
 |---|---|
-| Target | 192.168.144.131 |
-| Attacker | Kali, 192.168.144.129 |
+| Target | 192.168.144.200 |
+| Attacker | Kali VM on the same host-only lab network |
 | Tooling | nmap |
 
 ## Reconnaissance
@@ -19,7 +19,7 @@ Full-range TCP port discovery against the target, followed by targeted service/v
 A full 65535-port TCP scan was run first, deliberately without service detection, to get fast, unbiased coverage of every open port before spending time on per-service enumeration:
 
 ```bash
-nmap -p- -T4 192.168.144.131
+nmap -p- -T4 192.168.144.200
 ```
 
 ```
@@ -66,7 +66,7 @@ PORTS="21,22,111,1716,2049,2181,2222,3306,3632,4369,8081,8082,8083,8091,8888,347
 ### Step 3: Service/version detection and OS fingerprinting
 
 ```bash
-sudo nmap -sC -sV -O -p "$PORTS" 192.168.144.131
+sudo nmap -sC -sV -O -p "$PORTS" 192.168.144.200
 ```
 
 `-sC` runs nmap's default NSE script set against each open port (safe, non-intrusive scripts appropriate for initial enumeration). `-sV` performs service/version detection by actually probing each port rather than relying on the static port-number database used in Step 1. `-O` attempts OS fingerprinting based on TCP/IP stack behaviour. `sudo` is required for `-O`, since raw packet crafting for OS fingerprinting needs elevated privileges.
@@ -116,7 +116,7 @@ PORT      STATE  SERVICE    VERSION
 |_    ssh_runner: 37301
 8081/tcp  open   http       Jetty
 | http-title: Apache Druid
-|_Requested resource was http://192.168.144.131:8081/unified-console.html
+|_Requested resource was http://192.168.144.200:8081/unified-console.html
 8082/tcp  open   http       Jetty
 |_http-title: Site doesn't have a title.
 8083/tcp  open   http       Jetty
@@ -125,7 +125,7 @@ PORT      STATE  SERVICE    VERSION
 |_http-title: Site doesn't have a title.
 8888/tcp  open   http       Jetty
 | http-title: Apache Druid
-|_Requested resource was http://192.168.144.131:8888/unified-console.html
+|_Requested resource was http://192.168.144.200:8888/unified-console.html
 34743/tcp closed unknown
 37561/tcp closed unknown
 38999/tcp closed unknown
@@ -148,7 +148,7 @@ As anticipated in Step 2, the six high ports queried by this scan (from the stal
 ### Step 4: UDP top-ports sweep
 
 ```bash
-sudo nmap -sU --top-ports 20 192.168.144.131
+sudo nmap -sU --top-ports 20 192.168.144.200
 ```
 
 `-sU` scans UDP rather than TCP. `--top-ports 20` limits the sweep to nmap's twenty most commonly seen UDP ports rather than a full 65535-port UDP scan, which is a deliberate scope/time trade-off: a full UDP range scan is dramatically slower than the equivalent TCP scan (UDP has no handshake to confirm state quickly, so nmap must rely on ICMP unreachable responses or timeouts), so a top-ports sweep is the practical default for an initial pass.
@@ -202,7 +202,7 @@ No further action was taken on the UDP results; they are recorded here for compl
 | 8083/tcp | Apache Druid (historical) | 0.20.0 (inferred) | Not independently exploited; no HTTP UI |
 | 8091/tcp | Apache Druid (middleManager) | 0.20.0 (inferred) | Not independently exploited; no HTTP UI |
 | 8888/tcp | Apache Druid (router) | 0.20.0 | Proxies 8081; not independently exploited |
-| 631/udp | CUPS / cups-browsed | 1.28.17-3 (deliberately downgraded, pre-CVE-2024-47176 fix) | `r-12- cups-print-service-reconnaissance.md`, `r-13- cups-discovery-ip-change.md`, `e-12- cups-full-rce-chain.md`. **Not visible on TCP scans** (`cupsd` TCP interface is loopback-only); only discoverable via UDP scanning. Added after this scan was originally run; current target address for this service is 192.168.144.132. |
+| 631/udp | CUPS / cups-browsed | 1.28.17-3 (deliberately downgraded, pre-CVE-2024-47176 fix) | `r-12- cups-print-service-reconnaissance.md`, `r-13- cups-discovery-ip-change.md`, `e-12- cups-full-rce-chain.md`. **Not visible on TCP scans** (`cupsd` TCP interface is loopback-only); only discoverable via UDP scanning. Added after this scan was originally run; current target address for this service is 192.168.144.200. |
 | 139/tcp, 445/tcp | Samba (smbd/nmbd) | 4.17.12 | `r-14- samba-share-reconnaissance.md`, `e-13- samba-guest-writable-share.md`. Added after this scan was originally run; guest-accessible writable share configured deliberately. |
 | 161/udp | SNMP (snmpd) | 5.9.3 | `r-15- snmp-enumeration.md`, `e-14- snmp-community-string-disclosure.md`. Added after this scan was originally run; default `public` community string with unrestricted view configured deliberately. |
 | 6379/tcp | Redis | 7.0.15 | `r-16- redis-enumeration.md`, `e-15- redis-unauthenticated-data-exposure.md`. Added after this scan was originally run; deliberately unauthenticated, bound to all interfaces. |

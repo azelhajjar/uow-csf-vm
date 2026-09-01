@@ -8,9 +8,9 @@ Reconnaissance and enumeration of the distcc distributed compiler daemon on port
 
 | Item | Value |
 |---|---|
-| Target | 192.168.144.131 |
+| Target | 192.168.144.200 |
 | Service | distccd, port 3632/tcp |
-| Attacker | Kali, 192.168.144.129 |
+| Attacker | Kali VM on the same host-only lab network |
 | Tooling | nc, nmap NSE (`default` category, `distcc-cve2004-2687`) |
 
 ## Reconnaissance
@@ -20,11 +20,11 @@ Reconnaissance and enumeration of the distcc distributed compiler daemon on port
 Unlike FTP or SSH, distcc does not send a cleartext identifying banner on connection; its wire protocol is a compact binary/token-based format rather than a human-readable greeting. To test this directly rather than assuming it, a raw TCP connection was opened and a distcc protocol token was sent manually:
 
 ```bash
-echo -e "DIST00000001" | nc -nv -q2 192.168.144.131 3632
+echo -e "DIST00000001" | nc -nv -q2 192.168.144.200 3632
 ```
 
 ```
-Connection to 192.168.144.131 3632 port [tcp/*] succeeded!
+Connection to 192.168.144.200 3632 port [tcp/*] succeeded!
 ```
 
 The TCP connection succeeded, confirming the port is genuinely open and accepting connections, but no data was returned in response to the manually crafted token. This is itself a useful, if unremarkable, finding: distccd does not respond usefully to naive manual interaction the way a text-based protocol like FTP does, and correctly speaking its protocol would require either the real `distcc` client, a purpose-built script, or a tool (such as the eventual NSE exploit script) that understands its exact wire format. This is recorded as the expected, negative-but-informative result of attempting the simplest possible manual interaction before moving to more capable tooling.
@@ -63,7 +63,7 @@ https://nmap.org/nsedoc/scripts/distcc-cve2004-2687.html
 To continue the reconnaissance-appropriate approach (general enumeration before targeted vulnerability checks), a broader script pass was attempted using nmap's `default` and `discovery` categories together:
 
 ```bash
-nmap -sV -p 3632 --script default,discovery 192.168.144.131
+nmap -sV -p 3632 --script default,discovery 192.168.144.200
 ```
 
 This scan **did not complete successfully**. It produced a long sequence of output from numerous `broadcast-*` and `targets-*` scripts (multicast/mDNS discovery, IPv6 neighbour solicitation, and protocol-specific broadcast probes for OSPF, EIGRP, PIM, IGMP, and KNX gateway discovery, among others), several of which independently failed with `ERROR: Script execution failed`, and the scan ultimately crashed nmap itself with an internal assertion failure:
@@ -73,7 +73,7 @@ nmap: nse_nsock.cc:381: void callback(nsock_pool, nsock_event, void*): Assertion
 Aborted
 ```
 
-**This is a genuine and important finding about the `discovery` NSE category, not a distraction from the target enumeration.** Despite the scan being scoped to a single target IP and a single port (`-p 3632 192.168.144.131`), the `discovery` category pulled in scripts that operate at the *local network segment* level rather than respecting the specified target scope, sending broadcast and multicast probes across the entire subnet (visible in the output referencing other hosts on the segment, including the Kali attacker's own interface and the master VM). Several of these subnet-wide scripts failed outright, and the combination ultimately crashed the nmap process entirely before any distcc-specific results were returned.
+**This is a genuine and important finding about the `discovery` NSE category, not a distraction from the target enumeration.** Despite the scan being scoped to a single target IP and a single port (`-p 3632 192.168.144.200`), the `discovery` category pulled in scripts that operate at the *local network segment* level rather than respecting the specified target scope, sending broadcast and multicast probes across the entire subnet (visible in the output referencing other hosts on the segment, including the Kali attacker's own interface and the master VM). Several of these subnet-wide scripts failed outright, and the combination ultimately crashed the nmap process entirely before any distcc-specific results were returned.
 
 The practical lesson: broad, category-based NSE invocations (`--script default,discovery` or similar) do not necessarily respect the target scope implied by the command's IP/port arguments, and can have unpredictable side effects, up to and including crashing the scanning tool itself, well beyond the intended target. This is a real operational risk worth understanding before running broad script categories in any environment, lab or otherwise, particularly one where unintended broadcast traffic could have side effects on other systems sharing the segment.
 
@@ -82,7 +82,7 @@ The practical lesson: broad, category-based NSE invocations (`--script default,d
 Following the crash, the scan was re-run using only the `default` category (dropping `discovery` entirely), which contains nmap's curated set of scripts intended to be safe and reasonably scoped to the actual target:
 
 ```bash
-nmap -sV -p 3632 --script default 192.168.144.131
+nmap -sV -p 3632 --script default 192.168.144.200
 ```
 
 ```
@@ -97,7 +97,7 @@ This completed cleanly and without incident, though it produced no distcc-specif
 Having now confirmed the exact service version (`distccd v1`, Debian 12.2.0-14+deb12u1) via safe, scoped default scanning, and having separately identified through research/prior knowledge that older, permissively-configured distcc daemons are subject to CVE-2004-2687 (a weak-configuration class vulnerability rather than a memory-safety bug, as documented in `e-06- distcc-cve-2004-2687.md`), running the dedicated detection script becomes a deliberate, justified next step rather than a first guess:
 
 ```bash
-nmap -p 3632 --script distcc-cve2004-2687 192.168.144.131
+nmap -p 3632 --script distcc-cve2004-2687 192.168.144.200
 ```
 
 ```
