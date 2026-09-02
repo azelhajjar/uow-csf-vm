@@ -20,7 +20,7 @@ Standard Debian permissions on `/etc/shadow` are `-rw-r----- root:shadow`, restr
 
 ## Reconnaissance
 
-From an existing low-privilege shell (`distccd` in this instance, reached via `06-distcc-cve-2004-2687.md`):
+From an existing low-privilege shell (`distccd` in this instance, reached via `e-06- distcc-cve-2004-2687.md`):
 
 ```
 ls -la /etc/shadow

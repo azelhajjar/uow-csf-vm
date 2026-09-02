@@ -11,7 +11,7 @@
 | Target | 192.168.144.100 |
 | Misconfiguration | `/usr/bin/nano` installed with the setuid bit (`-rwsr-xr-x root root`) |
 | Attacker | Kali, 192.168.144.129 |
-| Starting account | `analyst` (uid 1003), reached via SSH using credentials cracked in `07-readable-shadow-credential-cracking.md` |
+| Starting account | `analyst` (uid 1003), reached via SSH using credentials cracked in `e-07- readable-shadow-credential-cracking.md` |
 | Resulting account | `root` (uid 0) |
 
 ## Vulnerability

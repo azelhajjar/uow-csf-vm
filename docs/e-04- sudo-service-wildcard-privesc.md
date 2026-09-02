@@ -2,7 +2,7 @@
 
 ## Summary
 
-Root privilege escalation from the `aberrant_distance` foothold (see `03-erlang-otp-ssh-rce-cve-2025-32433.md`), abusing an overly broad sudoers wildcard combined with unsanitised path concatenation in the Debian `/usr/sbin/service` wrapper script.
+Root privilege escalation from the `aberrant_distance` foothold (see `docs/e-03- erlang-otp-ssh-rce-cve-2025-32433.md`), abusing an overly broad sudoers wildcard combined with unsanitised path concatenation in the Debian `/usr/sbin/service` wrapper script.
 
 ## Environment
 

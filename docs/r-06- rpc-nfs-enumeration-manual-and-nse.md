@@ -2,7 +2,7 @@
 
 ## Summary
 
-Enumeration of the RPC portmapper service (port 111) and the NFS export it advertises (port 2049), comparing the standard command-line tools (`rpcinfo`, `showmount`) against their nmap NSE script equivalents. This activity documents the reconnaissance step that precedes and motivates `e- 02-nfs-anonymous-credential-exposure.md`, and additionally demonstrates that the NSE `nfs-ls` script can retrieve file listings and metadata directly through the scripting engine, without requiring the share to be manually mounted first, a capability distinct from what `showmount` alone provides.
+Enumeration of the RPC portmapper service (port 111) and the NFS export it advertises (port 2049), comparing the standard command-line tools (`rpcinfo`, `showmount`) against their nmap NSE script equivalents. This activity documents the reconnaissance step that precedes and motivates `e-02- nfs-anonymous-credential-exposure.md`, and additionally demonstrates that the NSE `nfs-ls` script can retrieve file listings and metadata directly through the scripting engine, without requiring the share to be manually mounted first, a capability distinct from what `showmount` alone provides.
 
 ## Environment
 
@@ -18,7 +18,7 @@ Enumeration of the RPC portmapper service (port 111) and the NFS export it adver
 ### Step 1: Manual RPC service enumeration with `rpcinfo`
 
 ```bash
-rpcinfo -p 192.168.144.200
+rpcinfo -p 192.168.144.100
 ```
 
 ```
@@ -53,20 +53,20 @@ rpcinfo -p 192.168.144.200
 ### Step 2: Manual export enumeration with `showmount`
 
 ```bash
-showmount -e 192.168.144.200
+showmount -e 192.168.144.100
 ```
 
 ```
-Export list for 192.168.144.200:
+Export list for 192.168.144.100:
 /srv/backups *
 ```
 
-`showmount -e` queries the `mountd` service specifically (rather than the full RPC program list) and asks it directly which filesystem paths are exported and to which clients. The output confirms a single export, `/srv/backups`, with `*` as the allowed client specification, meaning no host restriction is configured and any client can request to mount this share. This is the single most important finding of this enumeration phase and is what directly enables the credential-disclosure exploit documented in `e- 02-nfs-anonymous-credential-exposure.md`.
+`showmount -e` queries the `mountd` service specifically (rather than the full RPC program list) and asks it directly which filesystem paths are exported and to which clients. The output confirms a single export, `/srv/backups`, with `*` as the allowed client specification, meaning no host restriction is configured and any client can request to mount this share. This is the single most important finding of this enumeration phase and is what directly enables the credential-disclosure exploit documented in `e-02- nfs-anonymous-credential-exposure.md`.
 
 ### Step 3: NSE equivalent of `rpcinfo`
 
 ```bash
-nmap -p 111 --script rpcinfo 192.168.144.200
+nmap -p 111 --script rpcinfo 192.168.144.100
 ```
 
 ```
@@ -106,7 +106,7 @@ The practical takeaway: the NSE script and the CLI tool return equivalent core i
 ### Step 4: NSE export enumeration, directory listing, and filesystem statistics
 
 ```bash
-nmap -p 111,2049 --script nfs-showmount,nfs-ls,nfs-statfs 192.168.144.200
+nmap -p 111,2049 --script nfs-showmount,nfs-ls,nfs-statfs 192.168.144.100
 ```
 
 ```
@@ -129,21 +129,21 @@ PORT     STATE SERVICE
 2049/tcp open  nfs
 ```
 
-This is where the NSE approach demonstrates a genuine capability advantage over the manual toolchain used in `e- 02`:
+This is where the NSE approach demonstrates a genuine capability advantage over the manual toolchain used in `e-02`:
 
 - **`nfs-showmount`** reproduces the standalone `showmount -e` result exactly (`/srv/backups *`), confirming the same finding via a different tool.
-- **`nfs-ls` retrieves the full directory listing of the export directly through the NSE script**, without requiring the share to first be mounted locally with `mount -t nfs`, as was done manually in `e- 02`. The output shows the same three files later investigated there (`backup-service.txt`, `backup.conf`, `hosts.txt`), along with file permissions, ownership (UID/GID 0, i.e. root-owned), sizes, and modification timestamps, all retrieved in a single non-interactive command. The `access:` line (`Read Lookup NoModify NoExtend NoDelete NoExecute`) also confirms the NFS-level access permissions granted to an anonymous/unauthenticated client: read and directory-lookup access, but not write, extend, delete, or execute, consistent with a read-only-by-anonymous-clients export even though the underlying export itself has no host restriction.
+- **`nfs-ls` retrieves the full directory listing of the export directly through the NSE script**, without requiring the share to first be mounted locally with `mount -t nfs`, as was done manually in `e-02`. The output shows the same three files later investigated there (`backup-service.txt`, `backup.conf`, `hosts.txt`), along with file permissions, ownership (UID/GID 0, i.e. root-owned), sizes, and modification timestamps, all retrieved in a single non-interactive command. The `access:` line (`Read Lookup NoModify NoExtend NoDelete NoExecute`) also confirms the NFS-level access permissions granted to an anonymous/unauthenticated client: read and directory-lookup access, but not write, extend, delete, or execute, consistent with a read-only-by-anonymous-clients export even though the underlying export itself has no host restriction.
 - **`nfs-statfs`** retrieves filesystem-level statistics for the mounted export (total, used, and available space, maximum file size, maximum hard link count), information that has no direct equivalent in the manual `showmount`/`mount` workflow unless a student separately ran `df` after mounting the share locally.
 
-This demonstrates a genuinely faster reconnaissance path: where the manual method (`e- 02`) required running `showmount`, then `mount`, then `find`/`cat` on the mounted share to reach the same three filenames, this single NSE command achieves file listing, permissions, and filesystem statistics all at once, without ever mounting anything locally on the attacker machine.
+This demonstrates a genuinely faster reconnaissance path: where the manual method (`e-02`) required running `showmount`, then `mount`, then `find`/`cat` on the mounted share to reach the same three filenames, this single NSE command achieves file listing, permissions, and filesystem statistics all at once, without ever mounting anything locally on the attacker machine.
 
 ## Outcome
 
-Both manual CLI tools (`rpcinfo`, `showmount`) and their NSE equivalents (`rpcinfo`, `nfs-showmount`) produced consistent, corroborating results: a single NFS export, `/srv/backups`, exported to any client (`*`) with no host restriction. The NSE `nfs-ls` and `nfs-statfs` scripts additionally demonstrated the ability to retrieve export contents and filesystem statistics directly through nmap's scripting engine, without needing to mount the share locally first, a genuine efficiency advantage over the manual workflow used in `e- 02-nfs-anonymous-credential-exposure.md`. Unlike the FTP NSE scripts documented in `r-04- ftp-banner-grab-and-anonymous-access.md`, every NFS/RPC-related NSE script tested here worked correctly and reliably corroborated the manually-obtained findings; no detection gaps were observed in this instance.
+Both manual CLI tools (`rpcinfo`, `showmount`) and their NSE equivalents (`rpcinfo`, `nfs-showmount`) produced consistent, corroborating results: a single NFS export, `/srv/backups`, exported to any client (`*`) with no host restriction. The NSE `nfs-ls` and `nfs-statfs` scripts additionally demonstrated the ability to retrieve export contents and filesystem statistics directly through nmap's scripting engine, without needing to mount the share locally first, a genuine efficiency advantage over the manual workflow used in `e-02- nfs-anonymous-credential-exposure.md`. Unlike the FTP NSE scripts documented in `r-04- ftp-banner-grab-and-anonymous-access.md`, every NFS/RPC-related NSE script tested here worked correctly and reliably corroborated the manually-obtained findings; no detection gaps were observed in this instance.
 
 ## Remediation
 
-See `e- 02-nfs-anonymous-credential-exposure.md` for the full remediation guidance (restricting exports to trusted hosts, enabling authentication, not storing credentials on an unauthenticated share). No additional remediation points arise specifically from the enumeration methodology itself.
+See `e-02- nfs-anonymous-credential-exposure.md` for the full remediation guidance (restricting exports to trusted hosts, enabling authentication, not storing credentials on an unauthenticated share). No additional remediation points arise specifically from the enumeration methodology itself.
 
 ## Teaching Notes
 
@@ -156,8 +156,8 @@ This is also a good opportunity to reinforce the RPC ephemeral port drift behavi
 **Prerequisite exploit(s):** None (all commands run unauthenticated)
 **Required starting access:** Network access to the target from Kali
 **Starting account:** None
-**Resulting access:** N/A (enumeration only; file contents observed via `nfs-ls` were not yet acted upon or correlated into credentials in this activity, that step is documented separately in `e- 02-nfs-anonymous-credential-exposure.md`)
-**Provides access for:** Precedes and directly motivates `e- 02-nfs-anonymous-credential-exposure.md`
+**Resulting access:** N/A (enumeration only; file contents observed via `nfs-ls` were not yet acted upon or correlated into credentials in this activity, that step is documented separately in `e-02- nfs-anonymous-credential-exposure.md`)
+**Provides access for:** Precedes and directly motivates `e-02- nfs-anonymous-credential-exposure.md`
 **Suggested teaching level:** Level 5 (RPC/NFS enumeration fundamentals, comparing manual and automated tooling, understanding RPC program numbers vs. ephemeral ports)
 
 ## What is RPC/NFS?

@@ -16,7 +16,7 @@ This revises the earlier `claude_w-01-windows-ad-baseline-design.md`. That docum
 - Snapshot at that point: `cav-csf-windows-01-clean-server2019-vmtools` (Windows Server 2019 + VMware Tools only).
 - Static IP, hostname rename, AD DS/DNS roles and domain promotion: all done and validated, see the next section.
 - OU, user and group scaffolding: built, matching section 3 exactly.
-- Deliberate vulnerabilities: substantially built. Kerberoasting on `svc-web`, AS-REP roasting on `helpdesk01`, and DCSync domain replication rights abuse on `backup.operator` are built and validated, see `e-18`/`e-19`/`r-21`/`e-21`, with DCSync as the Windows Phase 2 capstone; `DnsAdmins` abuse has been dropped from the current lab (no clean Kali-native student exploitation path was validated). Website component: built and validated, a lightweight static IIS intranet at `uow-intranet.uow-csf.internal` (section 5, `r-22`).
+- Deliberate vulnerabilities: substantially built. Kerberoasting on `svc-web`, AS-REP roasting on `helpdesk01`, and DCSync domain replication rights abuse on `backup.operator` are built and validated, see `e-18`/`e-19`/`r-21`/`e-21`, with DCSync as the Windows Phase 2 capstone; `DnsAdmins` abuse has been dropped from the current lab (no clean Kali-native student exploitation path was validated). Website component: built and validated, a lightweight static IIS intranet at `uow-intranet.uow-csf.internal` (section 5, `r-22`). A second web service, WordPress on IIS, is also built and validated at `uow-news.uow-csf.internal` (section 15).
 - FTP service surface: built and validated. Anonymous, read-only IIS FTP (`Microsoft ftpd`, TCP 21) on the DC, see section 14 and `r-23`. Reconnaissance-only, not an exploit path.
 - Master reproduction at `192.168.144.200` is complete; sections 7 to 9 are retained as the completed build sequence and validation record.
 
@@ -60,12 +60,13 @@ Not to be actioned yet, recorded here so they aren't lost between now and the ma
 ### Validation progress
 
 - AD DS/DNS promotion: verified (`whoami`, `Get-ADDomain`, service status, shares, `nltest`, DNS/SRV resolution, `dcdiag /test:SysVolCheck` all passed cleanly)
-- Basic OU/group/user scaffolding (section 3): done, matches the confirmed design exactly (5 OUs, 7 users, 5 groups, 4 populated memberships)
+- Basic OU/group/user scaffolding (section 3): done, matches the confirmed design exactly (5 OUs, 8 users, 5 groups, 4 populated memberships)
 - Power/lock-timeout settings: applied
 - Windows 7 and Windows 10 client domain join: confirmed working
 - Normal domain user login, tested end to end from a client: confirmed. Windows 10 client (`Win10`) joined to `uow-csf.internal`, logged in as `uowcsf\analyst` (Phase 1 baseline account), DNS correctly resolved to `192.168.144.200` via domain join, no manual DNS override needed
 - DHCP is now built and validated on the DC, see section 13. The Windows 10 test client referenced above remains statically addressed at `192.168.144.237` (`DHCP Enabled: No`); DHCP is available for other clients via the scope in section 13.
 - Linux-to-DC integration is now confirmed: `cav-csf-linux` has joined `uow-csf.internal` successfully via `realmd`/`sssd`, using the dedicated `svc-linux-auth` service account. Domain login and home-directory auto-creation have been confirmed.
+- Low-privilege domain-join account `dcjoin` is now built and validated: delegated Computer-object create/delete rights on `OU=Computers,OU=UOW-CSF` only, default computer container redirected there via `redircmp`, confirmed with a Windows 10 client join (`WIN10-2`) landing in the correct OU.
 
 ### Power/lock-timeout settings: decided, keep
 
@@ -100,7 +101,7 @@ Applied consistently across the build. The `HKCU` lines are per-user and need re
 | Phase 1 scope | AD DS and DNS only, stable baseline |
 | AD CS | Deferred to Phase 3 |
 | Deliberate vulnerabilities | None in Phase 1, deferred to Phase 2 |
-| Website component | Planned, implementation not yet decided (section 5) |
+| Website component | Static IIS intranet built (section 5); WordPress/IIS service also built (section 15) |
 
 ## Resource constraint (governs everything below)
 
@@ -165,6 +166,7 @@ Until any of the above is deliberately added to a specific account or group, its
   - `helpdesk01` (Helpdesk Operator)
   - `svc-web` (Web Service)
   - `backup.operator` (Backup Operator)
+  - `dcjoin` (Domain Join Account)
 - Groups built, all in `OU=Groups,OU=UOW-CSF`:
   - `Lab-Students`, members: `analyst`, `mpatel`, `jreed`, `skhan`
   - `IT-Helpdesk`, members: `helpdesk01`
@@ -172,6 +174,14 @@ Until any of the above is deliberately added to a specific account or group, its
   - `Backup-Operators-Lab`, members: `backup.operator`
   - `Staff-Admin`, unpopulated placeholder
 - An SPN has been applied to `svc-web` (`e-18`), `DoesNotRequirePreAuth` to `helpdesk01` (`e-19`), and DCSync replication rights to `backup.operator` (`r-21`/`e-21`). No description-field content and no group nesting beyond flat membership have been applied to any account; `backup.operator` does carry the deliberate DCSync ACL grant noted above. Naming (`IT-Helpdesk`, `Web-Services`, `Backup-Operators-Lab`) anticipated which accounts/groups Phase 2 would attach weaknesses to, and the three built weaknesses above confirm that naming; the remaining candidate weaknesses are not yet present.
+
+`dcjoin` (`OU=Users,OU=UOW-CSF`) is a low-privilege domain-join account: it replaces `Administrator` for joining lab Windows clients to `uow-csf.internal`. It has been delegated Create/Delete Computer object rights on `OU=Computers,OU=UOW-CSF` only (Delegation of Control Wizard, General category, Create All Child Objects/Delete All Child Objects scoped to Computer objects), and the domain's default computer container has been redirected to that OU:
+
+```powershell
+redircmp "OU=Computers,OU=UOW-CSF,DC=uow-csf,DC=internal"
+```
+
+so a standard client join places the computer object there without needing an explicit OU parameter. Verified end to end: a Windows 10 test client (`WIN10-2`) joined using `dcjoin` credentials and landed at `CN=WIN10-2,OU=Computers,OU=UOW-CSF,DC=uow-csf,DC=internal`. `dcjoin` carries no group membership beyond `Domain Users` and is not a member of `Domain Admins`, `Enterprise Admins`, or `Administrators`.
 
 ### Password provisioning (confirmed plan)
 
@@ -198,7 +208,7 @@ Agreed: the site's job is a reconnaissance and initial-access bridge into the AD
 Decided and built: the lightweight IIS/custom intranet, built using the Phase 2 AD objects it references (users, groups, hostnames, the `svc-web` service account and SPN from `e-18`), so its clues are accurate rather than placeholder text. It runs at `uow-intranet.uow-csf.internal` on `uow-csf-dc` (`192.168.144.200`); see `r-22` for the reconnaissance write-up. The candidates considered were:
 
 - **Lightweight IIS/custom intranet or staff/service-desk portal — chosen and built.** Static content, IIS role only, no database engine required. Lowest resource cost of the candidates, and easiest to control precisely for planted clues. Its application pool identity is tied to the existing `svc-web` account, giving that account's SPN (`e-18`) a genuine running service behind it.
-- **WordPress (IIS + PHP via FastCGI + MariaDB, tuned down) — not chosen for the Windows DC baseline.** Familiar CMS with a large deliberately-vulnerable-plugin ecosystem, but the heavier resource footprint (PHP-FPM/FastCGI plus a database engine) wasn't justified once the static intranet met the teaching objective. Remains a possible target on Linux or a separate future platform, not this DC.
+- **WordPress (IIS + PHP via FastCGI + MariaDB, tuned down) — initially deferred, later built as a separate service.** Familiar CMS with a large deliberately-vulnerable-plugin ecosystem; the heavier resource footprint (PHP-FPM/FastCGI plus a database engine) wasn't justified for the initial baseline, so the static intranet was chosen and built first as the AD reconnaissance bridge. WordPress was subsequently also built on the Windows DC as its own separate site, `uow-news.uow-csf.internal` (section 15); it does not replace the static intranet, and runs under its own `UOW-CSF-WP` application pool using `ApplicationPoolIdentity`, separate from `svc-web` and from any AD account.
 - **Other lightweight Windows-compatible option** — not pursued, superseded by the built static intranet.
 
 Build timing: built after the Phase 1 baseline was stable and the Phase 2 AD misconfiguration design existed, as planned.
@@ -329,7 +339,7 @@ DCSync's write-up now exists (`r-21`/`e-21`), following the existing `.md` docum
   - If Windows Server 2019 Desktop Experience with no AD roles installed idles consistently above roughly 1.7 GB RAM used, or becomes visibly unstable/unusable at the 2 GB allocation, rebuild using Server Core before proceeding (Checkpoint A).
   - If it remains usable after clean install, continue to the AD DS/DNS baseline and check again after promotion (Checkpoint B).
   - This is a quick practical observation at each checkpoint, not a separate benchmarking exercise.
-- **Website implementation.** Lightweight IIS/custom intranet versus WordPress versus another option. Phase 1 memory headroom has passed, so this is now a Phase 2 design decision based on what AD accounts, groups, hostnames, and breadcrumbs the site needs to carry.
+- **Website implementation.** Settled: both were ultimately built rather than one replacing the other. The static IIS intranet was built first (section 5) as the AD reconnaissance bridge; a separate WordPress/IIS service was added afterward (section 15) as its own independent web service, not a replacement.
 - **Internet access during build.** Needed for Windows Update and feature installation. If enabled temporarily, should it be removed before the VM is treated as lab-ready?
 - **Licensing.** Windows Server 2019 evaluation media carries a 180-day evaluation period. Confirm whether eval-with-rearm is acceptable given the VM is discarded/rebuilt per activity, or whether the university's licensing channel should be used instead.
 - **Snapshot/versioning naming.** Still unreconciled, but now retrospectively: the clean-install snapshot was already taken as `cav-csf-windows-01-clean-server2019-vmtools`, which does not match the Linux convention (`CAV-CSF-01-VMware-Clean`). Decide whether to align the two conventions and rename, or accept the divergence and document it, before further Windows snapshots accumulate under the current style.
@@ -391,3 +401,37 @@ curl -v ftp://192.168.144.200/ --user anonymous:anonymous
 ```
 
 Anonymous login succeeds (`230 User logged in`), and directory listing confirms all seven files. See `r-23-windows-service-discovery.md` for the full evidence and teaching notes.
+
+
+## 15. WordPress/IIS service (built and validated)
+
+A second Windows-hosted web service is now built and validated on the master DC, `uow-csf-dc` (`192.168.144.200`), for `uow-csf.internal`, alongside the static intranet (section 5) and IIS FTP (section 14): a WordPress installation on IIS, running PHP via FastCGI against a local MariaDB instance.
+
+**Service design:**
+
+| Item | Value |
+|---|---|
+| Site | `UOW-CSF-WP` |
+| Host header | `uow-news.uow-csf.internal` |
+| Physical path | `C:\inetpub\wwwroot\wp-news` |
+| Application pool | `UOW-CSF-WP`, default `ApplicationPoolIdentity` |
+| PHP | 8.1.31 (NTS, x64), IIS FastCGI |
+| Database engine | MariaDB 10.6.22, bound to `127.0.0.1` only |
+| Database | `wp_news` |
+| Database user | `wp_news_user`@`127.0.0.1` |
+| WordPress version | 6.6.2 |
+| Site title | UOW-CSF News |
+| Admin username | `wp.editor` |
+| Admin email | `web.services@uow-csf.internal` |
+| Installed plugin | `wp-file-manager` (from `wp-file-manager.6.0.zip`) |
+
+Both the application pool identity and the database user are local to this service: `ApplicationPoolIdentity` is a per-pool virtual account with no domain identity, and `wp_news_user` is a MariaDB account with no relationship to any Windows or AD account. Neither `svc-web` nor any other Phase 2 AD account is used by this service.
+
+**Verification:**
+
+```powershell
+Invoke-WebRequest -Uri "http://uow-news.uow-csf.internal/" -UseBasicParsing
+netstat -ano | findstr ":3306"
+```
+
+The site returns `200` with PHP-rendered content; `netstat` confirms MariaDB listening on `127.0.0.1:3306` only, not `0.0.0.0`. The WP File Manager exploitation write-up for this service is `e-22` (WP File Manager arbitrary file upload). A dedicated reconnaissance write-up remains future work, pending `r-24`.

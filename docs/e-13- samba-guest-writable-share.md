@@ -22,7 +22,7 @@ The share is configured with `guest ok = yes`, `guest only = yes`, and `writable
 **Retrieving the exposed content:**
 
 ```bash
-smbclient //192.168.144.200/HR-Shared -N
+smbclient //192.168.144.100/HR-Shared -N
 ```
 ```
 smb: \> get Staff_Directory.csv

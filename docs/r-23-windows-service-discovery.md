@@ -56,7 +56,7 @@ curl -v ftp://192.168.144.200/ --user anonymous:anonymous
 < 226 Transfer complete.
 ```
 
-Anonymous login succeeds without a named domain credential, confirming read access to all seven files.
+Anonymous login succeeds without a named domain credential, confirming directory listing access to all seven files; individual file retrieval was expected given Read-only anonymous access, but was not separately captured in this validation pass.
 
 ### Access boundary
 
@@ -80,7 +80,7 @@ Expected result: upload denied. This denial should only be recorded as validated
 
 ## Outcome
 
-An anonymous, unauthenticated visitor to the FTP service can log in and list or retrieve seven IT Support reference files, disclosing password-reset contact guidance, department share paths, a new-starter checklist, and department contact names, all without needing a credential. Alongside `r-19`'s Windows/AD enumeration and `r-22`'s intranet reconnaissance, this is a third independently reachable service corroborating the same organisational naming convention and share layout.
+An anonymous, unauthenticated visitor to the FTP service can log in and list seven IT Support reference files by name, disclosing the existence of password-reset contact guidance, department share paths, a new-starter checklist, and department contact names, all without needing a credential. Individual file retrieval is expected given the service's Read-only anonymous access, but was not separately captured in this validation pass. Alongside `r-19`'s Windows/AD enumeration and `r-22`'s intranet reconnaissance, this is a third independently reachable service corroborating the same organisational naming convention and share layout.
 
 ## Teaching Notes
 

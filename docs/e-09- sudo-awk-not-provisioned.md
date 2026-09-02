@@ -2,7 +2,7 @@
 
 ## Summary
 
-The SecGen build was expected to include a sudo rule permitting privilege escalation via `awk` (a well-known GTFOBins technique where a NOPASSWD sudo grant on `/usr/bin/awk`, or a wrapper invoking it, allows arbitrary command execution as root). Direct inspection of the sudoers configuration on the disposable exploitation VM, performed with root access obtained via `08-suid-nano-privileged-file-write.md`, confirms this rule does not exist anywhere on the system. This is recorded as a negative finding rather than left as an open question.
+The SecGen build was expected to include a sudo rule permitting privilege escalation via `awk` (a well-known GTFOBins technique where a NOPASSWD sudo grant on `/usr/bin/awk`, or a wrapper invoking it, allows arbitrary command execution as root). Direct inspection of the sudoers configuration on the disposable exploitation VM, performed with root access obtained via `e-08- suid-nano-privileged-file-write.md`, confirms this rule does not exist anywhere on the system. This is recorded as a negative finding rather than left as an open question.
 
 ## Environment
 
@@ -68,7 +68,7 @@ Every sudo rule on the system is accounted for:
 
 - `root`, `%sudo` group: standard Debian baseline.
 - `uow-admin`: administrative access reserved for VM management, not a scenario/student account, and out of scope for exploitation or documentation.
-- `analyst ALL=(ALL) NOPASSWD:ALL`: exploitation artefact from `08-suid-nano-privileged-file-write.md`, not part of the original provisioned scenario.
+- `analyst ALL=(ALL) NOPASSWD:ALL`: exploitation artefact from `e-08- suid-nano-privileged-file-write.md`, not part of the original provisioned scenario.
 - `10_users_sudo_list`: harmless baseline `sudo -l` grant applied broadly.
 - `10_users_sudo_service`: the already-documented exploit 04 rule for `aberrant_distance`.
 

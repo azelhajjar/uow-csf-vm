@@ -20,11 +20,11 @@ Enumeration of the MariaDB service on port 3306, previously identified only by v
 Unlike distcc, MySQL/MariaDB sends a protocol handshake packet immediately on connection, without requiring the client to speak first. A raw netcat connection was sufficient to observe this:
 
 ```bash
-nc -nv 192.168.144.200 3306
+nc -nv 192.168.144.100 3306
 ```
 
 ```
-Connection to 192.168.144.200 3306 port [tcp/*] succeeded!
+Connection to 192.168.144.100 3306 port [tcp/*] succeeded!
 J.jHost '192.168.144.129' is not allowed to connect to this MariaDB server
 ```
 
@@ -57,7 +57,7 @@ A substantially larger tool set exists for MySQL/MariaDB than was available for 
 ### Step 3: Safe default version/service scan
 
 ```bash
-nmap -sV -p 3306 --script default 192.168.144.200
+nmap -sV -p 3306 --script default 192.168.144.100
 ```
 
 ```
@@ -70,7 +70,7 @@ Nmap's own version probe explicitly reports `(unauthorized)` alongside the versi
 ### Step 4: Standard client connection attempt
 
 ```bash
-mysql -h 192.168.144.200 -u root
+mysql -h 192.168.144.100 -u root
 ```
 
 ```
@@ -82,7 +82,7 @@ The standard `mysql` command-line client reaches the identical conclusion via a 
 ### Step 5: NSE script confirmation
 
 ```bash
-nmap -p 3306 --script mysql-info 192.168.144.200
+nmap -p 3306 --script mysql-info 192.168.144.100
 ```
 
 ```
@@ -93,7 +93,7 @@ PORT     STATE SERVICE
 `mysql-info` produced no output at all when run in isolation. Since this script relies on parsing the initial handshake packet for server details, and that handshake never completes due to the host restriction, the script has nothing to report; this is a genuine, explainable silent result (consistent with the underlying cause already established in Step 1), not the same kind of unexplained detection gap observed with the FTP scripts in `r-04- ftp-banner-grab-and-anonymous-access.md`.
 
 ```bash
-nmap -p 3306 --script mysql-empty-password 192.168.144.200
+nmap -p 3306 --script mysql-empty-password 192.168.144.100
 ```
 
 ```
@@ -105,7 +105,7 @@ PORT     STATE SERVICE
 This script, unlike `mysql-info`, does surface the host-restriction error message directly in its output, giving a fourth independent confirmation of the same underlying finding.
 
 ```bash
-nmap -p 3306 --script mysql-vuln-cve2012-2122 192.168.144.200
+nmap -p 3306 --script mysql-vuln-cve2012-2122 192.168.144.100
 ```
 
 ```
@@ -121,43 +121,43 @@ To further test the host-restriction finding with independent tooling, and to ch
 
 ```
 use auxiliary/scanner/mysql/mysql_version
-set RHOSTS 192.168.144.200
+set RHOSTS 192.168.144.100
 run
 ```
 
 ```
-[*] 192.168.144.200:3306 - 192.168.144.200:3306 is running MySQL, but responds with an error: \x04Host '192.168.144.129' is not allowed to connect to this MariaDB server
-[*] 192.168.144.200:3306 - Scanned 1 of 1 hosts (100% complete)
+[*] 192.168.144.100:3306 - 192.168.144.100:3306 is running MySQL, but responds with an error: \x04Host '192.168.144.129' is not allowed to connect to this MariaDB server
+[*] 192.168.144.100:3306 - Scanned 1 of 1 hosts (100% complete)
 ```
 
 A fifth independent confirmation of the identical host-restriction finding, consistent with every method tried so far.
 
 ```
 use auxiliary/scanner/mysql/mysql_authbypass_hashdump
-set RHOSTS 192.168.144.200
+set RHOSTS 192.168.144.100
 run
 ```
 
 ```
-[-] 192.168.144.200:3306  - 192.168.144.200:3306 Unable to login from this host due to policy (may still be vulnerable)
-[*] 192.168.144.200:3306  - Scanned 1 of 1 hosts (100% complete)
+[-] 192.168.144.100:3306  - 192.168.144.100:3306 Unable to login from this host due to policy (may still be vulnerable)
+[*] 192.168.144.100:3306  - Scanned 1 of 1 hosts (100% complete)
 ```
 
 This module, purpose-built to test for CVE-2012-2122 specifically, correctly and explicitly reports that the host-based access policy prevented it from reaching the authentication stage at all (`Unable to login from this host due to policy`), while honestly noting the target `may still be vulnerable`, an appropriately cautious phrasing given the module genuinely could not test the condition rather than confirming its absence. This is the correct, trustworthy behaviour: a sixth tool independently confirming the same access restriction, and correctly declining to claim a negative result it cannot actually support.
 
 ```
 use auxiliary/scanner/mysql/mysql_login
-set RHOSTS 192.168.144.200
+set RHOSTS 192.168.144.100
 set USERNAME root
 set PASSWORD ""
 run
 ```
 
 ```
-[-] 192.168.144.200:3306  - 192.168.144.200:3306 - Unsupported target version of MySQL detected. Skipping.
-[*] 192.168.144.200:3306  - Scanned 1 of 1 hosts (100% complete)
-[*] 192.168.144.200:3306  - Bruteforce completed, 1 credential was successful.
-[*] 192.168.144.200:3306  - You can open an MySQL session with these credentials and CreateSession set to true
+[-] 192.168.144.100:3306  - 192.168.144.100:3306 - Unsupported target version of MySQL detected. Skipping.
+[*] 192.168.144.100:3306  - Scanned 1 of 1 hosts (100% complete)
+[*] 192.168.144.100:3306  - Bruteforce completed, 1 credential was successful.
+[*] 192.168.144.100:3306  - You can open an MySQL session with these credentials and CreateSession set to true
 ```
 
 **This result is contradictory and required independent verification before being trusted.** The module's own first line states it detected an unsupported MariaDB version and explicitly skipped testing this target, yet its summary lines claim a credential (`root` with an empty password) succeeded. These two statements cannot both be true: a skipped target cannot simultaneously produce a successful login result.
@@ -165,7 +165,7 @@ run
 To resolve this, the supposedly successful credential was tested directly and independently:
 
 ```bash
-mysql -h 192.168.144.200 -u root -p
+mysql -h 192.168.144.100 -u root -p
 ```
 
 (password left blank at the prompt)

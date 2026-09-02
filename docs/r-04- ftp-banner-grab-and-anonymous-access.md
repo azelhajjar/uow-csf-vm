@@ -2,7 +2,7 @@
 
 ## Summary
 
-Manual and automated protocol interaction against the FTP service on port 21, distinct from the ProFTPD 1.3.3c supply-chain backdoor exploit documented in `e- 01-proftpd-1.3.3c-backdoor.md`. This activity covers direct banner grabbing and a check for anonymous login, which is a separate misconfiguration from the trojanised-tarball RCE: anonymous access being permitted is an information-disclosure and access-control weakness in its own right, independent of whether the specific ProFTPD build is backdoored. Anonymous login was found to be permitted, granting read access to a home directory containing a note file that references another location in the environment. This activity also compares multiple tools and techniques for reaching the same or related findings (interactive `ftp` client, `curl`, and several nmap NSE scripts), including documenting cases where automated NSE detection failed to corroborate findings that manual interaction had already reliably confirmed.
+Manual and automated protocol interaction against the FTP service on port 21, distinct from the ProFTPD 1.3.3c supply-chain backdoor exploit documented in `e-01- proftpd-1.3.3c-backdoor.md`. This activity covers direct banner grabbing and a check for anonymous login, which is a separate misconfiguration from the trojanised-tarball RCE: anonymous access being permitted is an information-disclosure and access-control weakness in its own right, independent of whether the specific ProFTPD build is backdoored. Anonymous login was found to be permitted, granting read access to a home directory containing a note file that references another location in the environment. This activity also compares multiple tools and techniques for reaching the same or related findings (interactive `ftp` client, `curl`, and several nmap NSE scripts), including documenting cases where automated NSE detection failed to corroborate findings that manual interaction had already reliably confirmed.
 
 ## Environment
 
@@ -18,28 +18,28 @@ Manual and automated protocol interaction against the FTP service on port 21, di
 ### Step 1: Manual banner grab
 
 ```bash
-nc -nv 192.168.144.200 21
+nc -nv 192.168.144.100 21
 ```
 
 ```
-Connection to 192.168.144.200 21 port [tcp/*] succeeded!
-220 ProFTPD 1.3.3c Server (outstandingmailbox) [192.168.144.200]
+Connection to 192.168.144.100 21 port [tcp/*] succeeded!
+220 ProFTPD 1.3.3c Server (outstandingmailbox) [192.168.144.100]
 ```
 
-Connecting directly with `nc` (netcat) rather than an FTP client or nmap's version-detection script demonstrates that a service's identifying banner is often available simply by opening a raw TCP connection and reading what the server sends unprompted, no authentication or protocol-specific tooling required. This confirms the ProFTPD 1.3.3c version already identified by nmap in `r- 02-reconnaissance-and-service-enumeration.md`, directly from the service itself rather than via a scanner's inference.
+Connecting directly with `nc` (netcat) rather than an FTP client or nmap's version-detection script demonstrates that a service's identifying banner is often available simply by opening a raw TCP connection and reading what the server sends unprompted, no authentication or protocol-specific tooling required. This confirms the ProFTPD 1.3.3c version already identified by nmap in `r-02- reconnaissance-and-service-enumeration.md`, directly from the service itself rather than via a scanner's inference.
 
 **Observation:** the banner includes a custom server name, `outstandingmailbox`, in place of (or alongside) the actual system hostname. This does not correspond to the target's real hostname (`cav-csf-linux`, confirmed in earlier exploitation activities) and appears to be cosmetic scenario flavour text configured into the ProFTPD `ServerName` directive rather than a meaningful technical finding. Worth noting for completeness, but not something requiring further investigation.
 
 ### Step 2: Anonymous login check
 
 ```bash
-ftp 192.168.144.200
+ftp 192.168.144.100
 ```
 
 ```
-Connected to 192.168.144.200.
-220 ProFTPD 1.3.3c Server (outstandingmailbox) [192.168.144.200]
-Name (192.168.144.200:kali): anonymous
+Connected to 192.168.144.100.
+220 ProFTPD 1.3.3c Server (outstandingmailbox) [192.168.144.100]
+Name (192.168.144.100:kali): anonymous
 331 Anonymous login ok, send your complete email address as your password
 Password:
 230 Greetings! Welcome to the server.
@@ -85,7 +85,7 @@ The old database export has been moved to the shared backup location.
 Please remove it once the migration has been verified.
 ```
 
-This is a deliberately placed information-disclosure artefact: the note references a "database export" having been "moved to the shared backup location," which reads as a scenario clue pointing toward another part of the environment. This connection is confirmed: the note is intentionally designed to point toward the NFS share investigated in `e- 02-nfs-anonymous-credential-exposure.md`, which is where the "old database export" (in practice, the backup files disclosing the `backupsvc` credential) is actually found. This is a deliberate cross-service breadcrumb: a student enumerating FTP anonymously should be led toward investigating NFS next, rather than the two services being unrelated islands in the scenario design.
+This is a deliberately placed information-disclosure artefact: the note references a "database export" having been "moved to the shared backup location," which reads as a scenario clue pointing toward another part of the environment. This connection is confirmed: the note is intentionally designed to point toward the NFS share investigated in `e-02- nfs-anonymous-credential-exposure.md`, which is where the "old database export" (in practice, the backup files disclosing the `backupsvc` credential) is actually found. This is a deliberate cross-service breadcrumb: a student enumerating FTP anonymously should be led toward investigating NFS next, rather than the two services being unrelated islands in the scenario design.
 
 ## Additional Enumeration: NSE Scripts and Alternate Tooling
 
@@ -94,7 +94,7 @@ The manual `nc`/`ftp` approach above is one valid method of FTP enumeration; the
 ### NSE: `ftp-anon`
 
 ```bash
-nmap -p 21 --script ftp-anon 192.168.144.200
+nmap -p 21 --script ftp-anon 192.168.144.100
 ```
 
 ```
@@ -107,7 +107,7 @@ PORT   STATE SERVICE
 ### NSE: `ftp-bounce`
 
 ```bash
-nmap -p 21 --script ftp-bounce 192.168.144.200
+nmap -p 21 --script ftp-bounce 192.168.144.100
 ```
 
 ```
@@ -124,7 +124,7 @@ This script tests for the classic FTP bounce vulnerability, where an FTP server'
 ### NSE: `ftp-proftpd-backdoor`
 
 ```bash
-nmap -p 21 --script ftp-proftpd-backdoor 192.168.144.200
+nmap -p 21 --script ftp-proftpd-backdoor 192.168.144.100
 ```
 
 ```
@@ -137,7 +137,7 @@ PORT   STATE SERVICE
 ### NSE: `ftp-syst`
 
 ```bash
-nmap -p 21 --script ftp-syst 192.168.144.200
+nmap -p 21 --script ftp-syst 192.168.144.100
 ```
 
 ```
@@ -150,13 +150,13 @@ PORT   STATE SERVICE
 ### Alternate manual tool: `curl`
 
 ```bash
-curl -v ftp://192.168.144.200/ --user anonymous:
+curl -v ftp://192.168.144.100/ --user anonymous:
 ```
 
 ```
-*   Trying 192.168.144.200:21...
-* Established connection to 192.168.144.200 (192.168.144.200 port 21) from 192.168.144.129 port 55678
-< 220 ProFTPD 1.3.3c Server (outstandingmailbox) [192.168.144.200]
+*   Trying 192.168.144.100:21...
+* Established connection to 192.168.144.100 (192.168.144.100 port 21) from 192.168.144.129 port 55678
+< 220 ProFTPD 1.3.3c Server (outstandingmailbox) [192.168.144.100]
 > USER anonymous
 < 331 Anonymous login ok, send your complete email address as your password
 > PASS
@@ -172,7 +172,7 @@ curl -v ftp://192.168.144.200/ --user anonymous:
 < 150 Opening ASCII mode data connection for file list
 -rw-r--r--   1 anon     anon          179 Aug 23 04:19 note
 < 226 Transfer complete
-* Connection #0 to host 192.168.144.200:21 left intact
+* Connection #0 to host 192.168.144.100:21 left intact
 ```
 
 `curl` with `--user anonymous:` (empty password after the colon) achieves the identical result to the interactive `ftp` client used earlier, confirmed anonymous login, directory listing showing the `note` file, in a single non-interactive command suitable for scripting or automation, rather than requiring a live interactive session. The `-v` (verbose) flag is what exposes the underlying FTP protocol exchange (`>` lines are commands curl sent, `<` lines are the server's responses), which is otherwise hidden by curl's default quiet output. This is a good demonstration that `curl` is not just an HTTP tool, it supports the FTP protocol natively, and can be a faster, more scriptable alternative to an interactive FTP client for straightforward tasks such as confirming anonymous access or retrieving a specific known file, though the interactive `ftp` client remains more convenient for open-ended exploration of an unfamiliar directory structure.
@@ -181,7 +181,7 @@ curl -v ftp://192.168.144.200/ --user anonymous:
 
 ## Outcome
 
-Confirmed anonymous FTP access is enabled on the target, independent of the ProFTPD 1.3.3c backdoor vulnerability documented separately. Anonymous access grants read access to a small home directory containing standard account skeleton files and one deliberately placed note file, whose content is an intentional cross-service breadcrumb pointing toward the anonymous NFS export documented in `e- 02-nfs-anonymous-credential-exposure.md`, where the referenced "old database export" and the `backupsvc` credential are actually located.
+Confirmed anonymous FTP access is enabled on the target, independent of the ProFTPD 1.3.3c backdoor vulnerability documented separately. Anonymous access grants read access to a small home directory containing standard account skeleton files and one deliberately placed note file, whose content is an intentional cross-service breadcrumb pointing toward the anonymous NFS export documented in `e-02- nfs-anonymous-credential-exposure.md`, where the referenced "old database export" and the `backupsvc` credential are actually located.
 
 Separately, of four FTP-specific nmap NSE scripts tested against this service (`ftp-anon`, `ftp-syst`, `ftp-bounce`, `ftp-proftpd-backdoor`), three produced no output at all despite two of them (`ftp-anon`, `ftp-proftpd-backdoor`) checking for conditions independently confirmed to be true on this target. `ftp-bounce` was the only script to return an interpretable result, but that result itself is inconclusive rather than a confirmed negative, given the lab's deliberate host-only network isolation, which prevented the script from resolving its intended real-world test target and forced it to substitute an arbitrary fallback address. A follow-up cross-check using Metasploit's `auxiliary/scanner/ftp/ftp_anonymous` module successfully and immediately detected the anonymous access that nmap's `ftp-anon` script had missed, confirming the finding is genuine and reliably detectable by capable tooling in general, and narrowing the earlier detection-gap conclusion specifically to nmap's own script implementation rather than to automated FTP enumeration as a whole. This is recorded as a significant finding about the limitations of specific automated tools against this server build, not as a separate vulnerability.
 
@@ -189,15 +189,15 @@ Separately, of four FTP-specific nmap NSE scripts tested against this service (`
 
 - Disable anonymous FTP access entirely unless there is a specific, deliberate business requirement for it; ProFTPD's `<Anonymous>` configuration block should be removed or explicitly disabled.
 - Never store notes, credentials, or references to other systems/locations in a directory accessible to unauthenticated or anonymous users, regardless of how innocuous the reference appears; this is precisely the kind of information disclosure that assists an attacker in mapping out further attack paths.
-- Independent of anonymous access, ProFTPD should be upgraded from the backdoored 1.3.3c release; see `e- 01-proftpd-1.3.3c-backdoor.md` for that separate finding and remediation.
+- Independent of anonymous access, ProFTPD should be upgraded from the backdoored 1.3.3c release; see `e-01- proftpd-1.3.3c-backdoor.md` for that separate finding and remediation.
 
 ## Teaching Notes
 
-This activity is a good demonstration that a single service can carry multiple, independent findings at different severities: the ProFTPD backdoor (`e- 01`) is a critical, unauthenticated-to-root vulnerability, while anonymous access being enabled is a lower-severity but still genuine access-control weakness that would exist and matter even on a fully patched, non-backdoored FTP server. Students should learn to enumerate and document each weakness on its own merits rather than treating a service as "done" once the most severe finding has been identified.
+This activity is a good demonstration that a single service can carry multiple, independent findings at different severities: the ProFTPD backdoor (`e-01`) is a critical, unauthenticated-to-root vulnerability, while anonymous access being enabled is a lower-severity but still genuine access-control weakness that would exist and matter even on a fully patched, non-backdoored FTP server. Students should learn to enumerate and document each weakness on its own merits rather than treating a service as "done" once the most severe finding has been identified.
 
 The `note` file is also a useful example of information disclosure through unstructured, human-authored content (as opposed to a leaked credential file or configuration), and of the value in actually reading everything accessible during enumeration rather than only checking for obviously named or high-value files.
 
-This activity also demonstrates deliberate attack-chain design: rather than treating each service in isolation, this scenario intentionally links FTP enumeration to NFS enumeration via a narrative clue, encouraging students to follow leads across services rather than exhaustively scanning every port with no sense of connection between findings. `e- 02-nfs-anonymous-credential-exposure.md` should ideally be read as the natural next step after this activity, discovered via the note's reference rather than purely through independent port scanning.
+This activity also demonstrates deliberate attack-chain design: rather than treating each service in isolation, this scenario intentionally links FTP enumeration to NFS enumeration via a narrative clue, encouraging students to follow leads across services rather than exhaustively scanning every port with no sense of connection between findings. `e-02- nfs-anonymous-credential-exposure.md` should ideally be read as the natural next step after this activity, discovered via the note's reference rather than purely through independent port scanning.
 
 Perhaps the most important lesson in this activity is the **NSE detection gap** documented in the Additional Enumeration section, and its subsequent resolution via a different tool: `ftp-anon`, `ftp-syst`, and `ftp-proftpd-backdoor` all failed to produce output entirely, with the first checking for a condition confirmed true on this target both manually and via Metasploit's equivalent module. Students should take away a clear, memorable principle from this: automated scanning and NSE scripts are valuable for speed and coverage across many hosts, but a clean, empty, or missing result from a script, or even from several related scripts within the same tool, must never be treated as proof that a vulnerability or misconfiguration is absent. Critically, this activity also demonstrates the correct follow-up action when such a gap is found: rather than simply concluding "this vulnerability doesn't exist" or "this class of tooling is broadly unreliable," cross-checking with an independently-implemented tool (here, Metasploit's `ftp_anonymous` module) either confirms or refutes the original manual finding, and narrows down precisely which tool or script was at fault, rather than casting doubt on automated enumeration in general. This mirrors and reinforces the same lesson already established with the Metasploit DistCC module in `e-06- distcc-cve-2004-2687.md`, but demonstrates it here at the reconnaissance stage rather than the exploitation stage, and shows the full diagnostic loop, manual confirmation, automated tool failure, and automated tool cross-check success, rather than stopping at the initial discrepancy.
 
@@ -209,27 +209,27 @@ To further test whether the NSE detection gap was specific to nmap's script impl
 
 ```
 use auxiliary/scanner/ftp/ftp_version
-set RHOSTS 192.168.144.200
+set RHOSTS 192.168.144.100
 run
 ```
 
 ```
-[+] 192.168.144.200:21    - FTP Banner: '220 ProFTPD 1.3.3c Server (outstandingmailbox) [192.168.144.200]\x0d\x0a'
-[*] 192.168.144.200:21    - Scanned 1 of 1 hosts (100% complete)
+[+] 192.168.144.100:21    - FTP Banner: '220 ProFTPD 1.3.3c Server (outstandingmailbox) [192.168.144.100]\x0d\x0a'
+[*] 192.168.144.100:21    - Scanned 1 of 1 hosts (100% complete)
 ```
 
 This simply confirms the same banner already captured manually in Step 1, with no discrepancy.
 
 ```
 use auxiliary/scanner/ftp/ftp_anonymous
-set RHOSTS 192.168.144.200
+set RHOSTS 192.168.144.100
 run
 ```
 
 ```
-[+] 192.168.144.200:21    - Anonymous Read-only access ()
-[+] 192.168.144.200:21    - Directory listing stored to: /home/kali/.msf4/loot/20260824043223_default_192.168.144.200_ftp.anonymous_862038.txt
-[*] 192.168.144.200:21    - Scanned 1 of 1 hosts (100% complete)
+[+] 192.168.144.100:21    - Anonymous Read-only access ()
+[+] 192.168.144.100:21    - Directory listing stored to: /home/kali/.msf4/loot/20260824043223_default_192.168.144.100_ftp.anonymous_862038.txt
+[*] 192.168.144.100:21    - Scanned 1 of 1 hosts (100% complete)
 ```
 
 **This resolves the detection gap identified earlier with nmap's `ftp-anon` script.** Metasploit's `ftp_anonymous` module correctly and immediately detected anonymous access, explicitly reporting `Anonymous Read-only access`, and additionally saved the resulting directory listing to a local loot file for later reference, a convenience the manual `ftp`/`curl` approaches did not provide automatically. This confirms the anonymous-access finding is genuine and reliably detectable by automated tooling in general; the earlier `ftp-anon` NSE script's silent failure was therefore specific to that particular script or nmap version/implementation, not evidence of some broader oddity in how this ProFTPD build responds to automated anonymous-login probing. This is an important refinement of the earlier finding: rather than concluding "automated FTP anonymous-detection is unreliable against this target" in general, the more precise and now better-supported conclusion is "this specific nmap NSE script failed on this target, but an equivalent, independently-implemented Metasploit module succeeded without issue." This distinction matters for how confidently either tool's results should be trusted in future engagements against similar targets.
@@ -240,7 +240,7 @@ run
 **Required starting access:** Network access to the target from Kali
 **Starting account:** None (anonymous FTP)
 **Resulting access:** Anonymous FTP read access to a limited home directory; no shell or credential obtained directly
-**Provides access for:** Intentionally leads toward `e- 02-nfs-anonymous-credential-exposure.md`; the `note` file's "shared backup location" is the NFS export investigated there, where the `backupsvc` credential is recovered
+**Provides access for:** Intentionally leads toward `e-02- nfs-anonymous-credential-exposure.md`; the `note` file's "shared backup location" is the NFS export investigated there, where the `backupsvc` credential is recovered
 **Suggested teaching level:** Level 5 (manual protocol interaction, anonymous service access as a distinct finding from CVE-based exploitation, and the value of thorough content enumeration)
 
 ## What is FTP?

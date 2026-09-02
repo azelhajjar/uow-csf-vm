@@ -6,7 +6,7 @@ Tracking document for `cav-csf-linux` master VM handover to the lab technician. 
 
 **Handover has taken place.** The Linux VM has been supplied to the lab technician for the lab repository. This changes the status of everything below: remaining items are no longer pre-handover tasks but changes that would require re-supplying the image. They should be batched into a scheduled re-supply rather than actioned individually, and each should be weighed against the disruption of replacing an image already in the lab repository.
 
-Functionally the delivered image is sound. The five web application platforms have been tested and confirmed working with the Windows VM powered off, which is the normal operating state for all but two modules. What remains outstanding is student-facing polish, not capability.
+Functionally the delivered image is sound. The five web application platforms have been tested and confirmed working with the Windows VM powered off, which is the normal operating state for all but two modules. No outstanding student-facing polish item is currently recorded; any future polish would be a new re-supply decision, not a pre-handover task.
 
 Nothing here should be deleted or edited without confirmation first, per the original scope instruction: produce a checklist/report, then wait for approval before acting on each item.
 

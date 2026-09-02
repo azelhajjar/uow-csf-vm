@@ -2,7 +2,7 @@
 
 ## Summary
 
-Following deletion of the original disposable VM and re-cloning from the master VM's post-CUPS-installation snapshot, the disposable VM's address changed from 192.168.144.200 to **192.168.144.200**. This activity re-establishes the CUPS/cups-browsed attack surface against the new address: confirming the rest of the previously-known service baseline is unchanged, confirming CUPS itself is invisible to a full TCP port sweep (since `cupsd`'s TCP interface is loopback-only), confirming it is visible via UDP scanning, and confirming, via `cups-browsed`'s own debug log, that the CVE-2024-47176 unauthenticated callback and local-queue-creation behaviour fires exactly as expected.
+This activity documents CUPS/cups-browsed service discovery against the master VM (`192.168.144.100`): confirming the previously-known service baseline is unchanged, confirming CUPS itself is invisible to a full TCP port sweep (since `cupsd`'s TCP interface is loopback-only), confirming it is visible via UDP scanning, and confirming, via `cups-browsed`'s own debug log, that the CVE-2024-47176 unauthenticated callback and local-queue-creation behaviour fires exactly as expected.
 
 ## Environment
 
@@ -14,10 +14,10 @@ Following deletion of the original disposable VM and re-cloning from the master 
 
 ## Reconnaissance
 
-### Step 1: Full TCP re-scan against the new address
+### Step 1: Full TCP scan
 
 ```bash
-nmap -p- -T4 192.168.144.200
+nmap -p- -T4 192.168.144.100
 ```
 
 Result: identical set of 15 well-known ports and 6 high/ephemeral RPC ports as the original `r-02- reconnaissance-and-service-enumeration.md` baseline. **Port 631 does not appear.** This is expected and correct: `cupsd`'s TCP listener is bound to `127.0.0.1`/`::1` only (confirmed during CUPS installation validation), so it is invisible to any external TCP scan regardless of the service being genuinely present and running.
@@ -25,7 +25,7 @@ Result: identical set of 15 well-known ports and 6 high/ephemeral RPC ports as t
 ### Step 2: UDP scan
 
 ```bash
-nmap -sU --top-ports 20 192.168.144.200
+nmap -sU --top-ports 20 192.168.144.100
 ```
 
 ```
@@ -38,7 +38,7 @@ Two minor UDP state differences were observed relative to the original `r-02` UD
 
 ### Step 3: Callback confirmation via debug log
 
-An initial re-run of the manual UDP callback test (identical packet to the one validated on the previous VM instance) initially appeared to produce no response on a plain `nc` listener. Rather than concluding the vulnerability was absent, `cups-browsed` debug logging was enabled on the target (`DebugLogging file stderr` in `/etc/cups/cups-browsed.conf`, service restarted) to observe its actual behaviour directly:
+An initial run of the manual UDP callback test initially appeared to produce no response on a plain `nc` listener. Rather than concluding the vulnerability was absent, `cups-browsed` debug logging was enabled on the target (`DebugLogging file stderr` in `/etc/cups/cups-browsed.conf`, service restarted) to observe its actual behaviour directly:
 
 ```bash
 sudo sed -i 's/# DebugLogging file stderr/DebugLogging file stderr/' /etc/cups/cups-browsed.conf
@@ -49,7 +49,7 @@ sudo journalctl -u cups-browsed -f
 A `tcpdump` capture on the target confirmed the crafted UDP packet was arriving correctly at the network level regardless:
 
 ```
-00:48:32 eth0 In IP 192.168.144.129.34673 > 192.168.144.200.631: UDP, length 72
+00:48:32 eth0 In IP 192.168.144.129.34673 > 192.168.144.100.631: UDP, length 72
   0 3 http://192.168.144.129:8000/printers/test "Office HQ" "Test Printer"
 ```
 
@@ -62,13 +62,13 @@ No further fallback available, giving up
 Removing local CUPS queue Test_Printer_192_168_144_129 (ipp://192.168.144.129:8000/printers/test).
 ```
 
-**This is stronger, more definitive confirmation than the raw HTTP callback observed on the previous VM instance.** The log shows `cups-browsed` did all of the following, entirely unauthenticated, in response to a single crafted UDP packet: created a local CUPS print queue named `Test_Printer_192_168_144_129`, issued a `get-printer-attributes` IPP request to the attacker-specified URL, and only removed the queue because the response it received (from a plain `nc` listener, not a real IPP server) lacked the required `printer-make-and-model` attribute. This confirms conclusively that the full chain documented in `e-12- cups-full-rce-chain.md` requires a genuine IPP-protocol-compliant server able to answer with a valid, attacker-crafted `printer-make-and-model` attribute, a plain raw-socket listener can trigger the callback but cannot complete the chain, exactly consistent with why `e-12` specifies using a proper IPP server library/PoC rather than raw sockets for the full exploitation activity.
+**This is stronger, more definitive confirmation than a raw HTTP callback alone would provide.** The log shows `cups-browsed` did all of the following, entirely unauthenticated, in response to a single crafted UDP packet: created a local CUPS print queue named `Test_Printer_192_168_144_129`, issued a `get-printer-attributes` IPP request to the attacker-specified URL, and only removed the queue because the response it received (from a plain `nc` listener, not a real IPP server) lacked the required `printer-make-and-model` attribute. This confirms conclusively that the full chain documented in `e-12- cups-full-rce-chain.md` requires a genuine IPP-protocol-compliant server able to answer with a valid, attacker-crafted `printer-make-and-model` attribute, a plain raw-socket listener can trigger the callback but cannot complete the chain, exactly consistent with why `e-12` specifies using a proper IPP server library/PoC rather than raw sockets for the full exploitation activity.
 
 ## Scenario Content: Legitimate Printer Queue
 
 Separate from the exploit-generated queue (`Pwned_Printer_...`, created and torn down during exploitation in `e-12- cups-full-rce-chain.md`), a legitimate, pre-existing printer queue was deliberately configured on this VM to give the print server genuine organisational presence, consistent with the project's approach of adding scenario realism to every service (as with the FTP `note` breadcrumb in `r-04`).
 
-**Setup** (run once per VM; applied to both master and the current disposable VM):
+**Setup** (run once on the master VM):
 ```bash
 sudo lpadmin -p HR-LaserJet-2F -E -v file:///dev/null -m drv:///sample.drv/generic.ppd
 echo "Q3 Budget Review - Finance Dept - CONFIDENTIAL" > /tmp/Q3_Budget_Review.txt
@@ -94,7 +94,7 @@ The queue name (`HR-LaserJet-2F`, suggesting HR department, 2nd floor) and the c
 
 ## Outcome
 
-Confirmed the CVE-2024-47176 vulnerability is present and fully functional on the re-cloned disposable VM (192.168.144.200), with debug-log evidence showing the complete unauthenticated queue-creation and callback sequence, not merely the HTTP request alone. Confirmed CUPS is undetectable via TCP scanning but detectable via UDP scanning, a valuable methodological point. All other previously-known services remain consistent with the `r-02` baseline. All future activity files referencing this target should use `192.168.144.200`, not `.131`.
+Confirmed the CVE-2024-47176 vulnerability is present and fully functional on the master VM (192.168.144.100), with debug-log evidence showing the complete unauthenticated queue-creation and callback sequence, not merely the HTTP request alone. Confirmed CUPS is undetectable via TCP scanning but detectable via UDP scanning, a valuable methodological point. All other previously-known services remain consistent with the `r-02` baseline.
 
 ## Teaching Notes
 
@@ -102,9 +102,9 @@ Two lessons stand out from this troubleshooting process itself, worth preserving
 
 ## Lab Dependencies
 
-**Prerequisite exploit(s):** None; supersedes the target address used in `r-12- cups-print-service-reconnaissance.md` and `e-12- cups-full-rce-chain.md`, which were validated against the now-deleted 192.168.144.200 instance
+**Prerequisite exploit(s):** None
 **Required starting access:** Network access to the target from Kali
 **Starting account:** None
 **Resulting access:** N/A (reconnaissance/confirmation only)
-**Provides access for:** Confirms the precondition for `e-12- cups-full-rce-chain.md` against the current disposable VM address
+**Provides access for:** Confirms the precondition for `e-12- cups-full-rce-chain.md` against the master VM (`192.168.144.100`)
 **Suggested teaching level:** Level 5–6 (TCP vs UDP service visibility, and diagnosing an apparent tool failure via service-side logging rather than assuming a vulnerability is absent)

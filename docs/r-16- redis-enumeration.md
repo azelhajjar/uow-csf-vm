@@ -18,7 +18,7 @@ Reconnaissance of the Redis service, newly added to this VM, confirming it accep
 ### Step 1: Port confirmation
 
 ```bash
-nmap -sV -p 6379 192.168.144.200
+nmap -sV -p 6379 192.168.144.100
 ```
 
 Confirms `6379/tcp` open, a new port not present in the original `r-02` baseline, running Redis.
@@ -35,7 +35,7 @@ redis-info.nse
 ```
 
 ```bash
-nmap -p 6379 --script redis-info 192.168.144.200
+nmap -p 6379 --script redis-info 192.168.144.100
 ```
 
 ```
@@ -55,7 +55,7 @@ This script worked cleanly and correctly on the first attempt, and usefully conf
 ### Step 3: Unauthenticated connection test
 
 ```bash
-redis-cli -h 192.168.144.200 ping
+redis-cli -h 192.168.144.100 ping
 ```
 
 ```
@@ -67,7 +67,7 @@ A successful `PONG` with no credential prompt confirms the server accepts comman
 ### Step 4: Server information disclosure
 
 ```bash
-redis-cli -h 192.168.144.200 info server
+redis-cli -h 192.168.144.100 info server
 ```
 
 ```
@@ -83,7 +83,7 @@ The `INFO` command, one of Redis's most basic commands, discloses the exact soft
 ### Step 5: Enumerating stored data
 
 ```bash
-redis-cli -h 192.168.144.200 keys '*'
+redis-cli -h 192.168.144.100 keys '*'
 ```
 
 ```

@@ -18,20 +18,20 @@ The target exposes two distinct services that speak the SSH protocol, on port 22
 ### Step 1: Banner grab on both ports
 
 ```bash
-nc -nv 192.168.144.200 22
+nc -nv 192.168.144.100 22
 ```
 
 ```
-Connection to 192.168.144.200 22 port [tcp/*] succeeded!
+Connection to 192.168.144.100 22 port [tcp/*] succeeded!
 SSH-2.0-OpenSSH_9.2p1 Debian-2+deb12u3
 ```
 
 ```bash
-nc -nv 192.168.144.200 2222
+nc -nv 192.168.144.100 2222
 ```
 
 ```
-Connection to 192.168.144.200 2222 port [tcp/*] succeeded!
+Connection to 192.168.144.100 2222 port [tcp/*] succeeded!
 SSH-2.0-Erlang/5.1.4.7
 ```
 
@@ -40,7 +40,7 @@ The SSH protocol requires the server to send its identification string immediate
 ### Step 2: Verbose SSH client negotiation against port 22
 
 ```bash
-ssh -v 192.168.144.200
+ssh -v 192.168.144.100
 ```
 
 Key extracts from the verbose output:
@@ -59,7 +59,7 @@ This confirms port 22 is a standard, modern OpenSSH configuration: the client an
 ### Step 3: Verbose SSH client negotiation against port 2222
 
 ```bash
-ssh -v -p 2222 192.168.144.200
+ssh -v -p 2222 192.168.144.100
 ```
 
 Key extracts:
@@ -70,7 +70,7 @@ debug1: compat_banner: no match: Erlang/5.1.4.7
 debug1: kex: algorithm: curve25519-sha256
 debug1: kex: host key algorithm: ecdsa-sha2-nistp256
 debug1: Server host key: ecdsa-sha2-nistp256 SHA256:EVMOG+b2gu9/3kEs1r5DrUMwfdgDjoj5wAnYB5yptwU
-The authenticity of host '[192.168.144.200]:2222 ([192.168.144.200]:2222)' can't be established.
+The authenticity of host '[192.168.144.100]:2222 ([192.168.144.100]:2222)' can't be established.
 ** WARNING: connection is not using a post-quantum key exchange algorithm.
 ** This session may be vulnerable to "store now, decrypt later" attacks.
 ** The server may need to be upgraded. See https://openssh.com/pq.html
@@ -95,7 +95,7 @@ As with port 22, this connection was not completed; no password was supplied, an
 The verbose `ssh -v` client output in Steps 2 and 3 only shows the single algorithm actually *negotiated* for each category (the first mutually supported option from each side's ordered preference list), not the full set of algorithms each server is willing to offer. To see the complete picture, three NSE scripts were run against both ports together.
 
 ```bash
-nmap -p 22,2222 --script ssh2-enum-algos 192.168.144.200
+nmap -p 22,2222 --script ssh2-enum-algos 192.168.144.100
 ```
 
 ```
@@ -190,7 +190,7 @@ nmap -p 22,2222 --script ssh2-enum-algos 192.168.144.200
 - Both ports support `chacha20-poly1305@openssh.com` as an encryption option and share several MAC algorithms, indicating enough protocol-level interoperability for either to be usable by a generic SSH client, despite being fundamentally different implementations.
 
 ```bash
-nmap -p 22,2222 --script ssh-hostkey --script-args ssh_hostkey=full 192.168.144.200
+nmap -p 22,2222 --script ssh-hostkey --script-args ssh_hostkey=full 192.168.144.100
 ```
 
 ```
@@ -206,7 +206,7 @@ nmap -p 22,2222 --script ssh-hostkey --script-args ssh_hostkey=full 192.168.144.
 The `ssh_hostkey=full` script argument prints the complete base64-encoded public key material rather than just the abbreviated SHA256 fingerprint seen in the earlier `ssh -v` output. Port 22 presents two host keys (`ecdsa-sha2-nistp256` and `ssh-ed25519`), a normal OpenSSH configuration where multiple key types are generated so the server can negotiate whichever type the connecting client prefers. Port 2222 presents only a single host key type (`ecdsa-sha2-nistp256`), consistent with the more limited `server_host_key_algorithms` list already seen in the `ssh2-enum-algos` output for that port (three algorithms offered, but backed by only one actual key). The two `ecdsa-sha2-nistp256` keys shown are visibly different base64 values, confirming these are two independently generated key pairs, not the same host key reused across both services.
 
 ```bash
-nmap -p 22,2222 --script ssh-auth-methods 192.168.144.200
+nmap -p 22,2222 --script ssh-auth-methods 192.168.144.100
 ```
 
 ```
@@ -233,14 +233,14 @@ For a further comparison against a different tool, Metasploit's own SSH version-
 
 ```
 use auxiliary/scanner/ssh/ssh_version
-set RHOSTS 192.168.144.200
+set RHOSTS 192.168.144.100
 set RPORT 22
 run
 ```
 
 ```
-[*] 192.168.144.200 - SSH server version: SSH-2.0-OpenSSH_9.2p1 Debian-2+deb12u3
-[*] 192.168.144.200 - Server Information and Encryption
+[*] 192.168.144.100 - SSH server version: SSH-2.0-OpenSSH_9.2p1 Debian-2+deb12u3
+[*] 192.168.144.100 - Server Information and Encryption
 =================================
   Type                     Value                                 Note
   ----                     -----                                 ----
@@ -265,8 +265,8 @@ run
 ```
 
 ```
-[*] 192.168.144.200 - SSH server version: SSH-2.0-Erlang/5.1.4.7
-[*] 192.168.144.200 - Server Information and Encryption
+[*] 192.168.144.100 - SSH server version: SSH-2.0-Erlang/5.1.4.7
+[*] 192.168.144.100 - Server Information and Encryption
 =================================
   Type                     Value                                 Note
   ----                     -----                                 ----

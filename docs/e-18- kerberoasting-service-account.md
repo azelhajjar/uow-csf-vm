@@ -20,7 +20,7 @@
 - Prerequisite: `r-19` (Windows/AD enumeration), which established the domain name, DC hostname, and a working domain credential, `analyst` / `CavLab2026!`. Requesting a service ticket for another account's SPN requires the requester to already hold a valid TGT.
 - Starting access: authenticated domain user (`analyst`).
 - Resulting access: a second, independent domain credential (`svc-web` / `Webservice2026!`), confirmed valid via a fresh Kerberos TGT and an authenticated SMB session.
-- Feeds into: nothing built yet. `svc-web`'s `Web-Services` group membership is the same naming this account was chosen to anticipate a future Windows intranet site's service account (`w-01` Section 5); no further chain exists until that site is built.
+- Feeds into: the intranet's application pool, which now runs as `UOWCSF\svc-web` (`w-01` Section 5, `r-22`). The recovered credential now corresponds to the live intranet service identity and its SPN, not merely an anticipated future one; it still grants no administrative access and does not constitute domain compromise.
 - Suggested teaching level: Level 6–7.
 
 ## Misconfiguration

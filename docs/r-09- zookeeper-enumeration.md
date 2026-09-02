@@ -26,7 +26,7 @@ No output was returned. **No Zookeeper-specific NSE scripts exist in this nmap i
 ### Step 2: Version/service detection
 
 ```bash
-nmap -sV -p 2181 --script default 192.168.144.200
+nmap -sV -p 2181 --script default 192.168.144.100
 ```
 
 ```
@@ -41,18 +41,18 @@ Confirms the specific Zookeeper release (3.4.14) and build date (March 2019), co
 Zookeeper exposes a small set of plain-text administrative diagnostic commands, historically referred to as "four-letter words" due to their short command names, that can be sent directly to the client port without any authentication. Three were tested.
 
 ```bash
-echo "ruok" | nc -nv -q2 192.168.144.200 2181
+echo "ruok" | nc -nv -q2 192.168.144.100 2181
 ```
 
 ```
-Connection to 192.168.144.200 2181 port [tcp/*] succeeded!
+Connection to 192.168.144.100 2181 port [tcp/*] succeeded!
 imok
 ```
 
 `ruok` ("are you ok?") is Zookeeper's simplest health check command. The response `imok` confirms the server considers itself healthy and able to serve requests. This is the lowest-risk, most basic form of interaction available and a reasonable first step before trying anything more detailed.
 
 ```bash
-echo "stat" | nc -nv -q2 192.168.144.200 2181
+echo "stat" | nc -nv -q2 192.168.144.100 2181
 ```
 
 ```
@@ -78,7 +78,7 @@ Node count: 54
 This is a substantially more informative result. Beyond confirming the version again, it lists every currently connected client by source address and port, along with per-connection traffic counters. Five of the six listed clients are connecting from `::1` (IPv6 loopback) or `127.0.0.1` (IPv4 loopback), meaning they originate from processes running locally on the target itself, not from any external host. This strongly indicates other local services on the target are actively using this Zookeeper instance as a dependency, consistent with Zookeeper's typical role as a coordination/configuration-management backend for a larger application, rather than being a standalone service with no other consumers. `Mode: standalone` confirms this is a single-node Zookeeper deployment (not part of a multi-node ensemble/cluster), and `Node count: 54` indicates the internal Zookeeper data tree (`znodes`) currently holds 54 nodes, again consistent with an application actively using Zookeeper to store operational/coordination state rather than an idle or freshly-installed instance.
 
 ```bash
-echo "envi" | nc -nv -q2 192.168.144.200 2181
+echo "envi" | nc -nv -q2 192.168.144.100 2181
 ```
 
 ```
